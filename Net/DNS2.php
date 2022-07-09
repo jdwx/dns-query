@@ -17,12 +17,6 @@
  *
  */
 
-/*
- * register the auto-load function
- *
- */
-spl_autoload_register('Net_DNS2::autoload');
-
 /**
  * This is the base class for the Net_DNS2_Resolver and Net_DNS2_Updater classes.
  *
@@ -193,7 +187,7 @@ class Net_DNS2
     public $last_exception_list = [];
 
     /*
-     * name server list
+     * name server list specified as IPv4 or IPv6 addresses
      */
     public $nameservers = [];
 
@@ -304,7 +298,7 @@ class Net_DNS2
     }
 
     /**
-     * sets the name servers to be used
+     * sets the name servers to be used, specified as IPv4 or IPv6 addresses
      *
      * @param mixed $nameservers either an array of name servers, or a file name 
      *                           to parse, assuming it's in the resolv.conf format
@@ -323,7 +317,22 @@ class Net_DNS2
         //
         if (is_array($nameservers)) {
 
-            $this->nameservers = $nameservers;
+            // collect valid IP addresses in a temporary list
+            $ipAddresses = [];
+
+            foreach ($nameservers as $value) {
+                if (self::isIPv4($value) || self::isIPv6($value)) {
+                    $ipAddresses[] = $value;
+                } else {
+                    throw new Net_DNS2_Exception(
+                        'invalid nameserver entry: ' . $value,
+                        Net_DNS2_Lookups::E_NS_INVALID_ENTRY
+                    );
+                }
+            }
+
+            // only replace the nameservers list if no exception is thrown
+            $this->nameservers = $ipAddresses;
 
         } else {
 
@@ -1363,3 +1372,9 @@ class Net_DNS2
         return $response;
     }
 }
+
+/*
+ * register the auto-load function
+ *
+ */
+spl_autoload_register('Net_DNS2::autoload');
