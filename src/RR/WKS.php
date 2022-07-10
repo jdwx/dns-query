@@ -51,7 +51,7 @@ class WKS extends RR
     /*
      * The protocol of the service
      */
-    public string $protocol;
+    public int $protocol;
 
     /** @var int[] bitmap */
     public array $bitmap = [];
@@ -76,7 +76,7 @@ class WKS extends RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
@@ -84,7 +84,7 @@ class WKS extends RR
      */
     protected function rrFromString(array $rdata) : bool {
         $this->address  = strtolower(trim(array_shift($rdata), '.'));
-        $this->protocol = array_shift($rdata);
+        $this->protocol = (int) array_shift($rdata);
         $this->bitmap   = $rdata;
 
         return true;
@@ -105,6 +105,7 @@ class WKS extends RR
             //
             // get the address and protocol value
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('Naddress/Cprotocol', $this->rdata);
 
             $this->address  = long2ip($x['address']);

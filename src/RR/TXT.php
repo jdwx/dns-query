@@ -58,7 +58,7 @@ class TXT extends RR
 
         foreach ($this->text as $t) {
 
-            $data .= $this->formatString( $t ) . ' TXT.php';
+            $data .= $this->formatString( $t ) . ' ';
         }
 
         return trim($data);

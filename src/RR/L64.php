@@ -45,7 +45,7 @@ class L64 extends RR
     /*
      * The preference
      */
-    public string $preference;
+    public int $preference;
 
     /*
      * The locator64 field
@@ -75,8 +75,8 @@ class L64 extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->preference = array_shift($rdata);
-        $this->locator64 = array_shift($rdata);
+        $this->preference = (int) array_shift( $rdata );
+        $this->locator64  = array_shift($rdata);
 
         return true;
     }

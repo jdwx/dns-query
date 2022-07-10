@@ -44,12 +44,12 @@ class RT extends RR
     /*
      * the preference of this route
      */
-    public string $preference;
+    public int $preference;
 
     /*
       * host which will serve as an intermediate in reaching the owner host
      */
-    public string $intermediatehost;
+    public string $intermediateHost;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -60,7 +60,7 @@ class RT extends RR
      */
     protected function rrToString() : string {
         return $this->preference . ' ' . 
-            $this->cleanString($this->intermediatehost) . '.';
+            $this->cleanString($this->intermediateHost) . '.';
     }
 
     /**
@@ -73,8 +73,8 @@ class RT extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->preference       = $rdata[0];
-        $this->intermediatehost = $this->cleanString($rdata[1]);
+        $this->preference       = (int) $rdata[ 0 ];
+        $this->intermediateHost = $this->cleanString( $rdata[ 1 ] );
 
         return true;
     }
@@ -96,12 +96,13 @@ class RT extends RR
             //
             // unpack the preference
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('npreference', $this->rdata);
 
             $this->preference       = $x['preference'];
             $offset                 = $packet->offset + 2;
 
-            $this->intermediatehost =  $packet->expandEx( $offset );
+            $this->intermediateHost =  $packet->expandEx( $offset );
 
             return true;
         }
@@ -121,12 +122,12 @@ class RT extends RR
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->intermediatehost) > 0) {
+        if (strlen($this->intermediateHost) > 0) {
 
             $data = pack('n', $this->preference);
             $packet->offset += 2;
 
-            $data .= $packet->compress($this->intermediatehost, $packet->offset);
+            $data .= $packet->compress($this->intermediateHost, $packet->offset);
 
             return $data;
         }

@@ -108,8 +108,8 @@ class LOC extends RR
     {
         if ($this->version == 0) {
 
-            return $this->_d2Dms( $this->latitude, 'LAT' ) . ' LOC.php' .
-                $this->_d2Dms($this->longitude, 'LNG') . ' ' . 
+            return $this->_d2Dms($this->latitude, 'LAT') . ' ' .
+                $this->_d2Dms($this->longitude, 'LNG') . ' ' .
                 sprintf('%.2fm', $this->altitude) . ' ' .
                 sprintf('%.2fm', $this->size) . ' ' .
                 sprintf('%.2fm', $this->horiz_pre) . ' ' .
@@ -149,8 +149,8 @@ class LOC extends RR
             // latitude
             //
             $latdeg     = (int) $x[1];
-            $latmin     = (isset($x[3])) ? $x[3] : 0;
-            $latsec     = (isset($x[5])) ? $x[5] : 0;
+            $latmin     = (isset($x[3])) ? (int) $x[3] : 0;
+            $latsec     = (isset($x[5])) ? (float) $x[5] : 0;
             $lathem     = strtoupper($x[6]);
 
             $this->latitude = $this->_dms2d($latdeg, $latmin, $latsec, $lathem);
@@ -159,20 +159,23 @@ class LOC extends RR
             // longitude
             //
             $londeg     = (int) $x[7];
-            $lonmin     = (isset($x[9])) ? $x[9] : 0;
-            $lonsec     = (isset($x[11])) ? $x[11] : 0;
+            $lonmin     = (isset($x[9])) ? (int) $x[9] : 0;
+            $lonsec     = (isset($x[11])) ? (float) $x[11] : 0;
             $lonhem     = strtoupper($x[12]);
 
             $this->longitude = $this->_dms2d($londeg, $lonmin, $lonsec, $lonhem);
 
             //
-            // the rest of teh values
+            // the rest of the values
             //
 
             $this->size         = (isset($x[15])) ? $x[15] : 1;
             $this->horiz_pre    = ((isset($x[17])) ? $x[17] : 10000);
             $this->vert_pre     = ((isset($x[19])) ? $x[19] : 10);
             $this->altitude     = (float) $x[13];
+
+            // There is no way to specify the version in text; it's always assumed to be 0.
+            $this->version = 0;
 
             return true;
         }
@@ -346,7 +349,7 @@ class LOC extends RR
      * @access private
      *
      */
-    private function _dms2d(int $deg, int $min, int $sec, string $hem) : float
+    private function _dms2d(int $deg, int $min, float $sec, string $hem) : float
     {
 
         $sign = ($hem == 'W' || $hem == 'S') ? -1 : 1;

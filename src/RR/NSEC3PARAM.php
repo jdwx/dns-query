@@ -45,17 +45,17 @@ class NSEC3PARAM extends RR
      *
      * TODO: same as the NSEC3
      */
-    public string $algorithm;
+    public int  $algorithm;
 
     /*
      * flags
      */
-    public string $flags;
+    public int $flags;
 
     /*
      *  defines the number of additional times the hash is performed.
      */
-    public string $iterations;
+    public int $iterations;
 
     /*
      * the length of the salt (not displayed)
@@ -104,9 +104,9 @@ class NSEC3PARAM extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->algorithm    = array_shift($rdata);
-        $this->flags        = array_shift($rdata);
-        $this->iterations   = array_shift($rdata);
+        $this->algorithm    = (int) array_shift($rdata);
+        $this->flags        = (int) array_shift($rdata);
+        $this->iterations   = (int) array_shift($rdata);
 
         $salt = array_shift($rdata);
         if ($salt == '-') {
@@ -135,6 +135,7 @@ class NSEC3PARAM extends RR
     {
         if ($this->rdLength > 0) {
 
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('Calgorithm/Cflags/niterations/Csalt_length', $this->rdata);
 
             $this->algorithm    = $x['algorithm'];

@@ -45,12 +45,12 @@ class NID extends RR
     /*
      * The preference
      */
-    public string $preference;
+    public int $preference;
 
     /*
      * The node ID field
      */
-    public string $nodeid;
+    public string $nodeId;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -60,21 +60,21 @@ class NID extends RR
      *
      */
     protected function rrToString() : string {
-        return $this->preference . ' ' . $this->nodeid;
+        return $this->preference . ' ' . $this->nodeId;
     }
 
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->preference = array_shift($rdata);
-        $this->nodeid = array_shift($rdata);
+        $this->preference = (int) array_shift( $rdata );
+        $this->nodeId     = array_shift( $rdata );
 
         return true;
     }
@@ -94,6 +94,7 @@ class NID extends RR
             //
             // unpack the values
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('npreference/n4nodeid', $this->rdata);
 
             $this->preference = $x['preference'];
@@ -101,7 +102,7 @@ class NID extends RR
             //
             // build the node id
             //
-            $this->nodeid = dechex($x['nodeid1']) . ':' . 
+            $this->nodeId = dechex($x['nodeid1']) . ':' .
                 dechex($x['nodeid2']) . ':' .
                 dechex($x['nodeid3']) . ':' . 
                 dechex($x['nodeid4']);
@@ -124,12 +125,12 @@ class NID extends RR
      * 
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->nodeid) > 0) {
+        if (strlen($this->nodeId) > 0) {
 
             //
             // break out the node id
             //
-            $n = explode(':', $this->nodeid);
+            $n = explode(':', $this->nodeId);
 
             //
             // pack the data

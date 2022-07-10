@@ -51,7 +51,7 @@ class Packet
      * the full binary data and length for this packet
      */
     public string $rdata;
-    public int $rdlength;
+    public int $rdLength;
 
     /*
      * the offset pointer used when building/parsing packets
@@ -122,23 +122,23 @@ class Packet
         $data = $this->header->get($this);
 
         foreach ($this->question as $x) {
-
             $data .= $x->get($this);
         }
+
         foreach ($this->answer as $x) {
-
             $data .= $x->get($this);
         }
+
         foreach ($this->authority as $x) {
-
             $data .= $x->get($this);
         }
-        foreach ($this->additional as $x) {
 
+        foreach ($this->additional as $x) {
             $data .= $x->get($this);
         }
 
         return $data;
+
     }
 
     /**
@@ -259,7 +259,7 @@ class Packet
         $name = '';
 
         while (1) {
-            if ($packet->rdlength < ($offset + 1)) {
+            if ($packet->rdLength < ($offset + 1)) {
                 return null;
             }
             
@@ -270,7 +270,7 @@ class Packet
                 break;
 
             } elseif (($xlen & 0xc0) == 0xc0) {
-                if ($packet->rdlength < ($offset + 2)) {
+                if ($packet->rdLength < ($offset + 2)) {
 
                     return null;
                 }
@@ -291,7 +291,7 @@ class Packet
             } else {
                 ++$offset;
 
-                if ($packet->rdlength < ($offset + $xlen)) {
+                if ($packet->rdLength < ($offset + $xlen)) {
 
                     return null;
                 }
@@ -299,7 +299,7 @@ class Packet
                 $elem = substr($packet->rdata, $offset, $xlen);
 
                 //
-                // escape literal dots in certain cases (SOA rname)
+                // escape literal dots in certain cases (SOA rName)
                 //
                 if ( $escape_dot_literals && ( str_contains( $elem, '.' ) ) ) {
 
@@ -349,7 +349,7 @@ class Packet
     public static function label( Packet $packet, int & $offset) : ?string
     {
 
-        if ($packet->rdlength < ($offset + 1)) {
+        if ($packet->rdLength < ($offset + 1)) {
 
             return null;
         }
@@ -357,10 +357,10 @@ class Packet
         $xlen = ord($packet->rdata[$offset]);
         ++$offset;
 
-        if (($xlen + $offset) > $packet->rdlength) {
+        if (($xlen + $offset) > $packet->rdLength) {
 
             $name = substr($packet->rdata, $offset);
-            $offset = $packet->rdlength;
+            $offset = $packet->rdLength;
         } else {
 
             $name = substr($packet->rdata, $offset, $xlen);
@@ -424,7 +424,7 @@ class Packet
     {
         $this->header->id   = $this->header->nextPacketId();
         $this->rdata        = '';
-        $this->rdlength     = 0;
+        $this->rdLength     = 0;
         $this->offset       = 0;
         $this->answer       = [];
         $this->authority    = [];

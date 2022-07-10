@@ -59,7 +59,7 @@ class HINFO extends RR
      */
     protected function rrToString() : string
     {
-        return $this->formatString( $this->cpu ) . ' HINFO.php' . $this->formatString($this->os);
+        return $this->formatString( $this->cpu ) . ' ' . $this->formatString($this->os);
     }
 
     /**

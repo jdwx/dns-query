@@ -47,7 +47,7 @@ class OPT extends RR
     /*
      * option code - assigned by IANA
      */
-    public string $option_code;
+    public int $option_code;
 
     /*
      * the length of the option data
@@ -97,9 +97,11 @@ class OPT extends RR
         // this is for when we're manually building an OPT RR object; we aren't
         // passing in binary data to parse, we just want a clean/empty object.
         //
+        $this->name             = '';
         $this->type             = 'OPT';
         $this->rdLength         = 0;
 
+        $this->option_code      = 0;
         $this->option_length    = 0;
         $this->extended_response_code   = 0;
         $this->version          = 0;
@@ -142,7 +144,7 @@ class OPT extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->option_code      = array_shift($rdata);
+        $this->option_code      = (int) array_shift($rdata);
         $this->option_data      = array_shift($rdata);
         $this->option_length    = strlen($this->option_data);
 
@@ -251,6 +253,6 @@ class OPT extends RR
             return $data;
         }
 
-        return null;
+        return '';
     }
 }

@@ -167,7 +167,7 @@ class Header
         //
         // the header must be at least 12 bytes long.
         //
-        if ($packet->rdlength < Lookups::DNS_HEADER_SIZE) {
+        if ($packet->rdLength < Lookups::DNS_HEADER_SIZE) {
 
             throw new Exception(
                 'invalid header data provided; too small',

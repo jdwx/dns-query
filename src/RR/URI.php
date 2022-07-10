@@ -45,12 +45,12 @@ class URI extends RR
     /*
      * The priority of this target host.
      */
-    public string $priority;
+    public int $priority;
 
     /*
      * a relative weight for entries with the same priority
      */
-    public string $weight;
+    public int $weight;
 
     /*
       * The domain name of the target host
@@ -83,8 +83,8 @@ class URI extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->priority = $rdata[0];
-        $this->weight   = $rdata[1];
+        $this->priority = (int) $rdata[ 0 ];
+        $this->weight   = (int) $rdata[ 1 ];
         $this->target   = trim(strtolower(trim($rdata[2])), '"');
         
         return true;
@@ -105,6 +105,7 @@ class URI extends RR
             //
             // unpack the priority and weight
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('npriority/nweight/a*target', $this->rdata);
 
             $this->priority = $x['priority'];

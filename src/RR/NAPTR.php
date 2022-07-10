@@ -53,13 +53,13 @@ class NAPTR extends RR
     /*
      * the order in which the NAPTR records MUST be processed
      */
-    public string $order;
+    public int $order;
 
     /*
      * specifies the order in which NAPTR records with equal "order"
      * values SHOULD be processed
      */
-    public string $preference;
+    public int $preference;
 
     /*
      * rewrite flags
@@ -100,15 +100,15 @@ class NAPTR extends RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->order        = array_shift($rdata);
-        $this->preference   = array_shift($rdata);
+        $this->order        = (int) array_shift($rdata);
+        $this->preference   = (int) array_shift($rdata);
 
         $data = $this->buildString($rdata);
         if (count($data) == 4) {
@@ -128,7 +128,7 @@ class NAPTR extends RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
      * @return bool
      * @access protected
@@ -164,8 +164,7 @@ class NAPTR extends RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
+     * @param Packet $packet a Packet to use for compressed names
      *
      * @return null|string                   either returns a binary packed
      *                                 string or null on failure

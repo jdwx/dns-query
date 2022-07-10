@@ -59,7 +59,7 @@ class ISDN extends RR
      */
     protected function rrToString() : string
     {
-        return $this->formatString( $this->isdnAddress ) . ' ISDN.php' .
+        return $this->formatString( $this->isdnAddress ) . ' ' .
             $this->formatString($this->sa);
     }
 

@@ -89,12 +89,63 @@ abstract class RR
     /*
      * The length of the rdata field
      */
-    public int $rdLength;
+    public int $rdLength = 0;
 
     /*
      * The resource record specific data as a packed binary string
      */
-    public string $rdata;
+    public string $rdata = '';
+
+
+    /**
+     * Constructor - builds a new RR object
+     *
+     * @param ?Packet $packet a Packet or null to create an empty object
+     *
+     * @param ?array           $rr      an array with RR parse values or null to
+     *                                 create an empty object
+     *
+     * @throws Exception
+     * @access public
+     *
+     */
+    public function __construct(Packet $packet = null, array $rr = null)
+    {
+        if ( (!is_null($packet)) && (!is_null($rr)) ) {
+
+            if ( ! $this->set( $packet, $rr ) ) {
+
+                throw new Exception(
+                    'failed to generate resource record',
+                    Lookups::E_RR_INVALID
+                );
+            }
+        } else {
+
+            $class = Lookups::$rr_types_class_to_id[get_class($this)];
+            if (isset($class)) {
+
+                $this->type = Lookups::$rr_types_by_id[$class];
+            }
+
+            $this->class    = 'IN';
+            $this->ttl      = 86400;
+        }
+    }
+
+    /**
+     * magic __toString() method to return the RR object as a string
+     *
+     * @return string
+     * @access public
+     *
+     */
+    public function __toString()
+    {
+        return $this->name . '. ' . $this->ttl . ' ' . $this->class .
+            ' ' . $this->type . ' ' . $this->rrToString();
+    }
+
 
     /**
      * abstract definition - method to return a RR as a string; not to 
@@ -162,55 +213,6 @@ abstract class RR
         throw new Exception( "getting type-specific RDATA failed" );
     }
 
-
-    /**
-     * Constructor - builds a new RR object
-     *
-     * @param ?Packet $packet a Packet or null to create an empty object
-     *
-     * @param ?array           $rr      an array with RR parse values or null to
-     *                                 create an empty object
-     *
-     * @throws Exception
-     * @access public
-     *
-     */
-    public function __construct(Packet $packet = null, array $rr = null)
-    {
-        if ( (!is_null($packet)) && (!is_null($rr)) ) {
-
-            if ( ! $this->set( $packet, $rr ) ) {
-
-                throw new Exception(
-                    'failed to generate resource record',
-                    Lookups::E_RR_INVALID
-                );
-            }
-        } else {
-
-            $class = Lookups::$rr_types_class_to_id[get_class($this)];
-            if (isset($class)) {
-
-                $this->type = Lookups::$rr_types_by_id[$class];
-            }
-
-            $this->class    = 'IN';
-            $this->ttl      = 86400;
-        }
-    }
-
-    /**
-     * magic __toString() method to return the RR object as a string
-     *
-     * @return string
-     * @access public
-     *
-     */
-    public function __toString()
-    {
-        return $this->name . '. ' . $this->ttl . ' ' . $this->class . 
-            ' ' . $this->type . ' ' . $this->rrToString();
-    }
 
     /**
      * return the same data as __toString(), but as an array, so each value can be 
@@ -327,7 +329,7 @@ abstract class RR
         // and not a class value
         //
         if ($this->type == 'OPT') {
-            $this->class = $rr['class'];
+            $this->class = (string) $rr['class'];
         } else {
             $this->class = Lookups::$classes_by_id[$rr['class']];
         }
@@ -437,7 +439,7 @@ abstract class RR
                 Lookups::E_PARSE_ERROR
             );
         }
-        if ($packet->rdlength < ($packet->offset + 10)) {
+        if ($packet->rdLength < ($packet->offset + 10)) {
 
             throw new Exception(
                 'failed to parse resource record: packet too small.',
@@ -461,7 +463,7 @@ abstract class RR
         $object['rdlength'] = ord($packet->rdata[$packet->offset++]) << 8 | 
                                 ord($packet->rdata[$packet->offset++]);
 
-        if ($packet->rdlength < ($packet->offset + $object['rdlength'])) {
+        if ($packet->rdLength < ($packet->offset + $object['rdlength'])) {
             return null;
         }
 

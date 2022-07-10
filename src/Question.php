@@ -126,7 +126,7 @@ class Question
         //
         $this->qname = $packet->expandEx( $packet->offset );
 
-        if ($packet->rdlength < ($packet->offset + 4)) {
+        if ($packet->rdLength < ($packet->offset + 4)) {
             throw new Exception(
                 'invalid question section: to small',
                 Lookups::E_QUESTION_INVALID

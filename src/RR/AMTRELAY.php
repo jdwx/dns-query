@@ -53,7 +53,7 @@ class AMTRELAY extends RR
     /*
      * the precedence for this record
      */
-    public string $precedence;
+    public int $precedence;
 
     /*
      * "Discovery Optional" flag
@@ -106,9 +106,9 @@ class AMTRELAY extends RR
         //
         // extract the values from the array
         //
-        $this->precedence   = array_shift($rdata);
-        $this->discovery    = (int) array_shift($rdata);
-        $this->relay_type   = (int) array_shift($rdata);
+        $this->precedence   = (int) array_shift( $rdata );
+        $this->discovery    = (int) array_shift( $rdata );
+        $this->relay_type   = (int) array_shift( $rdata );
         $this->relay        = trim(strtolower(trim(array_shift($rdata))), '.');
 
         //
@@ -173,6 +173,7 @@ class AMTRELAY extends RR
             //
             // parse off the first two octets
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('Cprecedence/Csecond', $this->rdata);
 
             $this->precedence   = $x['precedence'];
@@ -209,8 +210,8 @@ class AMTRELAY extends RR
                 break;
 
             case self::AMTRELAY_TYPE_DOMAIN:
-                $doffset = $packet->offset + $offset;
-                $this->relay = $packet->labelEx( $doffset );
+                $domainOffset = $packet->offset + $offset;
+                $this->relay = $packet->labelEx( $domainOffset );
 
                 break;
 

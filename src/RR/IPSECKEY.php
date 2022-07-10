@@ -58,7 +58,7 @@ class IPSECKEY extends RR
     /*
      * Precedence (used the same way as a preference field)
      */
-    public string $precedence;
+    public int $precedence;
 
     /*
      * Gateway type - specifies the format of the gateway information
@@ -70,7 +70,7 @@ class IPSECKEY extends RR
      *  3    wire-encoded domain name (not compressed)
      *
      */
-    public int $gateway_type;
+    public int $gatewayType;
 
     /*
      * The algorithm used
@@ -103,10 +103,10 @@ class IPSECKEY extends RR
      */
     protected function rrToString() : string
     {
-        $out = $this->precedence . ' ' . $this->gateway_type . ' ' . 
+        $out = $this->precedence . ' ' . $this->gatewayType . ' ' .
             $this->algorithm . ' ';
         
-        switch($this->gateway_type) {
+        switch($this->gatewayType) {
         case self::GATEWAY_TYPE_NONE:
             $out .= '. ';
             break;
@@ -139,7 +139,7 @@ class IPSECKEY extends RR
         //
         // load the data
         //
-        $precedence     = array_shift($rdata);
+        $precedence     = (int) array_shift( $rdata );
         $gateway_type   = (int) array_shift( $rdata );
         $algorithm      = (int) array_shift( $rdata );
         $gateway        = trim(strtolower(trim(array_shift($rdata))), '.');
@@ -194,7 +194,7 @@ class IPSECKEY extends RR
         // store the values
         //
         $this->precedence   = $precedence;
-        $this->gateway_type = $gateway_type;
+        $this->gatewayType = $gateway_type;
         $this->algorithm    = $algorithm;
         $this->gateway      = $gateway;
         $this->key          = $key;
@@ -220,10 +220,11 @@ class IPSECKEY extends RR
             //
             // parse off the precedence, gateway type and algorithm
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('Cprecedence/Cgateway_type/Calgorithm', $this->rdata);
 
             $this->precedence   = $x['precedence'];
-            $this->gateway_type = $x['gateway_type'];
+            $this->gatewayType = $x['gateway_type'];
             $this->algorithm    = $x['algorithm'];
 
             $offset = 3;
@@ -231,7 +232,7 @@ class IPSECKEY extends RR
             //
             // extract the gateway based on the type
             //
-            switch($this->gateway_type) {
+            switch($this->gatewayType) {
             case self::GATEWAY_TYPE_NONE:
                 $this->gateway = '';
                 break;
@@ -254,10 +255,9 @@ class IPSECKEY extends RR
                 break;
 
             case self::GATEWAY_TYPE_DOMAIN:
-
-                $doffset = $offset + $packet->offset;
-                $this->gateway = $packet->expandEx( $doffset );
-                $offset = ($doffset - $packet->offset);
+                $domainOffset = $offset + $packet->offset;
+                $this->gateway = $packet->expandEx( $domainOffset );
+                $offset = ($domainOffset - $packet->offset);
                 break;
 
             default:
@@ -303,13 +303,13 @@ class IPSECKEY extends RR
         // pack the precedence, gateway type and algorithm
         //
         $data = pack(
-            'CCC', $this->precedence, $this->gateway_type, $this->algorithm
+            'CCC', $this->precedence, $this->gatewayType, $this->algorithm
         );
 
         //
         // add the gateway based on the type
         //
-        switch($this->gateway_type) {
+        switch($this->gatewayType) {
         case self::GATEWAY_TYPE_NONE:
             // add nothing
             break;

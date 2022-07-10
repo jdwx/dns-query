@@ -44,7 +44,7 @@ class MX extends RR
     /*
      * the preference for this mail exchanger
      */
-    public string $preference;
+    public int $preference;
 
     /*
      * the hostname of the mail exchanger
@@ -74,7 +74,7 @@ class MX extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->preference   = array_shift($rdata);
+        $this->preference   = (int) array_shift( $rdata );
         $this->exchange     = $this->cleanString(array_shift($rdata));
 
         return true;

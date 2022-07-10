@@ -204,6 +204,7 @@ class FileCache extends Cache
                 fwrite($fp, $data);
             }
 
+            fsync( $fp );
             //
             // unlock
             //

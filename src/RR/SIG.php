@@ -156,17 +156,17 @@ class SIG extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->typeCovered  = strtoupper(array_shift($rdata));
-        $this->algorithm    = array_shift($rdata);
-        $this->labels       = array_shift($rdata);
-        $this->origTTL      = array_shift($rdata);
-        $this->sigExpiration       = array_shift($rdata);
-        $this->sigInception     = array_shift($rdata);
-        $this->keytag       = array_shift($rdata);
-        $this->signName     = $this->cleanString(array_shift($rdata));
+        $this->typeCovered   = strtoupper(array_shift($rdata));
+        $this->algorithm     = (int) array_shift($rdata);
+        $this->labels        = (int) array_shift($rdata);
+        $this->origTTL       = (int) array_shift($rdata);
+        $this->sigExpiration = array_shift($rdata);
+        $this->sigInception  = array_shift($rdata);
+        $this->keytag        = (int) array_shift($rdata);
+        $this->signName      = $this->cleanString(array_shift($rdata));
 
+        $this->signature = '';
         foreach ($rdata as $line) {
-
             $this->signature .= $line;
         }
 

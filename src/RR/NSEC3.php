@@ -48,17 +48,17 @@ class NSEC3 extends RR
     /*
      * Algorithm to use
      */
-    public string $algorithm;
+    public int $algorithm;
  
     /*
      * flags
      */
-    public string $flags;
+    public int $flags;
  
     /*
      *  defines the number of additional times the hash is performed.
      */
-    public string $iterations;
+    public int $iterations;
  
     /*
      * the length of the salt (not displayed)
@@ -124,16 +124,16 @@ class NSEC3 extends RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->algorithm    = array_shift($rdata);
-        $this->flags        = array_shift($rdata);
-        $this->iterations   = array_shift($rdata);
+        $this->algorithm    = (int) array_shift($rdata);
+        $this->flags        = (int) array_shift($rdata);
+        $this->iterations   = (int) array_shift($rdata);
      
         //
         // an empty salt is represented as '-' per RFC5155 section 3.3

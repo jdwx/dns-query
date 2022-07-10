@@ -46,7 +46,7 @@ class LP extends RR
     /*
      * The preference
      */
-    public string $preference;
+    public int $preference;
 
     /*
      * The FQDN field
@@ -68,7 +68,7 @@ class LP extends RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
@@ -76,17 +76,17 @@ class LP extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->preference = array_shift($rdata);
-        $this->fqdn = trim(array_shift($rdata), '.');
+        $this->preference = (int) array_shift($rdata);
+        $this->fqdn       = trim(array_shift($rdata), '.');
 
         return true;
     }
 
 
     /**
-     * parses the rdata of the Net_DNS2_Packet object
+     * parses the rdata of the Packet object
      *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Packet $packet a Packet to parse the RR from
      *
      * @return bool
      * @access protected
@@ -118,8 +118,7 @@ class LP extends RR
     /**
      * returns the rdata portion of the DNS packet
      * 
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
+     * @param Packet &$packet a Packet to use for compressed names
      *
      * @return ?string                   either returns a binary packed
      *                                 string or null on failure

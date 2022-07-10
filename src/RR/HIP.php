@@ -64,7 +64,7 @@ class HIP extends RR
     /*
      * the public key cryptographic algorithm
      */
-    public string $pk_algorithm;
+    public int $pk_algorithm;
 
     /*
      * the length of the public key field
@@ -117,7 +117,7 @@ class HIP extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->pk_algorithm     = array_shift($rdata);
+        $this->pk_algorithm     = (int) array_shift($rdata);
         $this->hit              = strtoupper(array_shift($rdata));
         $this->public_key       = array_shift($rdata);
 

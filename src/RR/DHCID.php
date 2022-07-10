@@ -46,12 +46,12 @@ class DHCID extends RR
     /*
      * Identifier type
      */
-    public string $id_type;
+    public int $idType;
 
     /*
      * Digest Type
      */
-    public string $digest_type;
+    public int $digestType;
 
     /*
      * The digest
@@ -68,7 +68,7 @@ class DHCID extends RR
      */
     protected function rrToString() : string
     {
-        $out = pack('nC', $this->id_type, $this->digest_type);
+        $out = pack('nC', $this->idType, $this->digestType);
         $out .= base64_decode($this->digest);
 
         return base64_encode($out);
@@ -91,10 +91,11 @@ class DHCID extends RR
             //
             // unpack the id type and digest type
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('nid_type/Cdigest_type', $data);
 
-            $this->id_type      = $x['id_type'];
-            $this->digest_type  = $x['digest_type'];
+            $this->idType      = $x['id_type'];
+            $this->digestType  = $x['digest_type'];
 
             //
             // copy out the digest
@@ -123,10 +124,11 @@ class DHCID extends RR
             //
             // unpack the id type and digest type
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('nid_type/Cdigest_type', $this->rdata);
 
-            $this->id_type      = $x['id_type'];
-            $this->digest_type  = $x['digest_type'];
+            $this->idType      = $x['id_type'];
+            $this->digestType  = $x['digest_type'];
 
             //
             // copy out the digest
@@ -156,7 +158,7 @@ class DHCID extends RR
     {
         if (strlen($this->digest) > 0) {
 
-            $data = pack('nC', $this->id_type, $this->digest_type) .
+            $data = pack('nC', $this->idType, $this->digestType) .
                 base64_decode($this->digest);
 
             $packet->offset += strlen($data);

@@ -8,7 +8,6 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\BitMap;
-use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -30,7 +29,7 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 
 /**
- * CSYNC Resource Record - RFC 7477 seciond 2.1.1
+ * CSYNC Resource Record - RFC 7477 section 2.1.1
  *
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *    |                  SOA Serial                   |
@@ -47,12 +46,12 @@ class CSYNC extends RR
     /*
      * serial number
      */
-    public string $serial;
+    public int $serial;
 
     /*
      * flags
      */
-    public string $flags;
+    public int $flags;
 
     /*
      * array of RR type names
@@ -71,7 +70,7 @@ class CSYNC extends RR
         $out = $this->serial . ' ' . $this->flags;
 
         //
-        // show the RR's
+        // show the RRs
         //
         foreach ($this->type_bit_maps as $rr) {
 
@@ -92,8 +91,8 @@ class CSYNC extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->serial   = array_shift($rdata);
-        $this->flags    = array_shift($rdata);
+        $this->serial   = (int) array_shift($rdata);
+        $this->flags    = (int) array_shift($rdata);
 
         $this->type_bit_maps = $rdata;
 
@@ -101,9 +100,9 @@ class CSYNC extends RR
     }
 
     /**
-     * parses the rdata of the Net_DNS2_Packet object
+     * parses the rdata of the Packet object
      *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Packet $packet a Packet to parse the RR from
      *
      * @return bool
      * @access protected
@@ -116,10 +115,11 @@ class CSYNC extends RR
             //
             // unpack the serial and flags values
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('@' . $packet->offset . '/Nserial/nflags', $packet->rdata);
 
-            $this->serial   = Net_DNS2::expandUint32($x['serial']);
-            $this->flags    = $x['flags'];
+            $this->serial   = $x[ 'serial' ];
+            $this->flags    = $x[ 'flags' ];
 
             //
             // parse out the RR bitmap                 
@@ -137,8 +137,7 @@ class CSYNC extends RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Packet $packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
+     * @param Packet $packet a Packet to use for compressed names
      *
      * @return ?string                   either returns a binary packed
      *                                 string or null on failure

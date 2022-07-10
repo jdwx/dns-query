@@ -22,20 +22,23 @@ declare( strict_types = 1 );
  */
 
 
+namespace JDWX\DNSQuery\tests;
+
+
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Resolver;
+use PHPUnit\Framework\TestCase;
 
-
-require_once 'Net_DNS2.php';
 
 /**
  * This test uses the Google public DNS servers to perform a resolution test;
  * this should work on *nix and Windows, but will require an internet connection.
  *
  */
-class Tests_Net_DNS2_CacheTest extends PHPUnit\Framework\TestCase
-{
+class LegacyCacheTest extends TestCase {
+
     /**
-     * function to test the resolver
+     * function to test the cache
      *
      * @return void
      * @access public
@@ -44,18 +47,24 @@ class Tests_Net_DNS2_CacheTest extends PHPUnit\Framework\TestCase
      */
     public function testCache() : void {
         $cache_file = '/tmp/net_dns2_test.cache';
+        if ( file_exists( $cache_file ) ) {
+            unlink( $cache_file );
+        }
 
-        $r = new Resolver(
-        [ 
-            'nameservers'   => [ '8.8.8.8', '8.8.4.4' ],
-            'use_cache'     => true,
-            'cache_type'    => 'file',
-            'cache_file'    => $cache_file 
-        ]);
+        $r = new Resolver( [
+            'nameservers' => [ '8.8.8.8', '8.8.4.4' ],
+            'use_cache' => true,
+            'cache_type' => 'file',
+            'cache_file' => $cache_file,
+        ] );
 
-        $r->query('google.com', 'MX');
 
-        static::assertTrue(file_exists($cache_file));
-        static::assertTrue((filesize($cache_file) > 0));
+        $r->query( 'google.com', 'MX' );
+
+        unset( $r );  # Must get the FileCache destructor to run.
+        clearstatcache();  # Clear the stat cache so the check will really measure the file size.
+
+        static::assertFileExists( $cache_file );
+        static::assertGreaterThan( 0, filesize( $cache_file ) );
     }
 }

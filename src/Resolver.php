@@ -237,7 +237,6 @@ class Resolver extends Net_DNS2
         // cache the response object
         //
         if ( $this->useCache && $this->cacheable( $type ) ) {
-
             $this->cache->put($packet_hash, $response);
         }
 

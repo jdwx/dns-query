@@ -47,17 +47,17 @@ class SRV extends RR
     /*
      * The priority of this target host.
      */
-    public string $priority;
+    public int $priority;
 
     /*
      * a relative weight for entries with the same priority
      */
-    public string $weight;
+    public int $weight;
 
     /*
       * The port on this target host of this service.
      */
-    public string $port;
+    public int $port;
 
     /*
       * The domain name of the target host
@@ -86,9 +86,9 @@ class SRV extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->priority = $rdata[0];
-        $this->weight   = $rdata[1];
-        $this->port     = $rdata[2];
+        $this->priority = (int) $rdata[0];
+        $this->weight   = (int) $rdata[1];
+        $this->port     = (int) $rdata[2];
 
         $this->target   = $this->cleanString($rdata[3]);
         

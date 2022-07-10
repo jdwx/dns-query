@@ -47,7 +47,7 @@ class PX extends RR
     /*
      * preference
      */
-    public string $preference;
+    public int $preference;
 
     /* 
      * the RFC822 part of the MIXER-conformant Global Address Mapping
@@ -81,7 +81,7 @@ class PX extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->preference   = $rdata[0];
+        $this->preference   = (int) $rdata[0];
         $this->map822       = $this->cleanString($rdata[1]);
         $this->mapX400      = $this->cleanString($rdata[2]);
 

@@ -8,7 +8,6 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Exception;
-use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -70,27 +69,27 @@ class SOA extends RR
     /*
      * serial number
       */
-    public string $serial;
+    public int $serial;
 
     /*
       * refresh time
       */
-    public string $refresh;
+    public int $refresh;
 
     /*
       * retry interval
      */
-    public string $retry;
+    public int $retry;
 
     /*
      * expire time
       */
-    public string $expire;
+    public int $expire;
 
     /*
      * minimum TTL for any RR in this zone
       */
-    public string $minimum;
+    public int $minimum;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -109,7 +108,7 @@ class SOA extends RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
@@ -119,11 +118,11 @@ class SOA extends RR
         $this->mName    = $this->cleanString($rdata[0]);
         $this->rName    = $this->cleanString($rdata[1]);
 
-        $this->serial   = $rdata[2];
-        $this->refresh  = $rdata[3];
-        $this->retry    = $rdata[4];
-        $this->expire   = $rdata[5];
-        $this->minimum  = $rdata[6];
+        $this->serial   = (int) $rdata[2];
+        $this->refresh  = (int) $rdata[3];
+        $this->retry    = (int) $rdata[4];
+        $this->expire   = (int) $rdata[5];
+        $this->minimum  = (int) $rdata[6];
 
         return true;
     }
@@ -159,11 +158,11 @@ class SOA extends RR
                 $packet->rdata
             );
 
-            $this->serial   = Net_DNS2::expandUint32($x['serial']);
-            $this->refresh  = Net_DNS2::expandUint32($x['refresh']);
-            $this->retry    = Net_DNS2::expandUint32($x['retry']);
-            $this->expire   = Net_DNS2::expandUint32($x['expire']);
-            $this->minimum  = Net_DNS2::expandUint32($x['minimum']);
+            $this->serial   = $x[ 'serial' ];
+            $this->refresh  = $x[ 'refresh' ];
+            $this->retry    = $x[ 'retry' ];
+            $this->expire   = $x[ 'expire' ];
+            $this->minimum  = $x[ 'minimum' ];
 
             return true;
         }

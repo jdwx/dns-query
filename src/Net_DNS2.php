@@ -758,19 +758,18 @@ class Net_DNS2
      * This function returns a negative integer value, as a string, with
      * the correct unsigned value.
      *
-     * @param string $_int the unsigned integer value to check
+     * @param int $_int the unsigned integer value to check
      *
      * @return string returns the unsigned value as a string.
      * @access public
      *
      */
-    public static function expandUint32( string $_int ) : string
+    public static function expandUint32( int $_int ) : string
     {
-        $ii = (int) $_int;
-        if ( ($ii < 0) && (PHP_INT_MAX == 2147483647) ) {
+        if ( ( $_int < 0) && ( PHP_INT_MAX == 2147483647 ) ) {
             return sprintf('%u', $_int);
         } else {
-            return $_int;
+            return (string) $_int;
         }
     }
 

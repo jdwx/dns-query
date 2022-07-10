@@ -9,7 +9,6 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 use JDWX\DNSQuery\Packet\RequestPacket;
 
@@ -89,7 +88,7 @@ class TSIG extends RR
     /*
      * The time it was signed
      */
-    public string $time_signed;
+    public int $time_signed;
 
     /*
      * allowed offset from the time signed
@@ -178,7 +177,7 @@ class TSIG extends RR
         // the rest of the data is set to default
         //
         $this->algorithm    = self::HMAC_MD5;
-        $this->time_signed  = strval( time() );
+        $this->time_signed  = time();
         $this->fudge        = 300;
         $this->mac_size     = 0;
         $this->mac          = '';
@@ -227,7 +226,7 @@ class TSIG extends RR
                 $this->rdata
             );
 
-            $this->time_signed  = Net_DNS2::expandUint32($x['time_low']);
+            $this->time_signed  = $x['time_low'];
             $this->fudge        = $x['fudge'];
             $this->mac_size     = $x['mac_size'];
 

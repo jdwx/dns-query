@@ -44,7 +44,7 @@ class AFSDB extends RR
     /*
      * The AFSDB subtype
      */
-    public string $subtype;
+    public int $subtype;
 
     /*
      * The AFSDB hostname
@@ -74,7 +74,7 @@ class AFSDB extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->subtype  = array_shift($rdata);
+        $this->subtype  = (int) array_shift( $rdata );
         $this->hostname = $this->cleanString(array_shift($rdata));
 
         return true;
@@ -98,6 +98,7 @@ class AFSDB extends RR
             //
             // unpack the subtype
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('nsubtype', $this->rdata);
 
             $this->subtype  = $x['subtype'];

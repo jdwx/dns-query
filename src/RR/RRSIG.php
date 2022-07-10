@@ -88,17 +88,17 @@ class RRSIG extends RR
     /*
      * the algorithm used for the signature
      */
-    public string $algorithm;
+    public int $algorithm;
     
     /*
      * the number of labels in the name
      */
-    public string $labels;
+    public int $labels;
 
     /*
      * the original TTL
      */
-    public string $origTTL;
+    public int $origTTL;
 
     /*
      * the signature expiration
@@ -113,7 +113,7 @@ class RRSIG extends RR
     /*
      * the keytag used
      */
-    public string $keytag;
+    public int $keytag;
 
     /*
      * the signer's name
@@ -150,17 +150,17 @@ class RRSIG extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->typeCovered  = strtoupper(array_shift($rdata));
-        $this->algorithm    = array_shift($rdata);
-        $this->labels       = array_shift($rdata);
-        $this->origTTL      = array_shift($rdata);
-        $this->sigExpiration       = array_shift($rdata);
-        $this->sigInception     = array_shift($rdata);
-        $this->keytag       = array_shift($rdata);
-        $this->signName     = $this->cleanString(array_shift($rdata));
+        $this->typeCovered   = strtoupper(array_shift($rdata));
+        $this->algorithm     = (int) array_shift($rdata);
+        $this->labels        = (int) array_shift($rdata);
+        $this->origTTL       = (int) array_shift($rdata);
+        $this->sigExpiration = array_shift($rdata);
+        $this->sigInception  = array_shift($rdata);
+        $this->keytag        = (int) array_shift($rdata);
+        $this->signName      = $this->cleanString(array_shift($rdata));
 
+        $this->signature = '';
         foreach ($rdata as $line) {
-
             $this->signature .= $line;
         }
 
@@ -193,9 +193,9 @@ class RRSIG extends RR
             );
 
             $this->typeCovered  = Lookups::$rr_types_by_id[$x['tc']];
-            $this->algorithm    = $x['algorithm'];
-            $this->labels       = $x['labels'];
-            $this->origTTL      = Net_DNS2::expandUint32($x['origttl']);
+            $this->algorithm    = $x[ 'algorithm' ];
+            $this->labels       = $x[ 'labels' ];
+            $this->origTTL      = $x[ 'origttl' ];
 
             //
             // the dates are in GM time

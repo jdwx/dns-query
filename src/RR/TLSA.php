@@ -45,17 +45,17 @@ class TLSA extends RR
     /*
      * The Certificate Usage Field
      */
-    public string $cert_usage;
+    public int $certUsage;
 
     /*
      * The Selector Field
      */
-    public string $selector;
+    public int $selector;
 
     /*
      * The Matching Type Field
      */
-    public string $matching_type;
+    public int $matchingType;
 
     /*
      * The Certificate Association Data Field
@@ -70,24 +70,24 @@ class TLSA extends RR
      *
      */
     protected function rrToString() : string {
-        return $this->cert_usage . ' ' . $this->selector . ' ' . 
-            $this->matching_type . ' ' . base64_encode($this->certificate);
+        return $this->certUsage . ' ' . $this->selector . ' ' .
+            $this->matchingType . ' ' . base64_encode($this->certificate);
     }
 
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->cert_usage       = array_shift($rdata);
-        $this->selector         = array_shift($rdata);
-        $this->matching_type    = array_shift($rdata);
-        $this->certificate      = base64_decode(implode('', $rdata));
+        $this->certUsage       = (int) array_shift( $rdata );
+        $this->selector        = (int) array_shift( $rdata );
+        $this->matchingType    = (int) array_shift( $rdata );
+        $this->certificate     = base64_decode(implode('', $rdata));
 
         return true;
     }
@@ -107,11 +107,12 @@ class TLSA extends RR
             //
             // unpack the format, keytag and algorithm
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('Cusage/Cselector/Ctype', $this->rdata);
 
-            $this->cert_usage       = $x['usage'];
+            $this->certUsage       = $x['usage'];
             $this->selector         = $x['selector'];
-            $this->matching_type    = $x['type'];
+            $this->matchingType    = $x['type'];
 
             //
             // copy the certificate
@@ -139,7 +140,7 @@ class TLSA extends RR
         if (strlen($this->certificate) > 0) {
 
             $data = pack(
-                    'CCC', $this->cert_usage, $this->selector, $this->matching_type
+                    'CCC', $this->certUsage, $this->selector, $this->matchingType
                 ) . $this->certificate;
 
             $packet->offset += strlen($data);

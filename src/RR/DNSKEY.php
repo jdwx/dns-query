@@ -28,7 +28,7 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 
 /**
- * DNSKEY Resource Record - RFC4034 sction 2.1
+ * DNSKEY Resource Record - RFC4034 section 2.1
  *
  *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -45,17 +45,17 @@ class DNSKEY extends RR
     /*
      * flags
      */
-    public string $flags;
+    public int $flags;
 
     /*
      * protocol
      */
-    public string $protocol;
+    public int $protocol;
 
     /*
      * algorithm used
      */
-    public string $algorithm;
+    public int $algorithm;
 
     /*
      * the public key
@@ -91,9 +91,9 @@ class DNSKEY extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->flags        = array_shift($rdata);
-        $this->protocol     = array_shift($rdata);
-        $this->algorithm    = array_shift($rdata);
+        $this->flags        = (int) array_shift($rdata);
+        $this->protocol     = (int) array_shift($rdata);
+        $this->algorithm    = (int) array_shift($rdata);
         $this->key          = implode(' ', $rdata);
     
         return true;
@@ -115,6 +115,7 @@ class DNSKEY extends RR
             //
             // unpack the flags, protocol and algorithm
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('nflags/Cprotocol/Calgorithm', $this->rdata);
 
             //
@@ -176,10 +177,10 @@ class DNSKEY extends RR
     protected function getKeyTag() : int
     {
         $key = array_values(unpack("C*", $this->rdata));
-        $keysize = $this->rdLength;
+        $keySize = $this->rdLength;
 
         $ac = 0;
-        for( $i = 0; $i < $keysize; $i++ )
+        for( $i = 0; $i < $keySize; $i++ )
             $ac += ($i & 1) ? $key[$i] : $key[$i] << 8;
 
         $ac += ($ac >> 16) & 0xFFFF;

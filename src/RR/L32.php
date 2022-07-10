@@ -43,7 +43,7 @@ class L32 extends RR
     /*
      * The preference
      */
-    public string $preference;
+    public int $preference;
 
     /*
      * The locator32 field
@@ -73,8 +73,8 @@ class L32 extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->preference = array_shift($rdata);
-        $this->locator32 = array_shift($rdata);
+        $this->preference = (int) array_shift($rdata);
+        $this->locator32  = array_shift($rdata);
 
         return true;
     }

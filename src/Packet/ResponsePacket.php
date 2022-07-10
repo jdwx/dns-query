@@ -83,7 +83,7 @@ class ResponsePacket extends Packet
         // store the full packet
         //
         $this->rdata    = $data;
-        $this->rdlength = $size;
+        $this->rdLength = $size;
 
         //
         // parse the header

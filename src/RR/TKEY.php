@@ -60,12 +60,12 @@ class TKEY extends RR
     public string $algorithm;
     public string $inception;
     public string $expiration;
-    public string $mode;
+    public int $mode;
     public int $error;
-    public int $key_size;
-    public string $key_data;
-    public int $other_size;
-    public string $other_data;
+    public int $keySize;
+    public string $keyData;
+    public int $otherSize;
+    public string $otherData;
 
     /*
      * TSIG Modes
@@ -100,9 +100,9 @@ class TKEY extends RR
     protected function rrToString() : string
     {
         $out = $this->cleanString($this->algorithm) . '. ' . $this->mode;
-        if ($this->key_size > 0) {
+        if ($this->keySize > 0) {
 
-            $out .= ' ' . trim($this->key_data, '.') . '.';
+            $out .= ' ' . trim($this->keyData, '.') . '.';
         } else {
 
             $out .= ' .';
@@ -126,8 +126,8 @@ class TKEY extends RR
         // data passed in is assumed: <algorithm> <mode> <key>
         //
         $this->algorithm    = $this->cleanString(array_shift($rdata));
-        $this->mode         = array_shift($rdata);
-        $this->key_data     = trim(array_shift($rdata), '.');
+        $this->mode         = (int) array_shift($rdata);
+        $this->keyData     = trim(array_shift($rdata), '.');
 
         //
         // the rest of the data is set manually
@@ -135,9 +135,9 @@ class TKEY extends RR
         $this->inception    = (string) time();
         $this->expiration   = (string) ( time() + 86400 ); // 1 day
         $this->error        = 0;
-        $this->key_size     = strlen($this->key_data);
-        $this->other_size   = 0;
-        $this->other_data   = '';
+        $this->keySize     = strlen($this->keyData);
+        $this->otherSize   = 0;
+        $this->otherData   = '';
 
         return true;
     }
@@ -176,17 +176,17 @@ class TKEY extends RR
             $this->expiration   = Net_DNS2::expandUint32($x['expiration']);
             $this->mode         = $x['mode'];
             $this->error        = $x['error'];
-            $this->key_size     = $x['key_size'];
+            $this->keySize     = $x['key_size'];
 
             $offset += 14;
 
             //
             // if key_size > 0, then copy out the key
             //
-            if ($this->key_size > 0) {
+            if ($this->keySize > 0) {
 
-                $this->key_data = substr($packet->rdata, $offset, $this->key_size);
-                $offset += $this->key_size;
+                $this->keyData = substr($packet->rdata, $offset, $this->keySize);
+                $offset += $this->keySize;
             }
 
             //
@@ -195,16 +195,16 @@ class TKEY extends RR
             /** @noinspection SpellCheckingInspection */
             $x = unpack('@' . $offset . '/nother_size', $packet->rdata);
             
-            $this->other_size = $x['other_size'];
+            $this->otherSize = $x['other_size'];
             $offset += 2;
 
             //
             // if other_size > 0, then copy out the data
             //
-            if ($this->other_size > 0) {
+            if ($this->otherSize > 0) {
 
-                $this->other_data = substr(
-                    $packet->rdata, $offset, $this->other_size
+                $this->otherData = substr(
+                    $packet->rdata, $offset, $this->otherSize
                 );
             }
 
@@ -232,8 +232,8 @@ class TKEY extends RR
             //
             // make sure the size values are correct
             //
-            $this->key_size     = strlen($this->key_data);
-            $this->other_size   = strlen($this->other_data);
+            $this->keySize     = strlen($this->keyData);
+            $this->otherSize   = strlen($this->otherData);
 
             //
             // add the algorithm without compression
@@ -246,24 +246,24 @@ class TKEY extends RR
             /** @noinspection SpellCheckingInspection */
             $data .= pack(
                 'NNnnn', $this->inception, $this->expiration, 
-                $this->mode, 0, $this->key_size
+                $this->mode, 0, $this->keySize
             );
 
             //
             // if the key_size > 0, then add the key
             //
-            if ($this->key_size > 0) {
+            if ($this->keySize > 0) {
             
-                $data .= $this->key_data;
+                $data .= $this->keyData;
             }
 
             //
             // pack in the other size
             //
-            $data .= pack('n', $this->other_size);
-            if ($this->other_size > 0) {
+            $data .= pack('n', $this->otherSize);
+            if ($this->otherSize > 0) {
 
-                $data .= $this->other_data;
+                $data .= $this->otherData;
             }
 
             $packet->offset += strlen($data);

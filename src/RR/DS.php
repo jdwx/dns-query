@@ -28,7 +28,7 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 
 /**
- * DS Resource Record - RFC4034 sction 5.1
+ * DS Resource Record - RFC4034 section 5.1
  *
  *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -45,17 +45,17 @@ class DS extends RR
     /*
      * key tag
      */
-    public string $keytag;
+    public int $keytag;
 
     /*
      * algorithm number
      */
-    public string $algorithm;
+    public int $algorithm;
 
     /*
      * algorithm used to construct the digest
      */
-    public string $digesttype;
+    public int $digestType;
 
     /*
      * the digest data
@@ -71,7 +71,7 @@ class DS extends RR
      */
     protected function rrToString() : string
     {
-        return $this->keytag . ' ' . $this->algorithm . ' ' . $this->digesttype . ' ' . $this->digest;
+        return $this->keytag . ' ' . $this->algorithm . ' ' . $this->digestType . ' ' . $this->digest;
     }
 
     /**
@@ -85,10 +85,10 @@ class DS extends RR
      */
     protected function rrFromString(array $rdata) : bool
     {
-        $this->keytag       = array_shift($rdata);
-        $this->algorithm    = array_shift($rdata);
-        $this->digesttype   = array_shift($rdata);
-        $this->digest       = implode('', $rdata);
+        $this->keytag       = (int) array_shift( $rdata );
+        $this->algorithm    = (int) array_shift( $rdata );
+        $this->digestType   = (int) array_shift( $rdata );
+        $this->digest       = implode('', $rdata );
 
         return true;
     }
@@ -96,7 +96,7 @@ class DS extends RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Packet $packet a Packet to parse the RR from
      *
      * @return bool
      * @access protected
@@ -107,13 +107,14 @@ class DS extends RR
         if ($this->rdLength > 0) {
 
             //
-            // unpack the keytag, algorithm and digesttype
+            // unpack the keytag, algorithm and digest type
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('nkeytag/Calgorithm/Cdigesttype/H*digest', $this->rdata);
 
             $this->keytag       = $x['keytag'];
             $this->algorithm    = $x['algorithm'];
-            $this->digesttype   = $x['digesttype'];
+            $this->digestType   = $x['digesttype'];
             $this->digest       = $x['digest'];
 
             return true;
@@ -125,8 +126,7 @@ class DS extends RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
+     * @param Packet $packet a Packet to use for compressed names
      *
      * @return ?string                   either returns a binary packed
      *                                 string or null on failure
@@ -137,7 +137,7 @@ class DS extends RR
     {
         if (strlen($this->digest) > 0) {
 
-            $data = pack('nCCH*', $this->keytag, $this->algorithm, $this->digesttype, $this->digest);
+            $data = pack('nCCH*', $this->keytag, $this->algorithm, $this->digestType, $this->digest);
 
             $packet->offset += strlen($data);
 

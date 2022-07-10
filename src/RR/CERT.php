@@ -78,17 +78,17 @@ class CERT extends RR
     /*
       * certificate format
      */
-    public string $format;
+    public int $format;
 
     /*
      * key tag
      */
-    public string $keytag;
+    public int $keytag;
 
     /*
-     * The algorithm used for the CERt
+     * The algorithm used for the CERT
      */
-    public string $algorithm;
+    public int $algorithm;
 
     /*
      * certificate
@@ -142,39 +142,40 @@ class CERT extends RR
         //
         // load and check the format; can be an int, or a mnemonic symbol
         //
-        $this->format = array_shift($rdata);
-        if (!is_numeric($this->format)) {
-            $mnemonic = strtoupper(trim($this->format));
-            if (!isset($this->cert_format_name_to_id[$mnemonic])) {
-
+        $format = array_shift( $rdata );
+        if ( ! is_numeric( $format ) ) {
+            $mnemonic = strtoupper( trim( $format ) );
+            if ( ! isset( $this->cert_format_name_to_id[ $mnemonic ] ) ) {
                 return false;
             }
-
-            $this->format = $this->cert_format_name_to_id[$mnemonic];
-        } elseif ( ! isset( $this->cert_format_id_to_name[ (int) $this->format ] ) ) {
+            $format = $this->cert_format_name_to_id[$mnemonic];
+        } elseif ( ! isset( $this->cert_format_id_to_name[ (int) $format ] ) ) {
              return false;
+        } else {
+            $format = (int) $format;
         }
-    
-        $this->keytag = array_shift($rdata);
+        $this->format = $format;
+
+        $this->keytag = (int) array_shift($rdata);
 
         //
         // parse and check the algorithm; can be an int, or a mnemonic symbol
         //
-        $this->algorithm = array_shift($rdata);
-        if (!is_numeric($this->algorithm)) {
-
-            $mnemonic = strtoupper(trim($this->algorithm));
-            if (!isset(Lookups::$algorithm_name_to_id[$mnemonic])) {
-
+        $algorithm = array_shift($rdata);
+        if ( ! is_numeric( $algorithm ) ) {
+            $mnemonic = strtoupper( trim( $algorithm ) );
+            if ( ! isset( Lookups::$algorithm_name_to_id[ $mnemonic ] ) ) {
                 return false;
             }
-
-            $this->algorithm = Lookups::$algorithm_name_to_id[
+            $algorithm = Lookups::$algorithm_name_to_id[
                 $mnemonic
             ];
-        } elseif (!isset(Lookups::$algorithm_id_to_name[$this->algorithm])) {
+        } elseif ( ! isset( Lookups::$algorithm_id_to_name[ $algorithm ] ) ) {
             return false;
+        } else {
+            $algorithm = (int) $algorithm;
         }
+        $this->algorithm = $algorithm;
 
         //
         // parse and base64 decode the certificate
