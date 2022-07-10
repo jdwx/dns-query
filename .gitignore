@@ -1,3 +1,5 @@
 .idea
 composer.lock
+phan.sh
+phan.txt
 vendor
