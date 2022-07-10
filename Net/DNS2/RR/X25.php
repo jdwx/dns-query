@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -30,7 +31,7 @@ class Net_DNS2_RR_X25 extends Net_DNS2_RR
     /*
      * The PSDN address
       */
-    public $psdnaddress;
+    public string $psdnaddress;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -39,7 +40,7 @@ class Net_DNS2_RR_X25 extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         return $this->formatString($this->psdnaddress);
     }
@@ -49,12 +50,11 @@ class Net_DNS2_RR_X25 extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $data = $this->buildString($rdata);
         if (count($data) == 1) {
 
@@ -70,12 +70,11 @@ class Net_DNS2_RR_X25 extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             $this->psdnaddress = Net_DNS2_Packet::label($packet, $packet->offset);
@@ -91,13 +90,12 @@ class Net_DNS2_RR_X25 extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if (strlen($this->psdnaddress) > 0) {
 
             $data = chr(strlen($this->psdnaddress)) . $this->psdnaddress;

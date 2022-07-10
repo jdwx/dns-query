@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates.
@@ -31,8 +32,9 @@ class Tests_Net_DNS2_DNSSECTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
+     * @throws Net_DNS2_Exception
      */
-    public function testDNSSEC()
+    public function testDNSSEC() : void
     {
         $ns = [ '8.8.8.8', '8.8.4.4' ];
 
@@ -40,10 +42,11 @@ class Tests_Net_DNS2_DNSSECTest extends PHPUnit\Framework\TestCase
 
         $r->dnssec = true;
 
-        $result = $r->query('org', 'SOA', 'IN');
+        $result = $r->query('org', 'SOA' );
 
-        $this->assertTrue(($result->header->ad == 1));
-        $this->assertTrue(($result->additional[0] instanceof Net_DNS2_RR_OPT));
-        $this->assertTrue(($result->additional[0]->do == 1));
+        static::assertTrue(($result->header->ad == 1));
+        static::assertTrue(($result->additional[0] instanceof Net_DNS2_RR_OPT));
+        assert( $result->additional[0] instanceof Net_DNS2_RR_OPT );
+        static::assertTrue(($result->additional[0]->do == 1));
     }
 }

@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -26,16 +27,15 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
     /**
      * open a cache object
      *
-     * @param string  $cache_file path to a file to use for cache storage
-     * @param integer $size       the size of the shared memory segment to create
-     * @param string  $serializer the name of the cache serialize to use
+     * @param string $cache_file path to a file to use for cache storage
+     * @param int    $size       the size of the shared memory segment to create
+     * @param string $serializer the name of the cache serialize to use
      *
-     * @throws Net_DNS2_Exception
      * @access public
      * @return void
      *
      */
-    public function open($cache_file, $size, $serializer)
+    public function open( string $cache_file, int $size, string $serializer ) : void
     {
         $this->cache_size       = $size;
         $this->cache_file       = $cache_file;
@@ -44,7 +44,7 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
         //
         // check that the file exists first
         //
-        if ( ($this->cache_opened == false) && (file_exists($this->cache_file) == true) ) {
+        if ( ! $this->cache_opened && file_exists( $this->cache_file ) ) {
 
             //   
             // check the file size                
@@ -71,8 +71,6 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
                 //
                 $data = fread($fp, $file_size);
 
-                $decoded = null;
-                    
                 if ($this->cache_serializer == 'json') {
 
                     $decoded = json_decode($data, true);         
@@ -81,7 +79,7 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
                     $decoded = unserialize($data);                
                 }
 
-                if (is_array($decoded) == true) {
+                if ( is_array( $decoded ) ) {
 
                     $this->cache_data = $decoded;
                 } else {
@@ -141,7 +139,7 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
             //
             // seek to the start of the file to read
             //
-            fseek($fp, 0, SEEK_SET);
+            fseek($fp, 0 );
 
             //
             // get the file size first; in PHP 8.0 fread() was changed to throw an exception if you try
@@ -163,8 +161,6 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
                     //
                     $c = $this->cache_data;
 
-                    $decoded = null;
-
                     if ($this->cache_serializer == 'json') {
 
                         $decoded = json_decode($data, true);
@@ -173,7 +169,7 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
                         $decoded = unserialize($data);
                     }
                 
-                    if (is_array($decoded) == true) {
+                    if ( is_array( $decoded ) ) {
 
                         $this->cache_data = array_merge($c, $decoded);
                     }
@@ -181,7 +177,7 @@ class Net_DNS2_Cache_File extends Net_DNS2_Cache
             }
 
             //
-            // trucate the file
+            // truncate the file
             //
             ftruncate($fp, 0);
 

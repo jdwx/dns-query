@@ -1,5 +1,9 @@
 <?php
 
+
+declare(strict_types=1);
+
+
 /**
  * DNS Library for handling lookups and updates. 
  *
@@ -35,27 +39,27 @@ class Net_DNS2_RR_NSEC3PARAM extends Net_DNS2_RR
      *
      * TODO: same as the NSEC3
      */
-    public $algorithm;
+    public string $algorithm;
 
     /*
      * flags
      */
-    public $flags;
+    public string $flags;
 
     /*
      *  defines the number of additional times the hash is performed.
      */
-    public $iterations;
+    public string $iterations;
 
     /*
-     * the length of the salt- not displayed
+     * the length of the salt (not displayed)
      */
-    public $salt_length;
+    public int $salt_length;
 
     /*
      * the salt
      */
-    public $salt;
+    public string $salt;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -64,7 +68,7 @@ class Net_DNS2_RR_NSEC3PARAM extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         $out = $this->algorithm . ' ' . $this->flags . ' ' . $this->iterations . ' ';
 
@@ -86,13 +90,13 @@ class Net_DNS2_RR_NSEC3PARAM extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         $this->algorithm    = array_shift($rdata);
         $this->flags        = array_shift($rdata);
@@ -117,11 +121,11 @@ class Net_DNS2_RR_NSEC3PARAM extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
 
@@ -150,12 +154,12 @@ class Net_DNS2_RR_NSEC3PARAM extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         $salt = pack('H*', $this->salt);
         $this->salt_length = strlen($salt);

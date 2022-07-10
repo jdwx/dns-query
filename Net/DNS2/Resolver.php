@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpUnused */
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -26,12 +28,13 @@ class Net_DNS2_Resolver extends Net_DNS2
     /**
      * Constructor - creates a new Net_DNS2_Resolver object
      *
-     * @param mixed $options either an array with options or null
+     * @param ?array $options either an array with options or null
      *
      * @access public
      *
+     * @throws Net_DNS2_Exception
      */
-    public function __construct(array $options = null)
+    public function __construct(?array $options = null)
     {
         parent::__construct($options);
     }
@@ -39,7 +42,7 @@ class Net_DNS2_Resolver extends Net_DNS2
     /**
      * does a basic DNS lookup query
      *
-     * @param string $name  the DNS name to loookup
+     * @param string $name  the DNS name to lookup
      * @param string $type  the name of the RR type to lookup
      * @param string $class the name of the RR class to lookup
      *
@@ -48,7 +51,7 @@ class Net_DNS2_Resolver extends Net_DNS2
      * @access public
      *
      */
-    public function query($name, $type = 'A', $class = 'IN')
+    public function query( string $name, string $type = 'A', string $class = 'IN' ) : Net_DNS2_Packet_Response
     {
         //
         // make sure we have some name servers set
@@ -56,7 +59,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         $this->checkServers(Net_DNS2::RESOLV_CONF);
 
         //
-        // we dont' support incremental zone tranfers; so if it's requested, a full
+        // we don't support incremental zone transfers; so if it's requested, a full
         // zone transfer can be returned
         //
         if ($type == 'IXFR') {
@@ -67,7 +70,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         //
         // if the name *looks* too short, then append the domain from the config
         //
-        if ( (strpos($name, '.') === false) && ($type != 'PTR') ) {
+        if ( ( ! str_contains( $name, '.' ) ) && ($type != 'PTR') ) {
 
             $name .= '.' . strtolower($this->domain);
         }
@@ -91,7 +94,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         // check for the DNSSEC flag, and if it's true, then add an OPT
         // RR to the additional section, and set the DO flag to 1.
         //
-        if ($this->dnssec == true) {
+        if ( $this->dnssec ) {
 
             //
             // create a new OPT RR
@@ -102,7 +105,9 @@ class Net_DNS2_Resolver extends Net_DNS2
             // set the DO flag, and the other values
             //
             $opt->do = 1;
-            $opt->class = $this->dnssec_payload_size;
+
+            // TODO: I am very suspicious of this line.  - jdwx
+            $opt->class = (string) $this->dnssec_payload_size;
 
             //
             // add the RR to the additional section.
@@ -114,24 +119,24 @@ class Net_DNS2_Resolver extends Net_DNS2
         //
         // set the DNSSEC AD or CD bits
         //
-        if ($this->dnssec_ad_flag == true) {
+        if ( $this->dnssec_ad_flag ) {
 
             $packet->header->ad = 1;
         }
-        if ($this->dnssec_cd_flag == true) {
+        if ( $this->dnssec_cd_flag ) {
 
             $packet->header->cd = 1;
         }
 
         //
-        // if caching is turned on, then check then hash the question, and
+        // if caching is turned on, check then hash the question, and
         // do a cache lookup.
         //
         // don't use the cache for zone transfers
         //
         $packet_hash = '';
 
-        if ( ($this->use_cache == true) && ($this->cacheable($type) == true) ) {
+        if ( $this->use_cache && $this->cacheable( $type ) ) {
 
             //
             // open the cache
@@ -157,7 +162,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         // set the RD (recursion desired) bit to 1 / 0 depending on the config
         // setting.
         //
-        if ($this->recurse == false) {
+        if ( ! $this->recurse ) {
             $packet->header->rd = 0;
         } else {
             $packet->header->rd = 1;
@@ -166,7 +171,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         //
         // send the packet and get back the response
         //
-        // *always* use TCP for zone transfers- does this cause any problems?
+        // *always* use TCP for zone transfers. does this cause any problems?
         //
         $response = $this->sendPacket(
             $packet, ($type == 'AXFR') ? true : $this->use_tcp
@@ -179,7 +184,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         // only do this is strict_query_mode is turned on, AND we've received
         // some answers; no point doing any else if there were no answers.
         //
-        if ( ($this->strict_query_mode == true) 
+        if ( $this->strict_query_mode
             && ($response->header->ancount > 0) 
         ) {
 
@@ -188,7 +193,7 @@ class Net_DNS2_Resolver extends Net_DNS2
             //
             // look for the requested name/type/class
             //
-            foreach ($response->answer as $index => $object) {
+            foreach ($response->answer as $object) {
 
                 if ( (strcasecmp(trim($object->name, '.'), trim($packet->question[0]->qname, '.')) == 0)
                     && ($object->type == $packet->question[0]->qtype)
@@ -202,13 +207,13 @@ class Net_DNS2_Resolver extends Net_DNS2
             //
             // if it's not found, then unset the answer section; it's not correct to
             // throw an exception here; if the hostname didn't exist, then 
-            // sendPacket() would have already thrown an NXDOMAIN error- so the host 
-            // *exists*, but just not the request type/class.
+            // sendPacket() would have already thrown an NXDOMAIN error. so the name
+            // *exists*, but just doesn't have any records of the request type/class.
             //
-            // the correct response in this case, is an empty answer section; the
+            // the correct response in this case is an empty answer section; the
             // authority section may still have usual information, like a SOA record.
             //
-            if ($found == false) {
+            if ( ! $found ) {
                 
                 $response->answer = [];
                 $response->header->ancount = 0;
@@ -218,7 +223,7 @@ class Net_DNS2_Resolver extends Net_DNS2
         //
         // cache the response object
         //
-        if ( ($this->use_cache == true) && ($this->cacheable($type) == true) ) {
+        if ( $this->use_cache && $this->cacheable( $type ) ) {
 
             $this->cache->put($packet_hash, $response);
         }
@@ -232,12 +237,12 @@ class Net_DNS2_Resolver extends Net_DNS2
      *
      * @param Net_DNS2_RR $rr the RR object to lookup
      * 
-     * @return Net_DNS2_RR object
+     * @return Net_DNS2_Packet_Response object
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function iquery(Net_DNS2_RR $rr)
+    public function iquery(Net_DNS2_RR $rr) : Net_DNS2_Packet_Response
     {
         //
         // make sure we have some name servers set

@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpUnused */
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -20,34 +22,32 @@
 /**
  * The main dynamic DNS notifier class.
  *
- * This class provices functions to handle DNS notify requests as defined by RFC 1996.
+ * This class provides functions to handle DNS notify requests as defined by RFC 1996.
  *
  * This is separate from the Net_DNS2_Resolver class, as while the underlying
  * protocol is the same, the functionality is completely different.
  *
  * Generally, query (recursive) lookups are done against caching server, while
- * notify requests are done against authoratative servers.
+ * notify requests are done against authoritative servers.
  *
  */
 class Net_DNS2_Notifier extends Net_DNS2
 {
-    /*
-     * a Net_DNS2_Packet_Request object used for the notify request
-     */
-    private $_packet;
+    /** @var Net_DNS2_Packet_Request object used for the notify request */
+    private Net_DNS2_Packet_Request $_packet;
 
     /**
      * Constructor - builds a new Net_DNS2_Notifier objected used for doing 
      * DNS notification for a changed zone
      *
      * @param string $zone    the domain name to use for DNS updates
-     * @param mixed  $options an array of config options or null
+     * @param ?array  $options an array of config options or null
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct($zone, array $options = null)
+    public function __construct( string $zone, ?array $options = null)
     {
         parent::__construct($options);
 
@@ -69,12 +69,12 @@ class Net_DNS2_Notifier extends Net_DNS2
      *
      * @param string $name The name to be checked.
      *
-     * @return boolean
+     * @return void
      * @throws Net_DNS2_Exception
      * @access private
      *
      */
-    private function _checkName($name)
+    private function _checkName( string $name ) : void
     {
         if (!preg_match('/' . $this->_packet->question[0]->qname . '$/', $name)) {
             
@@ -84,21 +84,19 @@ class Net_DNS2_Notifier extends Net_DNS2
                 Net_DNS2_Lookups::E_PACKET_INVALID
             );
         }
-    
-        return true;
     }
 
     /**
      *   3.7 - Add RR to notify
      *
-     * @param Net_DNS2_RR $rr the Net_DNS2_RR object to be sent in the notify message
+     * @param Net_DNS2_RR $rr the Net_DNS2_RR object to be sent in the "notify" message
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function add(Net_DNS2_RR $rr)
+    public function add(Net_DNS2_RR $rr) : bool
     {
         $this->_checkName($rr->name);
         //
@@ -110,21 +108,23 @@ class Net_DNS2_Notifier extends Net_DNS2
         return true;
     }
 
+
     /**
-     * add a signature to the request for authentication 
+     * add a signature to the request for authentication
      *
-     * @param string $keyname   the key name to use for the TSIG RR
+     * @param string $key_name the key name to use for the TSIG RR
      * @param string $signature the key to sign the request.
-     *
-     * @return     boolean
+     * @param string $algorithm
+     * @return     bool
+     * @throws Net_DNS2_Exception
      * @access     public
-     * @see        Net_DNS2::signTSIG()
      * @deprecated function deprecated in 1.1.0
      *
+     * @see        Net_DNS2::signTSIG()
      */
-    public function signature($keyname, $signature, $algorithm = Net_DNS2_RR_TSIG::HMAC_MD5)
+    public function signature( string $key_name, string $signature, string $algorithm = Net_DNS2_RR_TSIG::HMAC_MD5 ) : bool
     {
-        return $this->signTSIG($keyname, $signature, $algorithm);
+        return $this->signTSIG($key_name, $signature, $algorithm);
     }
 
     /**
@@ -134,7 +134,7 @@ class Net_DNS2_Notifier extends Net_DNS2
      * @access public
      #
      */
-    public function packet()
+    public function packet() : Net_DNS2_Packet_Request
     {
         //
         // take a copy
@@ -164,14 +164,14 @@ class Net_DNS2_Notifier extends Net_DNS2
     /**
      * executes the notify request
      *
-     * @param Net_DNS2_Packet_Response &$response ref to the response object
+     * @param ?Net_DNS2_Packet_Response & $response contains a reference to the response object after running
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function notify(&$response = null)
+    public function notify( ?Net_DNS2_Packet_Response & $response = null ) : bool
     {
         //
         // check for an authentication method; either TSIG or SIG
@@ -212,7 +212,7 @@ class Net_DNS2_Notifier extends Net_DNS2
         $this->_packet->reset();
 
         //
-        // for notifies, we just need to know it worked- we don't actualy need to
+        // for notifies, we just need to know it worked. we don't actually need to
         // return the response object
         //
         return true;

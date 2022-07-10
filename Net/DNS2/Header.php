@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -44,32 +45,32 @@
  */
 class Net_DNS2_Header
 {
-    public $id;         // 16 bit - identifier
-    public $qr;         //  1 bit - 0 = query, 1 = response
-    public $opcode;     //  4 bit - op code
-    public $aa;         //  1 bit - Authoritative Answer
-    public $tc;         //  1 bit - TrunCation
-    public $rd;         //  1 bit - Recursion Desired
-    public $ra;         //  1 bit - Recursion Available
-    public $z;          //  1 bit - Reserved
-    public $ad;         //  1 bit - Authentic Data (RFC4035)
-    public $cd;         //  1 bit - Checking Disabled (RFC4035)
-    public $rcode;      //  4 bit - Response code
-    public $qdcount;    // 16 bit - entries in the question section
-    public $ancount;    // 16 bit - resource records in the answer section
-    public $nscount;    // 16 bit - name server rr in the authority records section
-    public $arcount;    // 16 bit - rr's in the additional records section
+    public int $id;         // 16 bit - identifier
+    public int $qr;         //  1 bit - 0 = query, 1 = response
+    public int $opcode;     //  4 bit - op code
+    public int $aa;         //  1 bit - Authoritative Answer
+    public int $tc;         //  1 bit - Truncation
+    public int $rd;         //  1 bit - Recursion Desired
+    public int $ra;         //  1 bit - Recursion Available
+    public int $z;          //  1 bit - Reserved
+    public int $ad;         //  1 bit - Authentic Data (RFC4035)
+    public int $cd;         //  1 bit - Checking Disabled (RFC4035)
+    public int $rcode;      //  4 bit - Response code
+    public int $qdcount;    // 16 bit - entries in the question section
+    public int $ancount;    // 16 bit - resource records in the answer section
+    public int $nscount;    // 16 bit - name server resource records in the authority records section
+    public int $arcount;    // 16 bit - resource records in the additional records section
 
     /**
      * Constructor - builds a new Net_DNS2_Header object
      *
-     * @param mixed &$packet either a Net_DNS2_Packet object or null
+     * @param ?Net_DNS2_Packet $packet either a Net_DNS2_Packet object or null
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct(Net_DNS2_Packet &$packet = null)
+    public function __construct(?Net_DNS2_Packet $packet = null)
     {
         if (!is_null($packet)) {
 
@@ -97,11 +98,11 @@ class Net_DNS2_Header
     /**
      * returns the next available packet id
      *
-     * @return    integer
+     * @return    int
      * @access    public
      *
      */
-    public function nextPacketId()
+    public function nextPacketId() : int
     {
         if (++Net_DNS2_Lookups::$next_packet_id > 65535) {
 
@@ -146,12 +147,12 @@ class Net_DNS2_Header
      *
      * @param Net_DNS2_Packet &$packet Object
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function set(Net_DNS2_Packet &$packet)
+    public function set(Net_DNS2_Packet $packet) : bool
     {
         //
         // the header must be at least 12 bytes long.
@@ -212,7 +213,7 @@ class Net_DNS2_Header
      * @access    public
      *
      */
-    public function get(Net_DNS2_Packet &$packet)
+    public function get(Net_DNS2_Packet $packet) : string
     {
         $packet->offset += Net_DNS2_Lookups::DNS_HEADER_SIZE;
 

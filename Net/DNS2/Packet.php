@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -37,52 +38,33 @@ class Net_DNS2_Packet
     /*
      * the full binary data and length for this packet
      */
-    public $rdata;
-    public $rdlength;
+    public string $rdata;
+    public int $rdlength;
 
     /*
      * the offset pointer used when building/parsing packets
      */
-    public $offset = 0;
+    public int $offset = 0;
+
+    /** @var Net_DNS2_Header object with the DNS packet header */
+    public Net_DNS2_Header $header;
+
+    /** @var Net_DNS2_Question[] used as "zone" for updates per RFC2136 */
+    public array $question = [];
+
+    /** @var Net_DNS2_RR[] Answers used as "prerequisite" for updates per RFC2136 */
+    public array $answer = [];
+
+    /** @var Net_DNS2_RR[] Authority records used as "update" for updates per RFC2136 */
+    public array $authority = [];
+
+    /** @var Net_DNS2_RR[] Additional records used as "additional" for updates per RFC2136 */
+    public array $additional = [];
 
     /*
-     * Net_DNS2_Header object with the DNS packet header
+     * array of compressed labels
      */
-    public $header;
-
-    /*
-     * array of Net_DNS2_Question objects
-     *
-     * used as "zone" for updates per RFC2136
-     *
-     */
-    public $question = [];
-
-    /*
-     * array of Net_DNS2_RR Objects for Answers
-     * 
-     * used as "prerequisite" for updates per RFC2136
-     *
-     */
-    public $answer = [];
-
-    /*
-     * array of Net_DNS2_RR Objects for Authority
-     *
-     * used as "update" for updates per RFC2136
-     *
-     */
-    public $authority = [];
-
-    /*
-     * array of Net_DNS2_RR Objects for Addtitional
-     */
-    public $additional = [];
-
-    /*
-     * array of compressed labeles
-     */
-    private $_compressed = [];
+    private array $_compressed = [];
 
     /**
      * magic __toString() method to return the Net_DNS2_Packet as a string
@@ -123,7 +105,7 @@ class Net_DNS2_Packet
      * @access public
      *
      */
-    public function get()
+    public function get() : string
     {
         $data = $this->header->get($this);
 
@@ -153,20 +135,20 @@ class Net_DNS2_Packet
      * This logic was based on the Net::DNS::Packet::dn_comp() function 
      * by Michanel Fuhr
      *
-     * @param string  $name    the name to be compressed
-     * @param integer &$offset the offset into the given packet object
+     * @param string $name    the name to be compressed
+     * @param int &$offset the offset into the given packet object
      *
      * @return string
      * @access public
      *
      */
-    public function compress($name, &$offset)
+    public function compress( string $name, int & $offset ) : string
     {
         //
         // we're using preg_split() rather than explode() so that we can use the negative lookbehind,
         // to catch cases where we have escaped dots in strings.
         //
-        // there's only a few cases like this- the rname in SOA for example
+        // there's only a few cases like this; the rname in SOA for example
         //
         $names      = str_replace('\.', '.', preg_split('/(?<!\\\)\./', $name));
         $compname   = '';
@@ -226,7 +208,7 @@ class Net_DNS2_Packet
      * @access public
      *
      */
-    public static function pack($name)
+    public static function pack( string $name ) : string
     {
         $offset = 0;
         $names = explode('.', $name);
@@ -242,7 +224,6 @@ class Net_DNS2_Packet
         }
 
         $compname .= "\0";
-        $offset++;
 
         return $compname;
     }
@@ -254,14 +235,14 @@ class Net_DNS2_Packet
      * by Michanel Fuhr
      *
      * @param Net_DNS2_Packet &$packet the DNS packet to look in for the domain name
-     * @param integer         &$offset the offset into the given packet object
-     * @param boolean         $escape_dot_literals if we should escape periods in names
+     * @param int         &$offset the offset into the given packet object
+     * @param bool             $escape_dot_literals if we should escape periods in names
      *
-     * @return mixed either the domain name or null if it's not found.
+     * @return ?string either the domain name or null if it's not found.
      * @access public
      *
      */
-    public static function expand(Net_DNS2_Packet &$packet, &$offset, $escape_dot_literals = false)
+    public static function expand(Net_DNS2_Packet $packet, int & $offset, bool $escape_dot_literals = false) : ?string
     {
         $name = '';
 
@@ -276,7 +257,7 @@ class Net_DNS2_Packet
                 ++$offset;
                 break;
 
-            } else if (($xlen & 0xc0) == 0xc0) {
+            } elseif (($xlen & 0xc0) == 0xc0) {
                 if ($packet->rdlength < ($offset + 2)) {
 
                     return null;
@@ -303,13 +284,12 @@ class Net_DNS2_Packet
                     return null;
                 }
 
-                $elem = '';
                 $elem = substr($packet->rdata, $offset, $xlen);
 
                 //
                 // escape literal dots in certain cases (SOA rname)
                 //
-                if ( ($escape_dot_literals == true) && (strpos($elem, '.') !== false) ) {
+                if ( $escape_dot_literals && ( str_contains( $elem, '.' ) ) ) {
 
                     $elem = str_replace('.', '\.', $elem);
                 }
@@ -325,16 +305,15 @@ class Net_DNS2_Packet
     /**
      * parses a domain label from a DNS Packet at the given offset
      *
-     * @param Net_DNS2_Packet &$packet the DNS packet to look in for the domain name
-     * @param integer         &$offset the offset into the given packet object
+     * @param Net_DNS2_Packet $packet the DNS packet to look in for the domain name
+     * @param int         &$offset the offset into the given packet object
      *
-     * @return mixed either the domain name or null if it's not found.
+     * @return ?string either the domain name or null if it's not found.
      * @access public
      *
      */
-    public static function label(Net_DNS2_Packet &$packet, &$offset)
+    public static function label(Net_DNS2_Packet $packet, int & $offset) : ?string
     {
-        $name = '';
 
         if ($packet->rdlength < ($offset + 1)) {
 
@@ -359,15 +338,15 @@ class Net_DNS2_Packet
 
     /**
      * copies the contents of the given packet, to the local packet object. this
-     * function intentionally ignores some of the packet data.
+     * function intentionally ignores some packet data.
      *
      * @param Net_DNS2_Packet $packet the DNS packet to copy the data from
      *
-     * @return boolean
+     * @return bool
      * @access public
      *
      */
-    public function copy(Net_DNS2_Packet $packet)
+    public function copy( Net_DNS2_Packet $packet ) : bool
     {
         $this->header       = $packet->header;
         $this->question     = $packet->question;
@@ -381,11 +360,11 @@ class Net_DNS2_Packet
     /**
      * resets the values in the current packet object
      *
-     * @return boolean
+     * @return bool
      * @access public
      *
      */
-    public function reset()
+    public function reset() : bool
     {
         $this->header->id   = $this->header->nextPacketId();
         $this->rdata        = '';

@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -48,37 +49,37 @@ class Net_DNS2_RR_SOA extends Net_DNS2_RR
     /*
      * The master DNS server
      */
-    public $mname;
+    public string $mname;
 
     /*
      * mailbox of the responsible person
      */
-    public $rname;
+    public string $rname;
 
     /*
      * serial number
       */
-    public $serial;
+    public string $serial;
 
     /*
       * refresh time
       */
-    public $refresh;
+    public string $refresh;
 
     /*
       * retry interval
      */
-    public $retry;
+    public string $retry;
 
     /*
      * expire time
       */
-    public $expire;
+    public string $expire;
 
     /*
      * minimum TTL for any RR in this zone
       */
-    public $minimum;
+    public string $minimum;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -87,8 +88,7 @@ class Net_DNS2_RR_SOA extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->cleanString($this->mname) . '. ' . 
             $this->cleanString($this->rname) . '. ' . 
             $this->serial . ' ' . $this->refresh . ' ' . $this->retry . ' ' . 
@@ -100,12 +100,11 @@ class Net_DNS2_RR_SOA extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->mname    = $this->cleanString($rdata[0]);
         $this->rname    = $this->cleanString($rdata[1]);
 
@@ -123,12 +122,11 @@ class Net_DNS2_RR_SOA extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             //
@@ -165,13 +163,12 @@ class Net_DNS2_RR_SOA extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if (strlen($this->mname) > 0) {
     
             $data = $packet->compress($this->mname, $packet->offset);

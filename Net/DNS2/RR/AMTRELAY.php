@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -33,30 +34,30 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
     /*
      * type definitions that match the "type" field below
      */
-    const AMTRELAY_TYPE_NONE    = 0;
-    const AMTRELAY_TYPE_IPV4    = 1;
-    const AMTRELAY_TYPE_IPV6    = 2;
-    const AMTRELAY_TYPE_DOMAIN  = 3;
+    public const AMTRELAY_TYPE_NONE    = 0;
+    public const AMTRELAY_TYPE_IPV4    = 1;
+    public const AMTRELAY_TYPE_IPV6    = 2;
+    public const AMTRELAY_TYPE_DOMAIN  = 3;
 
     /*
      * the precedence for this record
      */
-    public $precedence;
+    public string $precedence;
 
     /*
      * "Discovery Optional" flag
      */
-    public $discovery;
+    public int $discovery;
 
     /*
      * The type field indicates the format of the information that is stored in the relay field.
      */
-    public $relay_type;
+    public int $relay_type;
 
     /*
      * The relay field is the address or domain name of the AMT relay.
      */
-    public $relay;
+    public string $relay;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -65,7 +66,7 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         $out = $this->precedence . ' ' . $this->discovery . ' ' . $this->relay_type . ' ' . $this->relay;
 
@@ -83,20 +84,20 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         //
         // extract the values from the array
         //
         $this->precedence   = array_shift($rdata);
-        $this->discovery    = array_shift($rdata);
-        $this->relay_type   = array_shift($rdata);
+        $this->discovery    = (int) array_shift($rdata);
+        $this->relay_type   = (int) array_shift($rdata);
         $this->relay        = trim(strtolower(trim(array_shift($rdata))), '.');
 
         //
@@ -116,19 +117,19 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
             break;
 
         case self::AMTRELAY_TYPE_IPV4:
-            if (Net_DNS2::isIPv4($this->relay) == false) {
+            if ( ! Net_DNS2::isIPv4( $this->relay ) ) {
                 return false;
             }
             break;
 
         case self::AMTRELAY_TYPE_IPV6:
-            if (Net_DNS2::isIPv6($this->relay) == false) {
+            if ( ! Net_DNS2::isIPv6( $this->relay ) ) {
                 return false;
             }
             break;
 
         case self::AMTRELAY_TYPE_DOMAIN:
-            ; // do nothing
+            // do nothing
             break;
 
         default:
@@ -146,13 +147,13 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
 
@@ -216,15 +217,15 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         //
         // pack the precedence, discovery, and type
@@ -236,7 +237,7 @@ class Net_DNS2_RR_AMTRELAY extends Net_DNS2_RR
         //
         switch($this->relay_type) {
         case self::AMTRELAY_TYPE_NONE:
-            ; // add nothing
+            // add nothing
             break;
 
         case self::AMTRELAY_TYPE_IPV4:

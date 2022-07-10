@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -28,14 +29,14 @@ class Net_DNS2_Packet_Request extends Net_DNS2_Packet
      * Constructor - builds a new Net_DNS2_Packet_Request object
      *
      * @param string $name  the domain name for the packet
-     * @param string $type  the DNS RR type for the packet
-     * @param string $class the DNS class for the packet
+     * @param ?string $type  the DNS RR type for the packet
+     * @param ?string $class the DNS class for the packet
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct($name, $type = null, $class = null)
+    public function __construct( string $name, ?string $type = null, ?string $class = null)
     {
         $this->set($name, $type, $class);
     }
@@ -47,17 +48,17 @@ class Net_DNS2_Packet_Request extends Net_DNS2_Packet
      * @param string $type  the DNS RR type for the packet
      * @param string $class the DNS class for the packet
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function set($name, $type = 'A', $class = 'IN')
+    public function set( string $name, string $type = 'A', string $class = 'IN' ) : bool
     {
         //
         // generate a new header
         //
-        $this->header = new Net_DNS2_Header;
+        $this->header = new Net_DNS2_Header();
 
         //
         // add a new question
@@ -111,10 +112,10 @@ class Net_DNS2_Packet_Request extends Net_DNS2_Packet
             // if it's a PTR request for an IP address, then make sure we tack on
             // the arpa domain.
             //
-            // there are other types of PTR requests, so if an IP adress doesn't match,
+            // there are other types of PTR requests, so if an IP address doesn't match,
             // then just let it flow through and assume it's a hostname
             //
-            if (Net_DNS2::isIPv4($name) == true) {
+            if ( Net_DNS2::isIPv4( $name ) ) {
 
                 //
                 // IPv4
@@ -122,27 +123,18 @@ class Net_DNS2_Packet_Request extends Net_DNS2_Packet
                 $name = implode('.', array_reverse(explode('.', $name)));
                 $name .= '.in-addr.arpa';
 
-            } else if (Net_DNS2::isIPv6($name) == true) {
+            } elseif ( Net_DNS2::isIPv6( $name ) ) {
 
                 //
                 // IPv6
                 //
                 $e = Net_DNS2::expandIPv6($name);
-                if ($e !== false) {
+                $name = implode(
+                    '.', array_reverse(str_split(str_replace(':', '', $e)))
+                );
 
-                    $name = implode(
-                        '.', array_reverse(str_split(str_replace(':', '', $e)))
-                    );
+                $name .= '.ip6.arpa';
 
-                    $name .= '.ip6.arpa';
-
-                } else {
-
-                    throw new Net_DNS2_Exception(
-                        'unsupported PTR value: ' . $name,
-                        Net_DNS2_Lookups::E_PACKET_INVALID
-                    );
-                }
             }
         }
 

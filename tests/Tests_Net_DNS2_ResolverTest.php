@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates.
@@ -32,18 +33,18 @@ class Tests_Net_DNS2_ResolverTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
+     * @throws Net_DNS2_Exception
      */
-    public function testResolver()
-    {
+    public function testResolver() : void {
         $ns = [ '8.8.8.8', '8.8.4.4' ];
 
         $r = new Net_DNS2_Resolver([ 'nameservers' => $ns ]);
 
         $result = $r->query('google.com', 'MX');
 
-        $this->assertSame($result->header->qr, Net_DNS2_Lookups::QR_RESPONSE);
-        $this->assertSame(count($result->question), 1);
-        $this->assertTrue(count($result->answer) > 0);
-        $this->assertTrue($result->answer[0] instanceof Net_DNS2_RR_MX);
+        static::assertSame($result->header->qr, Net_DNS2_Lookups::QR_RESPONSE);
+        static::assertSame(count($result->question), 1);
+        static::assertNotEmpty( $result->answer );
+        static::assertTrue($result->answer[0] instanceof Net_DNS2_RR_MX);
     }
 }

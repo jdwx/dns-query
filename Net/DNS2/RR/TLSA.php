@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -35,22 +36,22 @@ class Net_DNS2_RR_TLSA extends Net_DNS2_RR
     /*
      * The Certificate Usage Field
      */
-    public $cert_usage;
+    public string $cert_usage;
 
     /*
      * The Selector Field
      */
-    public $selector;
+    public string $selector;
 
     /*
      * The Matching Type Field
      */
-    public $matching_type;
+    public string $matching_type;
 
     /*
      * The Certificate Association Data Field
      */
-    public $certificate;
+    public string $certificate;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -59,8 +60,7 @@ class Net_DNS2_RR_TLSA extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->cert_usage . ' ' . $this->selector . ' ' . 
             $this->matching_type . ' ' . base64_encode($this->certificate);
     }
@@ -70,12 +70,11 @@ class Net_DNS2_RR_TLSA extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->cert_usage       = array_shift($rdata);
         $this->selector         = array_shift($rdata);
         $this->matching_type    = array_shift($rdata);
@@ -87,14 +86,13 @@ class Net_DNS2_RR_TLSA extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             //
@@ -123,13 +121,12 @@ class Net_DNS2_RR_TLSA extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if (strlen($this->certificate) > 0) {
 
             $data = pack(

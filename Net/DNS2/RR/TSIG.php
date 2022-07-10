@@ -1,4 +1,8 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
+
+declare(strict_types=1);
+
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -46,18 +50,18 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
     /*
      * TSIG Algorithm Identifiers
      */
-    const HMAC_MD5      = 'hmac-md5.sig-alg.reg.int';   // RFC 2845, required
-    const GSS_TSIG      = 'gss-tsig';                   // unsupported, optional
-    const HMAC_SHA1     = 'hmac-sha1';                  // RFC 4635, required
-    const HMAC_SHA224   = 'hmac-sha224';                // RFC 4635, optional
-    const HMAC_SHA256   = 'hmac-sha256';                // RFC 4635, required
-    const HMAC_SHA384   = 'hmac-sha384';                // RFC 4635, optional
-    const HMAC_SHA512   = 'hmac-sha512';                // RFC 4635, optional
+    public const HMAC_MD5 = 'hmac-md5.sig-alg.reg.int';   // RFC 2845, required
+    public const GSS_TSIG = 'gss-tsig';                   // unsupported, optional
+    public const HMAC_SHA1 = 'hmac-sha1';                  // RFC 4635, required
+    public const HMAC_SHA224 = 'hmac-sha224';                // RFC 4635, optional
+    public const HMAC_SHA256 = 'hmac-sha256';                // RFC 4635, required
+    public const HMAC_SHA384 = 'hmac-sha384';                // RFC 4635, optional
+    public const HMAC_SHA512 = 'hmac-sha512';                // RFC 4635, optional
 
     /*
      * the map of hash values to names
      */
-    public static $hash_algorithms = [
+    public static array $hash_algorithms = [
 
         self::HMAC_MD5      => 'md5',
         self::HMAC_SHA1     => 'sha1',
@@ -70,54 +74,54 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
     /*
      * algorithm used; only supports HMAC-MD5
      */
-    public $algorithm;
+    public string $algorithm;
 
     /*
      * The time it was signed
      */
-    public $time_signed;
+    public string $time_signed;
 
     /*
-     * fudge- allowed offset from the time signed
+     * allowed offset from the time signed
      */
-    public $fudge;
+    public int $fudge;
 
     /*
      * size of the digest
      */
-    public $mac_size;
+    public int $mac_size;
 
     /*
      * the digest data
      */
-    public $mac;
+    public string $mac;
 
     /*
      * the original id of the request
      */
-    public $original_id;
+    public int $original_id;
 
     /*
      * additional error code
      */
-    public $error;
+    public int $error;
 
     /*
      * length of the "other" data, should only ever be 0 when there is
      * no error, or 6 when there is the error RCODE_BADTIME
      */
-    public $other_length;
+    public int $other_length;
 
     /*
      * the other data; should only ever be a timestamp when there is the
      * error RCODE_BADTIME
      */
-    public $other_data;
+    public string $other_data;
 
     /*
      * the key to use for signing - passed in, not included in the rdata
      */
-    public $key;
+    public string $key;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -126,7 +130,7 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         $out = $this->cleanString($this->algorithm) . '. ' . 
             $this->time_signed . ' ' . 
@@ -145,16 +149,16 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         //
-        // the only value passed in is the key-
+        // the only value passed in is the key
         //
         // this assumes it's passed in base64 encoded.
         //
@@ -164,7 +168,7 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
         // the rest of the data is set to default
         //
         $this->algorithm    = self::HMAC_MD5;
-        $this->time_signed  = time();
+        $this->time_signed  = strval( time() );
         $this->fudge        = 300;
         $this->mac_size     = 0;
         $this->mac          = '';
@@ -185,13 +189,13 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
 
@@ -267,18 +271,20 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
         return false;
     }
 
+
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
+     * @throws Net_DNS2_Exception
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         if (strlen($this->key) > 0) {
 
@@ -392,7 +398,7 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
      * signs the given data with the given key, and returns the result
      *
      * @param string $data      the data to sign
-     * @param string $key       key to use for signing
+     * @param ?string $key       key to use for signing
      * @param string $algorithm the algorithm to use; defaults to MD5
      *
      * @return string the signed digest
@@ -400,57 +406,18 @@ class Net_DNS2_RR_TSIG extends Net_DNS2_RR
      * @access private
      *
      */
-    private function _signHMAC($data, $key = null, $algorithm = self::HMAC_MD5)
+    private function _signHMAC( string $data, ?string $key = null, string $algorithm = self::HMAC_MD5) : string
     {
-        //
-        // use the hash extension; this is included by default in >= 5.1.2 which
-        // is our dependent version anyway- so it's easy to switch to it.
-        //
-        if (extension_loaded('hash')) {
-
-            if (!isset(self::$hash_algorithms[$algorithm])) {
-
-                throw new Net_DNS2_Exception(
-                    'invalid or unsupported algorithm',
-                    Net_DNS2_Lookups::E_PARSE_ERROR
-                );
-            }
-
-            return hash_hmac(self::$hash_algorithms[$algorithm], $data, $key, true);
-        }
-
-        //
-        // if the hash extension isn't loaded, and they selected something other
-        // than MD5, throw an exception
-        //
-        if ($algorithm != self::HMAC_MD5) {
+        if (!isset(self::$hash_algorithms[$algorithm])) {
 
             throw new Net_DNS2_Exception(
-                'only HMAC-MD5 supported. please install the php-extension ' .
-                '"hash" in order to use the sha-family',
+                'invalid or unsupported algorithm',
                 Net_DNS2_Lookups::E_PARSE_ERROR
             );
         }
 
-        //
-        // otherwise, do it ourselves
-        //
-        if (is_null($key)) {
-
-            return pack('H*', md5($data));
-        }
-
-        $key = str_pad($key, 64, chr(0x00));
-        if (strlen($key) > 64) {
-    
-            $key = pack('H*', md5($key));
-        }
-
-        $k_ipad = $key ^ str_repeat(chr(0x36), 64);
-        $k_opad = $key ^ str_repeat(chr(0x5c), 64);
-
-        return $this->_signHMAC(
-            $k_opad . pack('H*', md5($k_ipad . $data)), null, $algorithm
-        );
+        return hash_hmac(self::$hash_algorithms[$algorithm], $data, $key, true);
     }
+
+
 }

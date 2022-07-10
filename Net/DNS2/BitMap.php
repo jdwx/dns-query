@@ -1,5 +1,9 @@
 <?php
 
+
+declare( strict_types = 1 );
+
+
 /**
  * DNS Library for handling lookups and updates. 
  *
@@ -29,13 +33,13 @@ class Net_DNS2_BitMap
      *
      * Type Bit Map(s) Field = ( Window Block # | Bitmap Length | Bitmap ) +
      *
-     * @param string $data a bitmap stringto parse
+     * @param string $data a bitmap string to parse
      *
      * @return array
      * @access public
      *
      */
-    public static function bitMapToArray($data)
+    public static function bitMapToArray( string $data ) : array
     {
         if (strlen($data) == 0) {
             return [];
@@ -99,13 +103,11 @@ class Net_DNS2_BitMap
      * @access public
      *
      */
-    public static function arrayToBitMap(array $data)
+    public static function arrayToBitMap( array $data ) : string
     {
         if (count($data) == 0) {
             return '';
         }
-
-        $current_window = 0;
 
         //
         // go through each RR
@@ -138,11 +140,12 @@ class Net_DNS2_BitMap
                 // if it's not found, then it must be defined as TYPE<id>, per
                 // RFC3845 section 2.2, if it's not, we ignore it.
                 //
-                list($name, $type) = explode('TYPE', $rr);
-                if (!isset($type)) {
-
+                $x = explode('TYPE', $rr);
+                if (count($x) < 2) {
                     continue;
                 }
+
+                $type = (int)$x[1];
             }
 
             //
@@ -165,15 +168,15 @@ class Net_DNS2_BitMap
 
             $bitstr = '';
 
-            for ($i=0; $i<$bm[$window]['length'] * 8; $i++) {
-                if (isset($bm[$window][$i])) {
+            for ( $i=0; $i< $bitdata['length'] * 8; $i++) {
+                if (isset( $bitdata[$i])) {
                     $bitstr .= '1';
                 } else {
                     $bitstr .= '0';
                 }
             }
 
-            $output .= pack('CC', $window, $bm[$window]['length']);
+            $output .= pack('CC', $window, $bitdata['length']);
             $output .= pack('H*', self::bigBaseConvert($bitstr));
         }
 
@@ -189,7 +192,7 @@ class Net_DNS2_BitMap
      * @access public
      *
      */
-    public static function bigBaseConvert($number)
+    public static function bigBaseConvert( string $number ) : string
     {
         $result = '';
 

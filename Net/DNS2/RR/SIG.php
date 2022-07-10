@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -70,52 +71,52 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
     /*
      * and instance of a Net_DNS2_PrivateKey object
      */
-    public $private_key = null;
+    public ?Net_DNS2_PrivateKey $private_key = null;
 
     /*
      * the RR type covered by this signature
      */
-    public $typecovered;
+    public string $typecovered;
 
     /*
      * the algorithm used for the signature
      */
-    public $algorithm;
+    public string $algorithm;
     
     /*
      * the number of labels in the name
      */
-    public $labels;
+    public int $labels;
 
     /*
      * the original TTL
      */
-    public $origttl;
+    public int $origttl;
 
     /*
      * the signature expiration
      */
-    public $sigexp;
+    public string $sigexp;
 
     /*
      * the inception of the signature
     */
-    public $sigincep;
+    public string $sigincep;
 
     /*
      * the keytag used
      */
-    public $keytag;
+    public int $keytag;
 
     /*
      * the signer's name
      */
-    public $signname;
+    public string $signname;
 
     /*
      * the signature
      */
-    public $signature;
+    public string $signature;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -124,8 +125,7 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->typecovered . ' ' . $this->algorithm . ' ' . 
             $this->labels . ' ' . $this->origttl . ' ' .
             $this->sigexp . ' ' . $this->sigincep . ' ' . 
@@ -138,12 +138,11 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->typecovered  = strtoupper(array_shift($rdata));
         $this->algorithm    = array_shift($rdata);
         $this->labels       = array_shift($rdata);
@@ -168,12 +167,11 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             //
@@ -187,7 +185,7 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
             $this->typecovered  = Net_DNS2_Lookups::$rr_types_by_id[$x['tc']];
             $this->algorithm    = $x['algorithm'];
             $this->labels       = $x['labels'];
-            $this->origttl      = Net_DNS2::expandUint32($x['origttl']);
+            $this->origttl      = $x['origttl'];
 
             //
             // the dates are in GM time
@@ -219,18 +217,20 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
         return false;
     }
 
+
     /**
      * returns the rdata portion of the DNS packet
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
+     * @throws Net_DNS2_Exception
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         //
         // parse the values out of the dates
@@ -267,7 +267,7 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
             $data .= $name;
         }
 
-        $data .= chr('0');
+        $data .= chr(0 );
 
         //
         // if the signature is empty, and $this->private_key is an instance of a 
@@ -303,8 +303,6 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
             //
             // based on the algorithm
             //
-            $algorithm = 0;
-
             switch($this->algorithm) {
 
             //
@@ -328,7 +326,7 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
             //
             case Net_DNS2_Lookups::DNSSEC_ALGORITHM_RSASHA256:
 
-                if (version_compare(PHP_VERSION, '5.4.8', '<') == true) {
+                if ( version_compare( PHP_VERSION, '5.4.8', '<' ) ) {
 
                     throw new Net_DNS2_Exception(
                         'SHA256 support is only available in PHP >= 5.4.8',
@@ -344,7 +342,7 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
             //
             case Net_DNS2_Lookups::DNSSEC_ALGORITHM_RSASHA512:
 
-                if (version_compare(PHP_VERSION, '5.4.8', '<') == true) {
+                if ( version_compare( PHP_VERSION, '5.4.8', '<' ) ) {
 
                     throw new Net_DNS2_Exception(
                         'SHA512 support is only available in PHP >= 5.4.8',
@@ -366,13 +364,12 @@ class Net_DNS2_RR_SIG extends Net_DNS2_RR
                     'invalid or unsupported algorithm',
                     Net_DNS2_Lookups::E_OPENSSL_INV_ALGO
                 );
-                break;
             }
 
             //
             // sign the data
             //
-            if (openssl_sign($sigdata, $this->signature, $this->private_key->instance, $algorithm) == false) {
+            if ( ! openssl_sign( $sigdata, $this->signature, $this->private_key->instance, $algorithm ) ) {
 
                 throw new Net_DNS2_Exception(
                     openssl_error_string(), 

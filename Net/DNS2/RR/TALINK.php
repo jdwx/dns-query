@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -32,12 +33,12 @@ class Net_DNS2_RR_TALINK extends Net_DNS2_RR
     /*
      * the previous domain name
      */
-    public $previous;
+    public string $previous;
 
     /*
      * the next domain name
      */
-    public $next;
+    public string $next;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -46,8 +47,7 @@ class Net_DNS2_RR_TALINK extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->cleanString($this->previous) . '. ' . 
             $this->cleanString($this->next) . '.';
     }
@@ -57,12 +57,11 @@ class Net_DNS2_RR_TALINK extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->previous = $this->cleanString($rdata[0]);
         $this->next     = $this->cleanString($rdata[1]);
 
@@ -74,12 +73,11 @@ class Net_DNS2_RR_TALINK extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             $offset         = $packet->offset;
@@ -99,13 +97,12 @@ class Net_DNS2_RR_TALINK extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if ( (strlen($this->previous) > 0) || (strlen($this->next) > 0) ) {
 
             $data = chr(strlen($this->previous)) . $this->previous . 

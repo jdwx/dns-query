@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -40,7 +41,7 @@ class Net_DNS2_RR_AAAA extends Net_DNS2_RR
      * per RFC1884
      *
      */
-    public $address;
+    public string $address;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -49,7 +50,7 @@ class Net_DNS2_RR_AAAA extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         return $this->address;
     }
@@ -57,19 +58,20 @@ class Net_DNS2_RR_AAAA extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string [] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+
+    protected function rrFromString(array $rdata) : bool
     {
         //
         // expand out compressed formats
         //
         $value = array_shift($rdata);
-        if (Net_DNS2::isIPv6($value) == true) {
+        if ( Net_DNS2::isIPv6( $value ) ) {
 
             $this->address = $value;
             return true;
@@ -81,13 +83,13 @@ class Net_DNS2_RR_AAAA extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         //
         // must be 8 x 16bit chunks, or 16 x 8bit
@@ -113,15 +115,15 @@ class Net_DNS2_RR_AAAA extends Net_DNS2_RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         $packet->offset += 16;
         return inet_pton($this->address);

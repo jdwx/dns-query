@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -27,29 +28,29 @@ class Net_DNS2_Packet_Response extends Net_DNS2_Packet
     /*
      * The name servers that this response came from
      */
-    public $answer_from;
+    public string $answer_from;
 
     /*
      * The socket type the answer came from (TCP/UDP)
      */
-    public $answer_socket_type;
+    public int $answer_socket_type;
 
     /*
      * The query response time in microseconds
      */
-    public $response_time = 0;
+    public float $response_time = 0.0;
 
     /**
      * Constructor - builds a new Net_DNS2_Packet_Response object
      *
-     * @param string  $data binary DNS packet
-     * @param integer $size the length of the DNS packet
+     * @param string $data binary DNS packet
+     * @param int    $size the length of the DNS packet
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct($data, $size)
+    public function __construct( string $data, int $size )
     {
         $this->set($data, $size);
     }
@@ -57,15 +58,15 @@ class Net_DNS2_Packet_Response extends Net_DNS2_Packet
     /**
      * builds a new Net_DNS2_Packet_Response object
      *
-     * @param string  $data binary DNS packet
-     * @param integer $size the length of the DNS packet
+     * @param string $data binary DNS packet
+     * @param int    $size the length of the DNS packet
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function set($data, $size)
+    public function set( string $data, int $size) : bool
     {
         //
         // store the full packet
@@ -77,7 +78,7 @@ class Net_DNS2_Packet_Response extends Net_DNS2_Packet
         // parse the header
         // 
         // we don't bother checking the size earlier, because the first thing the
-        // header class does, is check the size and throw and exception if it's
+        // header class does is check the size and throw and exception if it's
         // invalid.
         //
         $this->header = new Net_DNS2_Header($this);
@@ -87,7 +88,7 @@ class Net_DNS2_Packet_Response extends Net_DNS2_Packet
         // rest of the packet is probably empty; and there's no point in processing
         // anything else.
         //
-        // we also don't need to worry about checking to see if the the header is 
+        // we also don't need to worry about checking to see if the header is
         // null or not, since the Net_DNS2_Header() constructor will throw an 
         // exception if the packet is invalid.
         //

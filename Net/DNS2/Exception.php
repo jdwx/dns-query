@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -23,8 +24,8 @@
  */
 class Net_DNS2_Exception extends Exception
 {
-    private $_request;
-    private $_response;
+    private ?Net_DNS2_Packet_Request $_request;
+    private ?Net_DNS2_Packet_Response $_response;
 
     /**
      * Constructor - overload the constructor so we can pass in the request
@@ -32,19 +33,19 @@ class Net_DNS2_Exception extends Exception
      *
      * @param string $message  the exception message
      * @param int    $code     the exception code
-     * @param object $previous the previous Exception object
-     * @param object $request  the Net_DNS2_Packet_Request object for this request
-     * @param object $response the Net_DNS2_Packet_Response object for this request
+     * @param ?Net_DNS2_Exception $previous the previous Exception object
+     * @param ?Net_DNS2_Packet_Request $request  the Net_DNS2_Packet_Request object for this request
+     * @param ?Net_DNS2_Packet_Response $response the Net_DNS2_Packet_Response object for this request
      *
      * @access public
      *
      */
     public function __construct(
-        $message = '', 
-        $code = 0, 
-        $previous = null, 
-        Net_DNS2_Packet_Request $request = null,
-        Net_DNS2_Packet_Response $response = null
+        string $message = '',
+        int $code = 0,
+        ?Net_DNS2_Exception $previous = null,
+        ?Net_DNS2_Packet_Request $request = null,
+        ?Net_DNS2_Packet_Response $response = null
     ) {
         //
         // store the request/response objects (if passed)
@@ -55,28 +56,18 @@ class Net_DNS2_Exception extends Exception
         //
         // call the parent constructor
         //
-        // the "previous" argument was added in PHP 5.3.0
-        //
-        //      https://code.google.com/p/netdns2/issues/detail?id=25
-        //
-        if (version_compare(PHP_VERSION, '5.3.0', '>=') == true) {
-
-            parent::__construct($message, $code, $previous);
-        } else {
-
-            parent::__construct($message, $code);
-        }
+        parent::__construct($message, $code, $previous);
     }
 
     /**
      * returns the Net_DNS2_Packet_Request object (if available)
      *
-     * @return Net_DNS2_Packet_Request object
+     * @return ?Net_DNS2_Packet_Request object
      * @access public
      * @since  function available since release 1.3.1
      *
      */
-    public function getRequest()
+    public function getRequest() : ?Net_DNS2_Packet_Request
     {
         return $this->_request;
     }
@@ -84,12 +75,12 @@ class Net_DNS2_Exception extends Exception
     /**
      * returns the Net_DNS2_Packet_Response object (if available)
      *
-     * @return Net_DNS2_Packet_Response object
+     * @return ?Net_DNS2_Packet_Response object
      * @access public
      * @since  function available since release 1.3.1
      *
      */
-    public function getResponse()
+    public function getResponse() : ?Net_DNS2_Packet_Response
     {
         return $this->_response;
     }

@@ -1,5 +1,9 @@
 <?php
 
+
+declare(strict_types=1);
+
+
 /**
  * DNS Library for handling lookups and updates. 
  *
@@ -35,20 +39,20 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
     /*
      * format's allowed for certificates
      */
-    const CERT_FORMAT_RES       = 0;
-    const CERT_FORMAT_PKIX      = 1;
-    const CERT_FORMAT_SPKI      = 2;
-    const CERT_FORMAT_PGP       = 3;
-    const CERT_FORMAT_IPKIX     = 4;
-    const CERT_FORMAT_ISPKI     = 5;
-    const CERT_FORMAT_IPGP      = 6;
-    const CERT_FORMAT_ACPKIX    = 7;
-    const CERT_FORMAT_IACPKIX   = 8;
-    const CERT_FORMAT_URI       = 253;
-    const CERT_FORMAT_OID       = 254;
+    public const CERT_FORMAT_RES = 0;
+    public const CERT_FORMAT_PKIX = 1;
+    public const CERT_FORMAT_SPKI = 2;
+    public const CERT_FORMAT_PGP = 3;
+    public const CERT_FORMAT_IPKIX = 4;
+    public const CERT_FORMAT_ISPKI = 5;
+    public const CERT_FORMAT_IPGP = 6;
+    public const CERT_FORMAT_ACPKIX = 7;
+    public const CERT_FORMAT_IACPKIX = 8;
+    public const CERT_FORMAT_URI = 253;
+    public const CERT_FORMAT_OID = 254;
 
-    public $cert_format_name_to_id = [];
-    public $cert_format_id_to_name = [
+    public array $cert_format_name_to_id = [];
+    public array $cert_format_id_to_name = [
 
         self::CERT_FORMAT_RES       => 'Reserved',
         self::CERT_FORMAT_PKIX      => 'PKIX',
@@ -66,32 +70,32 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
     /*
       * certificate format
      */
-    public $format;
+    public string $format;
 
     /*
      * key tag
      */
-    public $keytag;
+    public string $keytag;
 
     /*
      * The algorithm used for the CERt
      */
-    public $algorithm;
+    public string $algorithm;
 
     /*
      * certificate
      */
-    public $certificate;
+    public string $certificate;
+
 
     /**
      * we have our own constructor so that we can load our certificate
      * information for parsing.
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     * @param array           $rr      a array with parsed RR values
+     * @param ?Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param ?array            $rr an array with parsed RR values
      *
-     * @return
-     *
+     * @throws Net_DNS2_Exception
      */
     public function __construct(Net_DNS2_Packet &$packet = null, array $rr = null)
     {
@@ -110,7 +114,7 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         return $this->format . ' ' . $this->keytag . ' ' . $this->algorithm . 
             ' ' . base64_encode($this->certificate);
@@ -119,13 +123,13 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         //
         // load and check the format; can be an int, or a mnemonic symbol
@@ -140,12 +144,8 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
             }
 
             $this->format = $this->cert_format_name_to_id[$mnemonic];
-        } else {
-
-            if (!isset($this->cert_format_id_to_name[$this->format])) {
-
-                return false;
-            }
+        } elseif (!isset($this->cert_format_id_to_name[$this->format])) {
+             return false;
         }
     
         $this->keytag = array_shift($rdata);
@@ -165,11 +165,8 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
             $this->algorithm = Net_DNS2_Lookups::$algorithm_name_to_id[
                 $mnemonic
             ];
-        } else {
-
-            if (!isset(Net_DNS2_Lookups::$algorithm_id_to_name[$this->algorithm])) {
-                return false;
-            }
+        } elseif (!isset(Net_DNS2_Lookups::$algorithm_id_to_name[$this->algorithm])) {
+            return false;
         }
 
         //
@@ -186,13 +183,13 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
 
@@ -216,18 +213,18 @@ class Net_DNS2_RR_CERT extends Net_DNS2_RR
         return false;
     }
 
+
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string either returns a binary packed
      *                                 string or null on failure
      * @access protected
-     *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         if (strlen($this->certificate) > 0) {
 

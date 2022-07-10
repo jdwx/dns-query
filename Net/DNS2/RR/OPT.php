@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -36,52 +37,52 @@ class Net_DNS2_RR_OPT extends Net_DNS2_RR
     /*
      * option code - assigned by IANA
      */
-    public $option_code;
+    public string $option_code;
 
     /*
      * the length of the option data
      */
-    public $option_length;
+    public int $option_length;
 
     /*
      * the option data
      */
-    public $option_data;
+    public string $option_data;
 
     /*
      * the extended response code stored in the TTL
      */
-    public $extended_rcode;
+    public int $extended_rcode;
 
     /*
      * the implementation level
      */
-    public $version;
+    public int $version;
 
     /*
-     * the DO bit used for DNSSEC - RFC3225
+     * the "DO" bit used for DNSSEC - RFC3225
      */
-    public $do;
+    public int $do;
 
     /*
      * the extended flags
      */
-    public $z;
+    public int $z;
 
     /**
      * Constructor - builds a new Net_DNS2_RR_OPT object; normally you wouldn't call
      * this directly, but OPT RR's are a little different
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet or null to create
+     * @param ?Net_DNS2_Packet & $packet a Net_DNS2_Packet packet or null to create
      *                                 an empty object
-     * @param array           $rr      an array with RR parse values or null to
+     * @param ?array           $rr      an array with RR parse values or null to
      *                                 create an empty object
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct(Net_DNS2_Packet &$packet = null, array $rr = null)
+    public function __construct(Net_DNS2_Packet & $packet = null, array $rr = null)
     {
         //
         // this is for when we're manually building an OPT RR object; we aren't
@@ -107,30 +108,30 @@ class Net_DNS2_RR_OPT extends Net_DNS2_RR
 
     /**
      * method to return the rdata portion of the packet as a string. There is no
-     * defintion for returning an OPT RR by string- this is just here to validate
+     * definition for returning an OPT RR by string. This is just here to validate
      * the binary parsing / building routines.
      *
      * @return  string
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         return $this->option_code . ' ' . $this->option_data;
     }
 
     /**
-     * parses the rdata portion from a standard DNS config line. There is no 
-     * definition for parsing a OPT RR by string- this is just here to validate
+     * Parses the rdata portion from a standard DNS config line. There is no
+     * definition for parsing an OPT RR by string. This is just here to validate
      * the binary parsing / building routines.
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         $this->option_code      = array_shift($rdata);
         $this->option_data      = array_shift($rdata);
@@ -151,11 +152,11 @@ class Net_DNS2_RR_OPT extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         //
         // parse out the TTL value
@@ -198,7 +199,7 @@ class Net_DNS2_RR_OPT extends Net_DNS2_RR
      * @access protected
      *
      */
-    protected function preBuild()
+    protected function preBuild() : void
     {
         //
         // build the TTL value based on the local values
@@ -210,7 +211,6 @@ class Net_DNS2_RR_OPT extends Net_DNS2_RR
 
         $this->ttl = $ttl[1];
 
-        return;
     }
 
     /**
@@ -219,12 +219,12 @@ class Net_DNS2_RR_OPT extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         //
         // if there is an option code, then pack that data too

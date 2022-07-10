@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpUnused */
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates.
@@ -18,13 +20,13 @@
  */
 
 //
-// initalize the packet id value
+// initialize the packet id value
 //
 Net_DNS2_Lookups::$next_packet_id   = mt_rand(0, 65535);
 
 //
 // build the reverse lookup tables; this is just so we don't have to
-// have duplicate static content laying around.
+// have duplicate static content lying around.
 //
 Net_DNS2_Lookups::$rr_types_by_id       = array_flip(Net_DNS2_Lookups::$rr_types_by_name);
 Net_DNS2_Lookups::$classes_by_id        = array_flip(Net_DNS2_Lookups::$classes_by_name);
@@ -36,7 +38,7 @@ Net_DNS2_Lookups::$rr_metatypes_by_id   = array_flip(Net_DNS2_Lookups::$rr_metat
 Net_DNS2_Lookups::$protocol_by_id       = array_flip(Net_DNS2_Lookups::$protocol_by_name);
 
 /**
- * This class provides simple lookups used througout the Net_DNS2 code
+ * This class provides simple lookups used throughout the Net_DNS2 code
  *
  */
 class Net_DNS2_Lookups
@@ -44,180 +46,180 @@ class Net_DNS2_Lookups
     /*
      * size (in bytes) of a header in a standard DNS packet
      */
-    const DNS_HEADER_SIZE       = 12;
+    public const DNS_HEADER_SIZE       = 12;
 
     /*
      * max size of a UDP packet
      */
-    const DNS_MAX_UDP_SIZE      = 512;
+    public const DNS_MAX_UDP_SIZE      = 512;
     
     /*
      * Query/Response flag
      */
-    const QR_QUERY              = 0;        // RFC 1035
-    const QR_RESPONSE           = 1;        // RFC 1035
+    public const QR_QUERY              = 0;        // RFC 1035
+    public const QR_RESPONSE           = 1;        // RFC 1035
 
     /*
      * DNS Op Codes
      */
-    const OPCODE_QUERY          = 0;        // RFC 1035
-    const OPCODE_IQUERY         = 1;        // RFC 1035, RFC 3425
-    const OPCODE_STATUS         = 2;        // RFC 1035
-    const OPCODE_NOTIFY         = 4;        // RFC 1996
-    const OPCODE_UPDATE         = 5;        // RFC 2136
-    const OPCODE_DSO            = 6;        // RFC 8490
+    public const OPCODE_QUERY          = 0;        // RFC 1035
+    public const OPCODE_IQUERY         = 1;        // RFC 1035, RFC 3425
+    public const OPCODE_STATUS         = 2;        // RFC 1035
+    public const OPCODE_NOTIFY         = 4;        // RFC 1996
+    public const OPCODE_UPDATE         = 5;        // RFC 2136
+    public const OPCODE_DSO            = 6;        // RFC 8490
 
     /*
      * Resource Record Classes
      */
-    const RR_CLASS_IN           = 1;        // RFC 1035
-    const RR_CLASS_CH           = 3;        // RFC 1035
-    const RR_CLASS_HS           = 4;        // RFC 1035
-    const RR_CLASS_NONE         = 254;      // RFC 2136
-    const RR_CLASS_ANY          = 255;      // RFC 1035
+    public const RR_CLASS_IN = 1;        // RFC 1035
+    public const RR_CLASS_CH = 3;        // RFC 1035
+    public const RR_CLASS_HS = 4;        // RFC 1035
+    public const RR_CLASS_NONE = 254;      // RFC 2136
+    public const RR_CLASS_ANY = 255;      // RFC 1035
 
     /*
      * DNS Response Codes
      */
-    const RCODE_NOERROR         = 0;        // RFC 1035
-    const RCODE_FORMERR         = 1;        // RFC 1035
-    const RCODE_SERVFAIL        = 2;        // RFC 1035
-    const RCODE_NXDOMAIN        = 3;        // RFC 1035
-    const RCODE_NOTIMP          = 4;        // RFC 1035
-    const RCODE_REFUSED         = 5;        // RFC 1035
-    const RCODE_YXDOMAIN        = 6;        // RFC 2136
-    const RCODE_YXRRSET         = 7;        // RFC 2136
-    const RCODE_NXRRSET         = 8;        // RFC 2136
-    const RCODE_NOTAUTH         = 9;        // RFC 2136
-    const RCODE_NOTZONE         = 10;       // RFC 2136
-    const RCODE_DSOTYPENI       = 11;       // RFC 8490
+    public const RCODE_NOERROR = 0;        // RFC 1035
+    public const RCODE_FORMERR = 1;        // RFC 1035
+    public const RCODE_SERVFAIL = 2;        // RFC 1035
+    public const RCODE_NXDOMAIN = 3;        // RFC 1035
+    public const RCODE_NOTIMP = 4;        // RFC 1035
+    public const RCODE_REFUSED = 5;        // RFC 1035
+    public const RCODE_YXDOMAIN = 6;        // RFC 2136
+    public const RCODE_YXRRSET = 7;        // RFC 2136
+    public const RCODE_NXRRSET = 8;        // RFC 2136
+    public const RCODE_NOTAUTH = 9;        // RFC 2136
+    public const RCODE_NOTZONE = 10;       // RFC 2136
+    public const RCODE_DSOTYPENI = 11;       // RFC 8490
 
     // 12-15 reserved
 
-    const RCODE_BADSIG          = 16;       // RFC 2845
-    const RCODE_BADVERS         = 16;       // RFC 6891
-    const RCODE_BADKEY          = 17;       // RFC 2845
-    const RCODE_BADTIME         = 18;       // RFC 2845
-    const RCODE_BADMODE         = 19;       // RFC 2930
-    const RCODE_BADNAME         = 20;       // RFC 2930
-    const RCODE_BADALG          = 21;       // RFC 2930
-    const RCODE_BADTRUNC        = 22;       // RFC 4635
-    const RCODE_BADCOOKIE       = 23;       // RFC 7873
+    public const RCODE_BADSIG = 16;       // RFC 2845
+    public const RCODE_BADVERS = 16;       // RFC 6891
+    public const RCODE_BADKEY = 17;       // RFC 2845
+    public const RCODE_BADTIME = 18;       // RFC 2845
+    public const RCODE_BADMODE = 19;       // RFC 2930
+    public const RCODE_BADNAME = 20;       // RFC 2930
+    public const RCODE_BADALG = 21;       // RFC 2930
+    public const RCODE_BADTRUNC = 22;       // RFC 4635
+    public const RCODE_BADCOOKIE = 23;       // RFC 7873
 
     /*
      * internal errors codes returned by the exceptions class
      */
-    const E_NONE                = 0;
-    const E_DNS_FORMERR         = self::RCODE_FORMERR;
-    const E_DNS_SERVFAIL        = self::RCODE_SERVFAIL;
-    const E_DNS_NXDOMAIN        = self::RCODE_NXDOMAIN;
-    const E_DNS_NOTIMP          = self::RCODE_NOTIMP;
-    const E_DNS_REFUSED         = self::RCODE_REFUSED;
-    const E_DNS_YXDOMAIN        = self::RCODE_YXDOMAIN;
-    const E_DNS_YXRRSET         = self::RCODE_YXRRSET;
-    const E_DNS_NXRRSET         = self::RCODE_NXRRSET;
-    const E_DNS_NOTAUTH         = self::RCODE_NOTAUTH;
-    const E_DNS_NOTZONE         = self::RCODE_NOTZONE;
+    public const E_NONE = 0;
+    public const E_DNS_FORMERR = self::RCODE_FORMERR;
+    public const E_DNS_SERVFAIL = self::RCODE_SERVFAIL;
+    public const E_DNS_NXDOMAIN = self::RCODE_NXDOMAIN;
+    public const E_DNS_NOTIMP = self::RCODE_NOTIMP;
+    public const E_DNS_REFUSED = self::RCODE_REFUSED;
+    public const E_DNS_YXDOMAIN = self::RCODE_YXDOMAIN;
+    public const E_DNS_YXRRSET = self::RCODE_YXRRSET;
+    public const E_DNS_NXRRSET = self::RCODE_NXRRSET;
+    public const E_DNS_NOTAUTH = self::RCODE_NOTAUTH;
+    public const E_DNS_NOTZONE = self::RCODE_NOTZONE;
 
     // 11-15 reserved
 
-    const E_DNS_BADSIG          = self::RCODE_BADSIG;
-    const E_DNS_BADKEY          = self::RCODE_BADKEY;
-    const E_DNS_BADTIME         = self::RCODE_BADTIME;
-    const E_DNS_BADMODE         = self::RCODE_BADMODE;
-    const E_DNS_BADNAME         = self::RCODE_BADNAME;
-    const E_DNS_BADALG          = self::RCODE_BADALG;
-    const E_DNS_BADTRUNC        = self::RCODE_BADTRUNC;
-    const E_DNS_BADCOOKIE       = self::RCODE_BADCOOKIE;
+    public const E_DNS_BADSIG = self::RCODE_BADSIG;
+    public const E_DNS_BADKEY = self::RCODE_BADKEY;
+    public const E_DNS_BADTIME = self::RCODE_BADTIME;
+    public const E_DNS_BADMODE = self::RCODE_BADMODE;
+    public const E_DNS_BADNAME = self::RCODE_BADNAME;
+    public const E_DNS_BADALG = self::RCODE_BADALG;
+    public const E_DNS_BADTRUNC = self::RCODE_BADTRUNC;
+    public const E_DNS_BADCOOKIE = self::RCODE_BADCOOKIE;
 
     // other error conditions
 
-    const E_NS_INVALID_FILE     = 200;
-    const E_NS_INVALID_ENTRY    = 201;
-    const E_NS_FAILED           = 202;
-    const E_NS_SOCKET_FAILED    = 203;
-    const E_NS_INVALID_SOCKET   = 204;
+    public const E_NS_INVALID_FILE = 200;
+    public const E_NS_INVALID_ENTRY = 201;
+    public const E_NS_FAILED = 202;
+    public const E_NS_SOCKET_FAILED = 203;
+    public const E_NS_INVALID_SOCKET = 204;
 
-    const E_PACKET_INVALID      = 300;
-    const E_PARSE_ERROR         = 301;
-    const E_HEADER_INVALID      = 302;
-    const E_QUESTION_INVALID    = 303;
-    const E_RR_INVALID          = 304;
+    public const E_PACKET_INVALID = 300;
+    public const E_PARSE_ERROR = 301;
+    public const E_HEADER_INVALID = 302;
+    public const E_QUESTION_INVALID = 303;
+    public const E_RR_INVALID = 304;
 
-    const E_OPENSSL_ERROR       = 400;
-    const E_OPENSSL_UNAVAIL     = 401;
-    const E_OPENSSL_INV_PKEY    = 402;
-    const E_OPENSSL_INV_ALGO    = 403;
+    public const E_OPENSSL_ERROR = 400;
+    public const E_OPENSSL_UNAVAIL = 401;
+    public const E_OPENSSL_INV_PKEY = 402;
+    public const E_OPENSSL_INV_ALGO = 403;
 
-    const E_CACHE_UNSUPPORTED   = 500;
-    const E_CACHE_SHM_FILE      = 501;
-    const E_CACHE_SHM_UNAVAIL   = 502;
+    public const E_CACHE_UNSUPPORTED = 500;
+    public const E_CACHE_SHM_FILE = 501;
+    public const E_CACHE_SHM_UNAVAIL = 502;
 
     /*
      * EDNS0 Option Codes (OPT)
      */
     // 0 - Reserved
-    const EDNS0_OPT_LLQ             = 1;
-    const EDNS0_OPT_UL              = 2;
-    const EDNS0_OPT_NSID            = 3;
+    public const EDNS0_OPT_LLQ = 1;
+    public const EDNS0_OPT_UL = 2;
+    public const EDNS0_OPT_NSID = 3;
     // 4 - Reserved
-    const EDNS0_OPT_DAU             = 5;
-    const EDNS0_OPT_DHU             = 6;
-    const EDNS0_OPT_N3U             = 7;
-    const EDNS0_OPT_CLIENT_SUBNET   = 8;
-    const EDNS0_OPT_EXPIRE          = 9;
-    const EDNS0_OPT_COOKIE          = 10;
-    const EDNS0_OPT_TCP_KEEPALIVE   = 11;
-    const EDNS0_OPT_PADDING         = 12;
-    const EDNS0_OPT_CHAIN           = 13;
-    const EDNS0_OPT_KEY_TAG         = 14;
-    // 15 - unsassigned
-    const EDNS0_OPT_CLIENT_TAG      = 16;
-    const EDNS0_OPT_SERVER_TAG      = 17;
+    public const EDNS0_OPT_DAU = 5;
+    public const EDNS0_OPT_DHU = 6;
+    public const EDNS0_OPT_N3U = 7;
+    public const EDNS0_OPT_CLIENT_SUBNET = 8;
+    public const EDNS0_OPT_EXPIRE = 9;
+    public const EDNS0_OPT_COOKIE = 10;
+    public const EDNS0_OPT_TCP_KEEPALIVE = 11;
+    public const EDNS0_OPT_PADDING = 12;
+    public const EDNS0_OPT_CHAIN = 13;
+    public const EDNS0_OPT_KEY_TAG = 14;
+    // 15 - unassigned
+    public const EDNS0_OPT_CLIENT_TAG = 16;
+    public const EDNS0_OPT_SERVER_TAG = 17;
     // 18-26945 - unassigned
-    const EDNS0_OPT_DEVICEID        = 26946;
+    public const EDNS0_OPT_DEVICEID = 26946;
 
     /*
      * DNSSEC Algorithms
      */
-    const DNSSEC_ALGORITHM_RES                  = 0;
-    const DNSSEC_ALGORITHM_RSAMD5               = 1;
-    const DNSSEC_ALGORITHM_DH                   = 2;
-    const DNSSEC_ALGORITHM_DSA                  = 3;
-    const DNSSEC_ALGORITHM_ECC                  = 4;
-    const DNSSEC_ALGORITHM_RSASHA1              = 5;
-    const DNSSEC_ALGORITHM_DSANSEC3SHA1         = 6;
-    const DSNSEC_ALGORITHM_RSASHA1NSEC3SHA1     = 7;
-    const DNSSEC_ALGORITHM_RSASHA256	        = 8;
-    const DNSSEC_ALGORITHM_RSASHA512            = 10;
-    const DNSSEC_ALGORITHM_ECCGOST              = 12;
-    const DNSSEC_ALGORITHM_ECDSAP256SHA256      = 13;
-    const DNSSEC_ALGORITHM_ECDSAP384SHA384      = 14;
-    const DNSSEC_ALGORITHM_ED25519              = 15;
-    const DNSSEC_ALGORITHM_ED448                = 16;
-    const DNSSEC_ALGORITHM_INDIRECT             = 252;
-    const DNSSEC_ALGORITHM_PRIVATEDNS           = 253;
-    const DNSSEC_ALGORITHM_PRIVATEOID           = 254;
+    public const DNSSEC_ALGORITHM_RES = 0;
+    public const DNSSEC_ALGORITHM_RSAMD5 = 1;
+    public const DNSSEC_ALGORITHM_DH = 2;
+    public const DNSSEC_ALGORITHM_DSA = 3;
+    public const DNSSEC_ALGORITHM_ECC = 4;
+    public const DNSSEC_ALGORITHM_RSASHA1 = 5;
+    public const DNSSEC_ALGORITHM_DSANSEC3SHA1 = 6;
+    public const DSNSEC_ALGORITHM_RSASHA1NSEC3SHA1 = 7;
+    public const DNSSEC_ALGORITHM_RSASHA256 = 8;
+    public const DNSSEC_ALGORITHM_RSASHA512 = 10;
+    public const DNSSEC_ALGORITHM_ECCGOST = 12;
+    public const DNSSEC_ALGORITHM_ECDSAP256SHA256 = 13;
+    public const DNSSEC_ALGORITHM_ECDSAP384SHA384 = 14;
+    public const DNSSEC_ALGORITHM_ED25519 = 15;
+    public const DNSSEC_ALGORITHM_ED448 = 16;
+    public const DNSSEC_ALGORITHM_INDIRECT = 252;
+    public const DNSSEC_ALGORITHM_PRIVATEDNS = 253;
+    public const DNSSEC_ALGORITHM_PRIVATEOID = 254;
 
     /*
      * DNSSEC Digest Types
      */
-    const DNSSEC_DIGEST_RES                     = 0;
-    const DNSSEC_DIGEST_SHA1                    = 1;
-    const DNSSEC_DIGEST_SHA256                  = 2;
-    const DNSSEC_DIGEST_GOST                    = 3;
-    const DNSSEC_DIGEST_SHA384                  = 4;
+    public const DNSSEC_DIGEST_RES = 0;
+    public const DNSSEC_DIGEST_SHA1 = 1;
+    public const DNSSEC_DIGEST_SHA256 = 2;
+    public const DNSSEC_DIGEST_GOST = 3;
+    public const DNSSEC_DIGEST_SHA384 = 4;
 
     /*
      * The packet id used when sending requests
      */
-    public static $next_packet_id;
+    public static int $next_packet_id;
 
     /*
      * Used to map resource record types to their id's, and back
      */
-    public static $rr_types_by_id   = [];
-    public static $rr_types_by_name = [
+    public static array $rr_types_by_id   = [];
+    public static array $rr_types_by_name = [
 
         'SIG0'          => 0,       // RFC 2931 pseudo type
         'A'             => 1,       // RFC 1035
@@ -249,7 +251,7 @@ class Net_DNS2_Lookups
         'GPOS'          => 27,      // RFC 1712 - Not implemented
         'AAAA'          => 28,      // RFC 3596
         'LOC'           => 29,      // RFC 1876
-        'NXT'           => 30,      // RFC 2065, obsoleted by by RFC 3755
+        'NXT'           => 30,      // RFC 2065, obsoleted by RFC 3755
         'EID'           => 31,      // [Patton][Patton1995]
         'NIMLOC'        => 32,      // [Patton][Patton1995]
         'SRV'           => 33,      // RFC 2782
@@ -328,8 +330,8 @@ class Net_DNS2_Lookups
     /*
      * Qtypes and Metatypes - defined in RFC2929 section 3.1
      */
-    public static $rr_qtypes_by_id      = [];
-    public static $rr_qtypes_by_name    = [
+    public static array $rr_qtypes_by_id      = [];
+    public static array $rr_qtypes_by_name    = [
 
         'IXFR'          => 251,     // RFC 1995 - only a full (AXFR) is supported
         'AXFR'          => 252,     // RFC 1035
@@ -338,8 +340,8 @@ class Net_DNS2_Lookups
         'ANY'           => 255      // RFC 1035 - we support both 'ANY' and '*'
     ];
     
-    public static $rr_metatypes_by_id   = [];
-    public static $rr_metatypes_by_name = [
+    public static array $rr_metatypes_by_id   = [];
+    public static array $rr_metatypes_by_name = [
 
         'OPT'           => 41,      // RFC 2671
         'TKEY'          => 249,     // RFC 2930
@@ -349,8 +351,8 @@ class Net_DNS2_Lookups
     /*
      * used to map resource record id's to RR class names
      */
-    public static $rr_types_class_to_id = [];
-    public static $rr_types_id_to_class = [
+    public static array $rr_types_class_to_id = [];
+    public static array $rr_types_id_to_class = [
 
         1           => 'Net_DNS2_RR_A',
         2           => 'Net_DNS2_RR_NS',
@@ -427,8 +429,8 @@ class Net_DNS2_Lookups
     /*
      * used to map resource record class names to their id's, and back
      */
-    public static $classes_by_id    = [];
-    public static $classes_by_name  = [
+    public static array $classes_by_id    = [];
+    public static array $classes_by_name  = [
 
         'IN'    => self::RR_CLASS_IN,        // RFC 1035
         'CH'    => self::RR_CLASS_CH,        // RFC 1035
@@ -440,7 +442,7 @@ class Net_DNS2_Lookups
     /*
      * maps response codes to error messages
      */
-    public static $result_code_messages = [
+    public static array $result_code_messages = [
 
         self::RCODE_NOERROR     => 'The request completed successfully.',
         self::RCODE_FORMERR     => 'The name server was unable to interpret the query.',
@@ -464,10 +466,10 @@ class Net_DNS2_Lookups
     ];
 
     /*
-     * maps DNS SEC alrorithms to their mnemonics
+     * maps DNS SEC algorithms to their mnemonics
      */
-    public static $algorithm_name_to_id = [];
-    public static $algorithm_id_to_name = [
+    public static array $algorithm_name_to_id = [];
+    public static array $algorithm_id_to_name = [
     
         self::DNSSEC_ALGORITHM_RES                  => 'RES',
         self::DNSSEC_ALGORITHM_RSAMD5               => 'RSAMD5',
@@ -492,8 +494,8 @@ class Net_DNS2_Lookups
     /*
      * maps DNSSEC digest types to their mnemonics
      */
-    public static $digest_name_to_id = [];
-    public static $digest_id_to_name = [
+    public static array $digest_name_to_id = [];
+    public static array $digest_id_to_name = [
 
         self::DNSSEC_DIGEST_RES         => 'RES',
         self::DNSSEC_DIGEST_SHA1        => 'SHA-1',
@@ -505,8 +507,8 @@ class Net_DNS2_Lookups
     /*
      * Protocols names - RFC 1010
      */
-    public static $protocol_by_id   = [];
-    public static $protocol_by_name = [
+    public static array $protocol_by_id   = [];
+    public static array $protocol_by_name = [
 
         'ICMP'          => 1,
         'IGMP'          => 2,

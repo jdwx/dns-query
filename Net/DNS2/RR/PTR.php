@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -30,7 +31,7 @@ class Net_DNS2_RR_PTR extends Net_DNS2_RR
     /*
      * the hostname of the PTR entry
      */
-    public $ptrdname;
+    public string $ptrdname;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -39,7 +40,7 @@ class Net_DNS2_RR_PTR extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         return rtrim($this->ptrdname, '.') . '.';
     }
@@ -49,12 +50,11 @@ class Net_DNS2_RR_PTR extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->ptrdname = rtrim(implode(' ', $rdata), '.');
         return true;
     }
@@ -64,12 +64,11 @@ class Net_DNS2_RR_PTR extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             $offset = $packet->offset;
@@ -87,13 +86,12 @@ class Net_DNS2_RR_PTR extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if (strlen($this->ptrdname) > 0) {
 
             return $packet->compress($this->ptrdname, $packet->offset);

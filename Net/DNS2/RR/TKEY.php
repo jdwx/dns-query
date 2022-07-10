@@ -1,4 +1,8 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
+
+declare(strict_types=1);
+
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -45,30 +49,30 @@
  */
 class Net_DNS2_RR_TKEY extends Net_DNS2_RR
 {
-    public $algorithm;
-    public $inception;
-    public $expiration;
-    public $mode;
-    public $error;
-    public $key_size;
-    public $key_data;
-    public $other_size;
-    public $other_data;
+    public string $algorithm;
+    public string $inception;
+    public string $expiration;
+    public string $mode;
+    public int $error;
+    public int $key_size;
+    public string $key_data;
+    public int $other_size;
+    public string $other_data;
 
     /*
      * TSIG Modes
      */
-    const TSIG_MODE_RES           = 0;
-    const TSIG_MODE_SERV_ASSIGN   = 1;
-    const TSIG_MODE_DH            = 2;
-    const TSIG_MODE_GSS_API       = 3;
-    const TSIG_MODE_RESV_ASSIGN   = 4;
-    const TSIG_MODE_KEY_DELE      = 5;
+    public const TSIG_MODE_RES = 0;
+    public const TSIG_MODE_SERV_ASSIGN = 1;
+    public const TSIG_MODE_DH = 2;
+    public const TSIG_MODE_GSS_API = 3;
+    public const TSIG_MODE_RESV_ASSIGN = 4;
+    public const TSIG_MODE_KEY_DELE = 5;
 
     /*
-     * map the mod id's to names so we can validate
+     * map the mod IDs to names so we can validate
      */
-    public $tsgi_mode_id_to_name = [
+    public array $tsgi_mode_id_to_name = [
 
         self::TSIG_MODE_RES           => 'Reserved',
         self::TSIG_MODE_SERV_ASSIGN   => 'Server Assignment',
@@ -85,7 +89,7 @@ class Net_DNS2_RR_TKEY extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         $out = $this->cleanString($this->algorithm) . '. ' . $this->mode;
         if ($this->key_size > 0) {
@@ -102,13 +106,13 @@ class Net_DNS2_RR_TKEY extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         //
         // data passed in is assumed: <algorithm> <mode> <key>
@@ -120,8 +124,8 @@ class Net_DNS2_RR_TKEY extends Net_DNS2_RR
         //
         // the rest of the data is set manually
         //
-        $this->inception    = time();
-        $this->expiration   = time() + 86400; // 1 day
+        $this->inception    = (string) time();
+        $this->expiration   = (string) ( time() + 86400 ); // 1 day
         $this->error        = 0;
         $this->key_size     = strlen($this->key_data);
         $this->other_size   = 0;
@@ -133,13 +137,13 @@ class Net_DNS2_RR_TKEY extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
         
@@ -201,15 +205,15 @@ class Net_DNS2_RR_TKEY extends Net_DNS2_RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         if (strlen($this->algorithm) > 0) {
 

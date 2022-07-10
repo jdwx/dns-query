@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -27,10 +28,8 @@
  */
 class Net_DNS2_RR_TXT extends Net_DNS2_RR
 {
-    /*
-     * an array of the text strings
-     */
-    public $text = [];
+    /** @var string[] an array of the text strings */
+    public array $text = [];
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -39,7 +38,7 @@ class Net_DNS2_RR_TXT extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         if (count($this->text) == 0) {
             return '""';
@@ -60,12 +59,11 @@ class Net_DNS2_RR_TXT extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $data = $this->buildString($rdata);
         if (count($data) > 0) {
 
@@ -80,12 +78,11 @@ class Net_DNS2_RR_TXT extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
             
             $length = $packet->offset + $this->rdlength;
@@ -108,13 +105,12 @@ class Net_DNS2_RR_TXT extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         $data = null;
 
         foreach ($this->text as $t) {

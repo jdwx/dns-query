@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates.
@@ -32,9 +33,9 @@ class Tests_Net_DNS2_CacheTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
+     * @throws Net_DNS2_Exception
      */
-    public function testCache()
-    {
+    public function testCache() : void {
         $cache_file = '/tmp/net_dns2_test.cache';
 
         $r = new Net_DNS2_Resolver(
@@ -45,9 +46,9 @@ class Tests_Net_DNS2_CacheTest extends PHPUnit\Framework\TestCase
             'cache_file'    => $cache_file 
         ]);
 
-        $result = $r->query('google.com', 'MX');
+        $r->query('google.com', 'MX');
 
-        $this->assertTrue(file_exists($cache_file));
-        $this->assertTrue((filesize($cache_file) > 0));
+        static::assertTrue(file_exists($cache_file));
+        static::assertTrue((filesize($cache_file) > 0));
     }
 }

@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpUnused */
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -20,14 +22,14 @@
 /**
  * The main dynamic DNS updater class.
  *
- * This class provices functions to handle all defined dynamic DNS update 
+ * This class provides functions to handle all defined dynamic DNS update
  * requests as defined by RFC 2136.
  *
  * This is separate from the Net_DNS2_Resolver class, as while the underlying
  * protocol is the same, the functionality is completely different.
  *
  * Generally, query (recursive) lookups are done against caching server, while
- * update requests are done against authoratative servers.
+ * update requests are done against authoritative servers.
  *
  */
 class Net_DNS2_Updater extends Net_DNS2
@@ -35,20 +37,20 @@ class Net_DNS2_Updater extends Net_DNS2
     /*
      * a Net_DNS2_Packet_Request object used for the update request
      */
-    private $_packet;
+    private Net_DNS2_Packet_Request $_packet;
 
     /**
      * Constructor - builds a new Net_DNS2_Updater objected used for doing 
      * dynamic DNS updates
      *
      * @param string $zone    the domain name to use for DNS updates
-     * @param mixed  $options an array of config options or null
+     * @param ?array  $options an array of config options or null
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct($zone, array $options = null)
+    public function __construct( string $zone, ?array $options = null )
     {
         parent::__construct($options);
 
@@ -70,12 +72,12 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      * @param string $name The name to be checked.
      *
-     * @return boolean
+     * @return void
      * @throws Net_DNS2_Exception
      * @access private
      *
      */
-    private function _checkName($name)
+    private function _checkName( string $name ) : void
     {
         if (!preg_match('/' . $this->_packet->question[0]->qname . '$/', $name)) {
             
@@ -85,26 +87,8 @@ class Net_DNS2_Updater extends Net_DNS2
                 Net_DNS2_Lookups::E_PACKET_INVALID
             );
         }
-    
-        return true;
     }
 
-    /**
-     * add a signature to the request for authentication 
-     *
-     * @param string $keyname   the key name to use for the TSIG RR
-     * @param string $signature the key to sign the request.
-     *
-     * @return     boolean
-     * @access     public
-     * @see        Net_DNS2::signTSIG()
-     * @deprecated function deprecated in 1.1.0
-     *
-     */
-    public function signature($keyname, $signature)
-    {
-        return $this->signTSIG($keyname, $signature);
-    }
 
     /**
      *   2.5.1 - Add To An RRset
@@ -116,12 +100,12 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      * @param Net_DNS2_RR $rr the Net_DNS2_RR object to be added to the zone
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function add(Net_DNS2_RR $rr)
+    public function add(Net_DNS2_RR $rr) : bool
     {
         $this->_checkName($rr->name);
 
@@ -147,12 +131,12 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      * @param Net_DNS2_RR $rr the Net_DNS2_RR object to be deleted from the zone
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function delete(Net_DNS2_RR $rr)
+    public function delete(Net_DNS2_RR $rr) : bool
     {
         $this->_checkName($rr->name);
 
@@ -182,12 +166,12 @@ class Net_DNS2_Updater extends Net_DNS2
      * @param string $name the RR name to be removed from the zone
      * @param string $type the RR type to be removed from the zone
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function deleteAny($name, $type)
+    public function deleteAny( string $name, string $type ) : bool
     {
         $this->_checkName($name);
 
@@ -202,7 +186,7 @@ class Net_DNS2_Updater extends Net_DNS2
             );
         }
     
-        $rr = new $class;
+        $rr = new $class();
 
         $rr->name       = $name;
         $rr->ttl        = 0;
@@ -232,12 +216,12 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      * @param string $name the RR name to be removed from the zone
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function deleteAll($name)
+    public function deleteAll( string $name ) : bool
     {
         $this->_checkName($name);
 
@@ -245,7 +229,7 @@ class Net_DNS2_Updater extends Net_DNS2
         // the Net_DNS2_RR_ANY class is just an empty stub class used for these
         // cases only
         //
-        $rr = new Net_DNS2_RR_ANY;
+        $rr = new Net_DNS2_RR_ANY();
 
         $rr->name       = $name;
         $rr->ttl        = 0;
@@ -280,12 +264,12 @@ class Net_DNS2_Updater extends Net_DNS2
      * @param string $name the RR name for the prerequisite
      * @param string $type the RR type for the prerequisite
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function checkExists($name, $type)
+    public function checkExists( string $name, string $type) : bool
     {
         $this->_checkName($name);
         
@@ -300,7 +284,7 @@ class Net_DNS2_Updater extends Net_DNS2
             );
         }
     
-        $rr = new $class;
+        $rr = new $class();
 
         $rr->name       = $name;
         $rr->ttl        = 0;
@@ -335,12 +319,12 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      * @param Net_DNS2_RR $rr the RR object to be used as a prerequisite
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function checkValueExists(Net_DNS2_RR $rr)
+    public function checkValueExists( Net_DNS2_RR $rr ) : bool
     {
         $this->_checkName($rr->name);
 
@@ -373,12 +357,12 @@ class Net_DNS2_Updater extends Net_DNS2
      * @param string $name the RR name for the prerequisite
      * @param string $type the RR type for the prerequisite
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function checkNotExists($name, $type)
+    public function checkNotExists( string $name, string $type ) : bool
     {
         $this->_checkName($name);
 
@@ -393,7 +377,7 @@ class Net_DNS2_Updater extends Net_DNS2
             );
         }
     
-        $rr = new $class;
+        $rr = new $class();
 
         $rr->name       = $name;
         $rr->ttl        = 0;
@@ -416,7 +400,7 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      *   Name is in use.  At least one RR with a specified NAME (in the zone
      *   and class specified by the Zone Section) must exist.  Note that this
-     *   prerequisite is NOT satisfied by empty nonterminals.
+     *   prerequisite is NOT satisfied by empty non-terminals.
      *
      *   For this prerequisite, a requestor adds to the section a single RR
      *   whose NAME is equal to that of the name whose ownership of an RR is
@@ -428,12 +412,12 @@ class Net_DNS2_Updater extends Net_DNS2
      *
      * @param string $name the RR name for the prerequisite
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function checkNameInUse($name)
+    public function checkNameInUse( string $name ) : bool
     {
         $this->_checkName($name);
 
@@ -441,7 +425,7 @@ class Net_DNS2_Updater extends Net_DNS2
         // the Net_DNS2_RR_ANY class is just an empty stub class used for these
         // cases only
         //
-        $rr = new Net_DNS2_RR_ANY;
+        $rr = new Net_DNS2_RR_ANY();
 
         $rr->name       = $name;
         $rr->ttl        = 0;
@@ -464,22 +448,22 @@ class Net_DNS2_Updater extends Net_DNS2
      *   2.4.5 - Name Is Not In Use
      *
      *   Name is not in use.  No RR of any type is owned by a specified NAME.
-     *   Note that this prerequisite IS satisfied by empty nonterminals.
+     *   Note that this prerequisite IS satisfied by empty non-terminals.
      *
      *   For this prerequisite, a requestor adds to the section a single RR
-     *   whose NAME is equal to that of the name whose nonownership of any RRs
+     *   whose NAME is equal to that of the name whose non-ownership of any RRs
      *   is required.  RDLENGTH is zero and RDATA is therefore empty.  CLASS
      *   must be specified as NONE.  TYPE must be specified as ANY.  TTL must
      *   be specified as zero (0).
      *
      * @param string $name the RR name for the prerequisite
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function checkNameNotInUse($name)
+    public function checkNameNotInUse( string $name ) : bool
     {
         $this->_checkName($name);
 
@@ -487,7 +471,7 @@ class Net_DNS2_Updater extends Net_DNS2
         // the Net_DNS2_RR_ANY class is just an empty stub class used for these
         // cases only
         //
-        $rr = new Net_DNS2_RR_ANY;
+        $rr = new Net_DNS2_RR_ANY();
 
         $rr->name       = $name;
         $rr->ttl        = 0;
@@ -513,7 +497,7 @@ class Net_DNS2_Updater extends Net_DNS2
      * @access public
      #
      */
-    public function packet()
+    public function packet() : Net_DNS2_Packet_Request
     {
         //
         // take a copy
@@ -541,16 +525,16 @@ class Net_DNS2_Updater extends Net_DNS2
     }
 
     /**
-     * executes the update request with the object informaton
+     * executes the update request with the object information
      *
-     * @param Net_DNS2_Packet_Response &$response ref to the response object
+     * @param ?Net_DNS2_Packet_Response &$response ref to the response object or null to ignore response
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function update(&$response = null)
+    public function update( Net_DNS2_Packet_Response & $response = null ) : bool
     {
         //
         // make sure we have some name servers set
@@ -598,7 +582,7 @@ class Net_DNS2_Updater extends Net_DNS2
         $this->_packet->reset();
 
         //
-        // for updates, we just need to know it worked- we don't actualy need to
+        // for updates, we just need to know it worked. we don't actually need to
         // return the response object
         //
         return true;

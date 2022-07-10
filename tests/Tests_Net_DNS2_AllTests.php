@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates.
@@ -32,7 +33,7 @@ set_include_path('..:.');
 
 /**
  * This test suite assumes that Net_DNS2 will be in the include path, otherwise it
- * will fail. There's no other way to hardcode a include_path in here that would
+ * will fail. There's no other way to hardcode an include_path in here that would
  * make it work everywhere.
  *
  */
@@ -45,20 +46,18 @@ class Tests_Net_DNS2_AllTests
      * @access public
      *
      */
-    public static function main()
-    {
+    public static function main() : void {
         PHPUnit_TextUI_TestRunner::run(self::suite());
     }
 
     /**
      * test suite
      *
-     * @return void
+     * @return PHPUnit_Framework_TestSuite
      * @access public
      *
      */
-    public static function suite()
-    {
+    public static function suite() : PHPUnit_Framework_TestSuite {
         $suite = new PHPUnit_Framework_TestSuite('PEAR - Net_DNS2');
 
         $suite->addTestSuite('Tests_Net_DNS2_CacheTest');

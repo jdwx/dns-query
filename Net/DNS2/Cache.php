@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -26,39 +27,39 @@ class Net_DNS2_Cache
     /*
      * the filename of the cache file
      */
-    protected $cache_file = '';
+    protected string $cache_file = '';
 
     /*
      * the local data store for the cache
      */
-    protected $cache_data = [];
+    protected array $cache_data = [];
 
     /*
      * the size of the cache to use
      */
-    protected $cache_size = 0;
+    protected int $cache_size = 0;
 
     /*
-     * the cache serializer
+     * the cache serializer ('json' or... not 'json')
      */
-    protected $cache_serializer;
+    protected string $cache_serializer;
 
     /*
      * an internal flag to make sure we don't load the cache content more
      * than once per instance.
      */ 
-    protected $cache_opened = false;
+    protected bool $cache_opened = false;
 
     /**
      * returns true/false if the provided key is defined in the cache
      * 
      * @param string $key the key to lookup in the local cache
      *
-     * @return boolean
+     * @return bool
      * @access public
      *
      */
-    public function has($key)
+    public function has( string $key ) : bool
     {
         return isset($this->cache_data[$key]);
     }
@@ -68,11 +69,11 @@ class Net_DNS2_Cache
      * 
      * @param string $key the key to lookup in the local cache
      *
-     * @return mixed returns the cache data on sucess, false on error
+     * @return mixed returns the cache data on success, false on error
      * @access public
      *
      */
-    public function get($key)
+    public function get( string $key ) : mixed
     {
         if (isset($this->cache_data[$key])) {
 
@@ -97,7 +98,7 @@ class Net_DNS2_Cache
      * @access public
      *
      */
-    public function put($key, $data)
+    public function put( string $key, mixed $data) : void
     {
         $ttl = 86400 * 365;
 
@@ -108,16 +109,16 @@ class Net_DNS2_Cache
         $data->rdlength = 0;
 
         //
-        // find the lowest TTL, and use that as the TTL for the whole cached 
+        // find the lowest TTL, and use that as the TTL for the cached
         // object. The downside to using one TTL for the whole object, is that
-        // we'll invalidate entries before they actuall expire, causing a
+        // we'll invalidate entries before they actually expire, causing a
         // real lookup to happen.
         //
         // The upside is that we don't need to require() each RR type in the
-        // cache, so we can look at their individual TTL's on each run- we only
+        // cache, so we can look at their individual TTLs on each run. we only
         // unserialize the actual RR object when it's get() from the cache.
         //
-        foreach ($data->answer as $index => $rr) {
+        foreach ($data->answer as $rr) {
                     
             if ($rr->ttl < $ttl) {
                 $ttl = $rr->ttl;
@@ -126,7 +127,7 @@ class Net_DNS2_Cache
             $rr->rdata = '';
             $rr->rdlength = 0;
         }
-        foreach ($data->authority as $index => $rr) {
+        foreach ($data->authority as $rr) {
                     
             if ($rr->ttl < $ttl) {
                 $ttl = $rr->ttl;
@@ -135,7 +136,7 @@ class Net_DNS2_Cache
             $rr->rdata = '';
             $rr->rdlength = 0;
         }
-        foreach ($data->additional as $index => $rr) {
+        foreach ($data->additional as $rr) {
                     
             if ($rr->ttl < $ttl) {
                 $ttl = $rr->ttl;
@@ -159,13 +160,13 @@ class Net_DNS2_Cache
     }
 
     /**
-     * runs a clean up process on the cache data
+     * clean up the cache data
      *
      * @return void
      * @access protected
      *
      */
-    protected function clean()
+    protected function clean() : void
     {
         if (count($this->cache_data) > 0) {
 
@@ -192,14 +193,13 @@ class Net_DNS2_Cache
     }
 
     /**
-     * runs a clean up process on the cache data
+     * resize the cache data
      *
-     * @return mixed
+     * @return bool|string|null
      * @access protected
      *
      */
-    protected function resize()
-    {
+    protected function resize() : bool|string|null {
         if (count($this->cache_data) > 0) {
         
             //

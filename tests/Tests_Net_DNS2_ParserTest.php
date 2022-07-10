@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates.
@@ -31,16 +32,16 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
+     * @throws Net_DNS2_Exception
      */
-    public function testTSIG()
-    {
+    public function testTSIG() : void {
         //
         // create a new packet
         //
         $request = new Net_DNS2_Packet_Request('example.com', 'SOA', 'IN');
 
         //
-        // add a A record to the authority section, like an update request
+        // add an A record to the authority section, like an update request
         //
         $request->authority[] = Net_DNS2_RR::fromString('test.example.com A 10.10.10.10');
         $request->header->nscount = 1;
@@ -69,18 +70,20 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
         //
         // the answer data in the response, should match our initial line exactly
         //
-        $this->assertSame($line, substr($response->additional[0]->__toString(), 0, 58));
+        static::assertSame($line, substr($response->additional[0]->__toString(), 0, 58));
     }
 
+
     /**
-     * function to test parsing the individual RR's
+     * function to test parsing the individual RRs
      *
      * @return void
      * @access public
      *
+     * @throws Net_DNS2_Exception
+     * @throws Net_DNS2_Exception
      */
-    public function testParser()
-    {
+    public function testParser() : void {
         $rrs = [
 
             'A'             => 'example.com. 300 IN A 172.168.0.50',
@@ -134,13 +137,15 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             'EUI48'         => 'example.com. 300 IN EUI48 00-00-5e-00-53-2a',
             'EUI64'         => 'example.com. 300 IN EUI64 00-00-5e-ef-10-00-00-2a',
             'TKEY'          => 'example.com. 300 IN TKEY gss.microsoft.com. 3 123456.',
-            'URI'           => 'example.com. 300 IN URI 10 1 "http://mrdns.com/contact.html"',
+            'URI'           => 'example.com. 300 IN URI 10 1 "https://mrdns.com/contact.html"',
             'CAA'           => 'example.com. 300 IN CAA 0 issue "ca.example.net; policy=ev"',
             'AVC'           => 'example.com. 300 IN AVC "first record" "another records" "a third"',
-            'AMTRELAY'      => 'example.com. 300 IN AMTRELAY 10 0 0 .',
-            'AMTRELAY'      => 'example.com. 300 IN AMTRELAY 10 0 1 203.0.113.15',
-            'AMTRELAY'      => 'example.com. 300 IN AMTRELAY 10 0 2 2600:1f16:17c:3950:47ac:cb79:62ba:702e',
-            'AMTRELAY'      => 'example.com. 300 IN AMTRELAY 10 0 3 test.google.com.',
+            'AMTRELAY'      => [
+                'example.com. 300 IN AMTRELAY 10 0 0 .',
+                'example.com. 300 IN AMTRELAY 10 0 1 203.0.113.15',
+                'example.com. 300 IN AMTRELAY 10 0 2 2600:1f16:17c:3950:47ac:cb79:62ba:702e',
+                'example.com. 300 IN AMTRELAY 10 0 3 test.google.com.',
+            ],
             'TA'            => 'example.com. 300 IN TA 21366 7 2 96eeb2ffd9b00cd4694e78278b5efdab0a80446567b69f634da078f0d90f01ba',
             'DLV'           => 'example.com. 300 IN DLV 21366 7 2 96eeb2ffd9b00cd4694e78278b5efdab0a80446567b69f634da078f0d90f01ba',
         ];
@@ -166,7 +171,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             //
             // check that the object is right
             //
-            $this->assertTrue($a instanceof $class_name);
+            static::assertTrue($a instanceof $class_name);
 
             //
             // set it on the packet
@@ -187,9 +192,10 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             //
             // the answer data in the response, should match our initial line exactly
             //
-            $this->assertSame($line, $response->answer[0]->__toString());
+            static::assertSame($line, $response->answer[0]->__toString());
         }
     }
+
 
     /**
      * function to test the compression logic
@@ -197,8 +203,9 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
+     * @throws Net_DNS2_Exception
      */
-    public function testCompression()
+    public function testCompression() : void
     {
         //
         // this list of RR's uses name compression
@@ -239,7 +246,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             //
             // check that the object is right
             //
-            $this->assertTrue($a instanceof $class_name);
+            static::assertTrue($a instanceof $class_name);
 
             //
             // set it on the packet
@@ -272,21 +279,21 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
         //
         $response_authority = $response->authority;
 
-        foreach ($response_authority as $id => $object) {
+        foreach ($response_authority as $object) {
 
-            $response_authority[$id]->rdlength = '';
-            $response_authority[$id]->rdata = '';
+            $object->rdlength = 0;
+            $object->rdata = '';
         }
 
         //
         // build the hashes
         //
-        $a = md5(print_r($request_authority, 1));
-        $b = md5(print_r($response_authority, 1));
+        $a = md5(print_r($request_authority, true));
+        $b = md5(print_r($response_authority, true));
 
         //
         // the new hashes should match.
         //
-        $this->assertSame($a, $b);
+        static::assertSame($a, $b);
     }
 }

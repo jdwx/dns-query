@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -70,47 +71,47 @@ class Net_DNS2_RR_RRSIG extends Net_DNS2_RR
     /*
      * the RR type covered by this signature
      */
-    public $typecovered;
+    public string $typecovered;
 
     /*
      * the algorithm used for the signature
      */
-    public $algorithm;
+    public string $algorithm;
     
     /*
      * the number of labels in the name
      */
-    public $labels;
+    public string $labels;
 
     /*
      * the original TTL
      */
-    public $origttl;
+    public string $origttl;
 
     /*
      * the signature expiration
      */
-    public $sigexp;
+    public string $sigexp;
 
     /*
      * the inception of the signature
     */
-    public $sigincep;
+    public string $sigincep;
 
     /*
      * the keytag used
      */
-    public $keytag;
+    public string $keytag;
 
     /*
      * the signer's name
      */
-    public $signname;
+    public string $signname;
 
     /*
      * the signature
      */
-    public $signature;
+    public string $signature;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -119,8 +120,7 @@ class Net_DNS2_RR_RRSIG extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->typecovered . ' ' . $this->algorithm . ' ' . 
             $this->labels . ' ' . $this->origttl . ' ' .
             $this->sigexp . ' ' . $this->sigincep . ' ' . 
@@ -133,12 +133,11 @@ class Net_DNS2_RR_RRSIG extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->typecovered  = strtoupper(array_shift($rdata));
         $this->algorithm    = array_shift($rdata);
         $this->labels       = array_shift($rdata);
@@ -163,12 +162,11 @@ class Net_DNS2_RR_RRSIG extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
 
             //
@@ -220,13 +218,12 @@ class Net_DNS2_RR_RRSIG extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if (strlen($this->signature) > 0) {
 
             //

@@ -9,28 +9,25 @@
   * Includes a separate, more intuitive "Updater" class for handling dynamic update
   * Support zone signing using TSIG and SIG(0) for updates and zone transfers
   * Includes a local cache using shared memory or flat file to improve performance
-  * includes many more RR's, including DNSSEC RR's.
+  * includes many more RRs, including DNSSEC RRs.
 
 
 ## Installing Net\_DNS2 ##
 
-You can download it directly from PEAR: http://pear.php.net/package/Net_DNS2
+You can require it directly via Composer: https://packagist.org/packages/pear/net_dns2
 
 ```
-pear install Net_DNS2
+composer require jdwx/netdns2
 ```
 
-Or you can require it directly via Composer: https://packagist.org/packages/pear/net_dns2
+NOTE: As of 2022-07-10 this package has not yet been submitted to Packagist, so the above information
+is preliminary.
 
-```
-composer require pear/net_dns2
-```
-
-Or download the source above.
+Or download the source from Github: https://github.com/jdwx/netdns2
 
 ## Requirements ##
 
-* PHP 5.4+
+* PHP 8.1+
 * The PHP INI setting `mbstring.func_overload` equals 0, 1, 4, or 5.
 
 

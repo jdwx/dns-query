@@ -1,5 +1,9 @@
 <?php
 
+
+declare(strict_types=1);
+
+
 /**
  * DNS Library for handling lookups and updates. 
  *
@@ -36,12 +40,12 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
      * for FORMAT are value 0 indicating ATM End System Address (AESA) format
      * and value 1 indicating E.164 format
      */
-    public $format;
+    public int $format;
 
     /*
      * The IPv4 address in quad-dotted notation
      */
-    public $address;
+    public string $address;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -50,7 +54,7 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         return $this->address;
     }
@@ -60,20 +64,20 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         $value = array_shift($rdata);
 
-        if (ctype_xdigit($value) == true) {
+        if ( ctype_xdigit( $value ) ) {
             
             $this->format   = 0;
             $this->address  = $value;
 
-        } else if (is_numeric($value) == true) {
+        } elseif ( is_numeric( $value ) ) {
 
             $this->format   = 1;
             $this->address  = $value;
@@ -89,13 +93,13 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      * 
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
 
@@ -112,7 +116,7 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
 
                 $this->address = $a['address'];
 
-            } else if ($this->format == 1) {
+            } elseif ($this->format == 1) {
 
                 $this->address = substr($this->rdata, 1, $this->rdlength - 1);
 
@@ -130,15 +134,15 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
     /**
      * returns the rdata portion of the DNS packet
      * 
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed 
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      * 
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         $data = chr($this->format);
 
@@ -146,7 +150,7 @@ class Net_DNS2_RR_ATMA extends Net_DNS2_RR
 
             $data .= pack('H*', $this->address);
 
-        } else if ($this->format == 1) {
+        } elseif ($this->format == 1) {
 
             $data .= $this->address;
 

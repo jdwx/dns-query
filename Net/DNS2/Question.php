@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -18,7 +19,7 @@
  */
 
 /**
- * This class handles parsing and constructing the question sectino of DNS
+ * This class handles parsing and constructing the question section of DNS
  * packets.
  *
  * This is referred to as the "zone" for update per RFC2136
@@ -45,35 +46,35 @@ class Net_DNS2_Question
      * referred to as "zname" for updates per RFC2136
      *
      */
-    public $qname;
+    public string $qname;
 
     /*
-     * The RR type for the questino
+     * The RR type for the question
      *
      * referred to as "ztype" for updates per RFC2136
      *
      */
-    public $qtype;
+    public string $qtype;
     
     /*
-     * The RR class for the questino
+     * The RR class for the question
      *
      * referred to as "zclass" for updates per RFC2136
      *
      */
-    public $qclass;
+    public string $qclass;
 
     /**
      * Constructor - builds a new Net_DNS2_Question object
      *
-     * @param mixed &$packet either a Net_DNS2_Packet object, or null to 
+     * @param ?Net_DNS2_Packet $packet either a Net_DNS2_Packet object, or null to
      *                       build an empty object
      *
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function __construct(Net_DNS2_Packet &$packet = null)
+    public function __construct( ?Net_DNS2_Packet $packet = null )
     {
         if (!is_null($packet)) {
 
@@ -104,17 +105,17 @@ class Net_DNS2_Question
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet object
      *
-     * @return boolean
+     * @return bool
      * @throws Net_DNS2_Exception
      * @access public
      *
      */
-    public function set(Net_DNS2_Packet &$packet)
+    public function set(Net_DNS2_Packet $packet) : bool
     {
         //
         // expand the name
         //
-        $this->qname = $packet->expand($packet, $packet->offset);
+        $this->qname = $packet::expand($packet, $packet->offset);
         if ($packet->rdlength < ($packet->offset + 4)) {
 
             throw new Net_DNS2_Exception(
@@ -169,7 +170,7 @@ class Net_DNS2_Question
      * @access public
      *
      */
-    public function get(Net_DNS2_Packet &$packet)
+    public function get(Net_DNS2_Packet $packet) : string
     {
         //
         // validate the type and class

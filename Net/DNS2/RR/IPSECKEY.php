@@ -1,5 +1,9 @@
 <?php
 
+
+declare(strict_types=1);
+
+
 /**
  * DNS Library for handling lookups and updates. 
  *
@@ -34,22 +38,22 @@
  */
 class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
 {
-    const GATEWAY_TYPE_NONE     = 0;
-    const GATEWAY_TYPE_IPV4     = 1;
-    const GATEWAY_TYPE_IPV6     = 2;
-    const GATEWAY_TYPE_DOMAIN   = 3;
+    public const GATEWAY_TYPE_NONE = 0;
+    public const GATEWAY_TYPE_IPV4 = 1;
+    public const GATEWAY_TYPE_IPV6 = 2;
+    public const GATEWAY_TYPE_DOMAIN = 3;
 
-    const ALGORITHM_NONE        = 0;
-    const ALGORITHM_DSA         = 1;
-    const ALGORITHM_RSA         = 2;
+    public const ALGORITHM_NONE = 0;
+    public const ALGORITHM_DSA = 1;
+    public const ALGORITHM_RSA = 2;
 
     /*
-     * Precedence (used the same was as a preference field)
+     * Precedence (used the same way as a preference field)
      */
-    public $precedence;
+    public string $precedence;
 
     /*
-     * Gateway type - specifies the format of the gataway information
+     * Gateway type - specifies the format of the gateway information
      * This can be either:
      *
      *  0    No Gateway
@@ -58,7 +62,7 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
      *  3    wire-encoded domain name (not compressed)
      *
      */
-    public $gateway_type;
+    public string $gateway_type;
 
     /*
      * The algorithm used
@@ -70,17 +74,17 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
      *  2    RSA key is present
      *
      */
-    public $algorithm;
+    public string $algorithm;
 
     /*
-     * The gatway information 
+     * The gateway information
      */
-    public $gateway;
+    public string $gateway;
 
     /*
      * the public key
      */
-    public $key;
+    public string $key;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -89,7 +93,7 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
+    protected function rrToString() : string
     {
         $out = $this->precedence . ' ' . $this->gateway_type . ' ' . 
             $this->algorithm . ' ';
@@ -116,13 +120,13 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         //
         // load the data
@@ -142,19 +146,19 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
             break;
 
         case self::GATEWAY_TYPE_IPV4:
-            if (Net_DNS2::isIPv4($gateway) == false) {
+            if ( ! Net_DNS2::isIPv4( $gateway ) ) {
                 return false;
             }
             break;
 
         case self::GATEWAY_TYPE_IPV6:
-            if (Net_DNS2::isIPv6($gateway) == false) {
+            if ( ! Net_DNS2::isIPv6( $gateway ) ) {
                 return false;
             }
             break;
 
         case self::GATEWAY_TYPE_DOMAIN:
-            ; // do nothing
+            // do nothing
             break;
 
         default:
@@ -171,7 +175,7 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
 
         case self::ALGORITHM_DSA:
         case self::ALGORITHM_RSA:
-            ; // do nothing        
+            // do nothing
             break;
 
         default:
@@ -193,13 +197,13 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength > 0) {
 
@@ -215,7 +219,7 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
             $offset = 3;
 
             //
-            // extract the gatway based on the type
+            // extract the gateway based on the type
             //
             switch($this->gateway_type) {
             case self::GATEWAY_TYPE_NONE:
@@ -276,15 +280,15 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         //
         // pack the precedence, gateway type and algorithm
@@ -298,7 +302,7 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
         //
         switch($this->gateway_type) {
         case self::GATEWAY_TYPE_NONE:
-            ; // add nothing
+            // add nothing
             break;
         
         case self::GATEWAY_TYPE_IPV4:
@@ -319,7 +323,7 @@ class Net_DNS2_RR_IPSECKEY extends Net_DNS2_RR
         //
         switch($this->algorithm) {
         case self::ALGORITHM_NONE:
-            ; // add nothing
+            // add nothing
             break;
             
         case self::ALGORITHM_DSA:

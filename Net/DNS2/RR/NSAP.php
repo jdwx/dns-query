@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -33,15 +34,15 @@
  */
 class Net_DNS2_RR_NSAP extends Net_DNS2_RR
 {
-    public $afi;
-    public $idi;
-    public $dfi;
-    public $aa;
-    public $rsvd;
-    public $rd;
-    public $area;
-    public $id;
-    public $sel;
+    public string $afi;
+    public string $idi;
+    public string $dfi;
+    public string $aa;
+    public string $rsvd;
+    public string $rd;
+    public string $area;
+    public string $id;
+    public string $sel;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -50,8 +51,7 @@ class Net_DNS2_RR_NSAP extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->cleanString($this->afi) . '.' . 
             $this->cleanString($this->idi) . '.' . 
             $this->cleanString($this->dfi) . '.' . 
@@ -66,19 +66,19 @@ class Net_DNS2_RR_NSAP extends Net_DNS2_RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
+    protected function rrFromString(array $rdata) : bool
     {
         $data = strtolower(trim(array_shift($rdata)));
 
         //
         // there is no real standard for format, so we can't rely on the fact that
-        // the value will come in with periods separating the values- so strip 
+        // the value will come in with periods separating the values so strip
         // them out if they're included, and parse without them.
         //    
         $data = str_replace([ '.', '0x' ], '', $data);
@@ -112,13 +112,13 @@ class Net_DNS2_RR_NSAP extends Net_DNS2_RR
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
+    protected function rrSet(Net_DNS2_Packet $packet) : bool
     {
         if ($this->rdlength == 20) {
 
@@ -128,7 +128,7 @@ class Net_DNS2_RR_NSAP extends Net_DNS2_RR
             $this->afi = dechex(ord($this->rdata[0]));
 
             //
-            // we only support AFI 47- there arent' any others defined.
+            // we only support AFI 47- there aren't any others defined.
             //
             if ($this->afi == '47') {
 
@@ -163,15 +163,15 @@ class Net_DNS2_RR_NSAP extends Net_DNS2_RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
+     * @param Net_DNS2_Packet $packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return ?string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string
     {
         if ($this->afi == '0x47') {
 

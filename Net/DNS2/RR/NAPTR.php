@@ -1,4 +1,5 @@
 <?php
+declare( strict_types = 1 );
 
 /**
  * DNS Library for handling lookups and updates. 
@@ -42,34 +43,34 @@ class Net_DNS2_RR_NAPTR extends Net_DNS2_RR
     /*
      * the order in which the NAPTR records MUST be processed
      */
-    public $order;
+    public string $order;
 
     /*
      * specifies the order in which NAPTR records with equal "order"
      * values SHOULD be processed
      */
-    public $preference;
+    public string $preference;
 
     /*
      * rewrite flags
      */
-    public $flags;
+    public string $flags;
 
     /* 
      * Specifies the service(s) available down this rewrite path
      */
-    public $services;
+    public string $services;
 
     /*
      * regular expression
      */
-    public $regexp;
+    public string $regexp;
 
     /* 
      * The next NAME to query for NAPTR, SRV, or address records
      * depending on the value of the flags field
      */
-    public $replacement;
+    public string $replacement;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -78,8 +79,7 @@ class Net_DNS2_RR_NAPTR extends Net_DNS2_RR
      * @access  protected
      *
      */
-    protected function rrToString()
-    {
+    protected function rrToString() : string {
         return $this->order . ' ' . $this->preference . ' ' . 
             $this->formatString($this->flags) . ' ' . 
             $this->formatString($this->services) . ' ' . 
@@ -92,12 +92,11 @@ class Net_DNS2_RR_NAPTR extends Net_DNS2_RR
      *
      * @param array $rdata a string split line of values for the rdata
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrFromString(array $rdata)
-    {
+    protected function rrFromString(array $rdata) : bool {
         $this->order        = array_shift($rdata);
         $this->preference   = array_shift($rdata);
 
@@ -120,12 +119,11 @@ class Net_DNS2_RR_NAPTR extends Net_DNS2_RR
      *
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet to parse the RR from
      *
-     * @return boolean
+     * @return bool
      * @access protected
      *
      */
-    protected function rrSet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrSet(Net_DNS2_Packet $packet) : bool {
         if ($this->rdlength > 0) {
             
             //
@@ -156,13 +154,12 @@ class Net_DNS2_RR_NAPTR extends Net_DNS2_RR
      * @param Net_DNS2_Packet &$packet a Net_DNS2_Packet packet use for
      *                                 compressed names
      *
-     * @return mixed                   either returns a binary packed
+     * @return null|string                   either returns a binary packed
      *                                 string or null on failure
      * @access protected
      *
      */
-    protected function rrGet(Net_DNS2_Packet &$packet)
-    {
+    protected function rrGet(Net_DNS2_Packet $packet) : ?string {
         if ( (isset($this->order)) && (strlen($this->services) > 0) ) {
             
             $data = pack('nn', $this->order, $this->preference);
