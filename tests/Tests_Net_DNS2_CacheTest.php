@@ -1,5 +1,8 @@
 <?php
+
+
 declare( strict_types = 1 );
+
 
 /**
  * DNS Library for handling lookups and updates.
@@ -18,7 +21,11 @@ declare( strict_types = 1 );
  *
  */
 
-require_once 'Net/DNS2.php';
+
+use JDWX\DNSQuery\Resolver;
+
+
+require_once 'Net_DNS2.php';
 
 /**
  * This test uses the Google public DNS servers to perform a resolution test;
@@ -33,12 +40,12 @@ class Tests_Net_DNS2_CacheTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
-     * @throws Net_DNS2_Exception
+     * @throws Exception
      */
     public function testCache() : void {
         $cache_file = '/tmp/net_dns2_test.cache';
 
-        $r = new Net_DNS2_Resolver(
+        $r = new Resolver(
         [ 
             'nameservers'   => [ '8.8.8.8', '8.8.4.4' ],
             'use_cache'     => true,

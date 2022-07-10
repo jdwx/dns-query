@@ -18,7 +18,12 @@ declare( strict_types = 1 );
  *
  */
 
-require_once 'Net/DNS2.php';
+
+use JDWX\DNSQuery\Resolver;
+use JDWX\DNSQuery\RR\OPT;
+
+
+require_once 'Net_DNS2.php';
 
 /**
  * Test class to test the DNSSEC logic
@@ -32,21 +37,21 @@ class Tests_Net_DNS2_DNSSECTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
-     * @throws Net_DNS2_Exception
+     * @throws JDWX\DNSQuery\Exception
      */
     public function testDNSSEC() : void
     {
         $ns = [ '8.8.8.8', '8.8.4.4' ];
 
-        $r = new Net_DNS2_Resolver([ 'nameservers' => $ns ]);
+        $r = new Resolver([ 'nameservers' => $ns ]);
 
         $r->dnssec = true;
 
         $result = $r->query('org', 'SOA' );
 
         static::assertTrue(($result->header->ad == 1));
-        static::assertTrue(($result->additional[0] instanceof Net_DNS2_RR_OPT));
-        assert( $result->additional[0] instanceof Net_DNS2_RR_OPT );
+        static::assertTrue(($result->additional[0] instanceof OPT));
+        assert( $result->additional[0] instanceof OPT );
         static::assertTrue(($result->additional[0]->do == 1));
     }
 }

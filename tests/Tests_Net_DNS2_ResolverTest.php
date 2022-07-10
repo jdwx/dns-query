@@ -18,7 +18,13 @@ declare( strict_types = 1 );
  *
  */
 
-require_once 'Net/DNS2.php';
+
+use JDWX\DNSQuery\Lookups;
+use JDWX\DNSQuery\Resolver;
+use JDWX\DNSQuery\RR\MX;
+
+
+require_once 'Net_DNS2.php';
 
 /**
  * This test uses the Google public DNS servers to perform a resolution test;
@@ -33,18 +39,18 @@ class Tests_Net_DNS2_ResolverTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
-     * @throws Net_DNS2_Exception
+     * @throws JDWX\DNSQuery\Exception
      */
     public function testResolver() : void {
         $ns = [ '8.8.8.8', '8.8.4.4' ];
 
-        $r = new Net_DNS2_Resolver([ 'nameservers' => $ns ]);
+        $r = new Resolver([ 'nameservers' => $ns ]);
 
         $result = $r->query('google.com', 'MX');
 
-        static::assertSame($result->header->qr, Net_DNS2_Lookups::QR_RESPONSE);
+        static::assertSame($result->header->qr, Lookups::QR_RESPONSE);
         static::assertSame(count($result->question), 1);
         static::assertNotEmpty( $result->answer );
-        static::assertTrue($result->answer[0] instanceof Net_DNS2_RR_MX);
+        static::assertTrue($result->answer[0] instanceof MX);
     }
 }

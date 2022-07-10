@@ -47,18 +47,19 @@ class Tests_Net_DNS2_AllTests
      *
      */
     public static function main() : void {
-        PHPUnit_TextUI_TestRunner::run(self::suite());
+        $test = new PHPUnit\TextUI\TestRunner();
+        $test->run(self::suite());
     }
 
     /**
      * test suite
      *
-     * @return PHPUnit_Framework_TestSuite
+     * @return PHPUnit\Framework\TestSuite
      * @access public
      *
      */
-    public static function suite() : PHPUnit_Framework_TestSuite {
-        $suite = new PHPUnit_Framework_TestSuite('PEAR - Net_DNS2');
+    public static function suite() : PHPUnit\Framework\TestSuite {
+        $suite = new PHPUnit\Framework\TestSuite('PEAR - Net_DNS2');
 
         $suite->addTestSuite('Tests_Net_DNS2_CacheTest');
         $suite->addTestSuite('Tests_Net_DNS2_ParserTest');

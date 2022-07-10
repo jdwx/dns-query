@@ -18,7 +18,15 @@ declare( strict_types = 1 );
  *
  */
 
-require_once 'Net/DNS2.php';
+
+use JDWX\DNSQuery\Packet\RequestPacket;
+use JDWX\DNSQuery\Packet\ResponsePacket;
+use JDWX\DNSQuery\RR\RR;
+use JDWX\DNSQuery\RR\TSIG;
+use JDWX\DNSQuery\Updater;
+
+
+require_once 'Net_DNS2.php';
 
 /**
  * Test class to test the parsing code
@@ -32,26 +40,27 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
-     * @throws Net_DNS2_Exception
+     * @throws JDWX\DNSQuery\Exception
      */
     public function testTSIG() : void {
         //
         // create a new packet
         //
-        $request = new Net_DNS2_Packet_Request('example.com', 'SOA', 'IN');
+        $request = new RequestPacket('example.com', 'SOA', 'IN');
 
         //
         // add an A record to the authority section, like an update request
         //
-        $request->authority[] = Net_DNS2_RR::fromString('test.example.com A 10.10.10.10');
+        $request->authority[] = RR::fromString('test.example.com A 10.10.10.10');
         $request->header->nscount = 1;
 
         //
         // add the TSIG as additional
         //
-        $request->additional[] = Net_DNS2_RR::fromString('mykey TSIG Zm9vYmFy');
+        $request->additional[] = RR::fromString('mykey TSIG Zm9vYmFy');
         $request->header->arcount = 1;
 
+        assert( $request->additional[0] instanceof TSIG );
         $line = $request->additional[0]->name . '. ' . $request->additional[0]->ttl . ' ' .
         $request->additional[0]->class . ' ' . $request->additional[0]->type . ' ' .
         $request->additional[0]->algorithm . '. ' . $request->additional[0]->time_signed  . ' '.
@@ -65,7 +74,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
         //
         // parse the binary
         //
-        $response = new Net_DNS2_Packet_Response($data, strlen($data));
+        $response = new ResponsePacket($data, strlen($data));
 
         //
         // the answer data in the response, should match our initial line exactly
@@ -80,8 +89,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
-     * @throws Net_DNS2_Exception
-     * @throws Net_DNS2_Exception
+     * @throws JDWX\DNSQuery\Exception
      */
     public function testParser() : void {
         $rrs = [
@@ -158,15 +166,15 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             // create a new packet
             //
             if ($rr == 'PTR') {
-                $request = new Net_DNS2_Packet_Request('1.0.0.127.in-addr.arpa', $rr, 'IN');
+                $request = new RequestPacket('1.0.0.127.in-addr.arpa', $rr, 'IN');
             } else {
-                $request = new Net_DNS2_Packet_Request('example.com', $rr, 'IN');
+                $request = new RequestPacket('example.com', $rr, 'IN');
             }
 
             //
             // parse the line
             //
-            $a = Net_DNS2_RR::fromString($line);
+            $a = RR::fromString($line);
 
             //
             // check that the object is right
@@ -187,7 +195,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             //
             // parse the binary
             //
-            $response = new Net_DNS2_Packet_Response($data, strlen($data));
+            $response = new ResponsePacket($data, strlen($data));
 
             //
             // the answer data in the response, should match our initial line exactly
@@ -203,7 +211,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
      * @return void
      * @access public
      *
-     * @throws Net_DNS2_Exception
+     * @throws JDWX\DNSQuery\Exception
      */
     public function testCompression() : void
     {
@@ -229,7 +237,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
         //
         // create a new updater object
         //
-        $u = new Net_DNS2_Updater("example.com", [ 'nameservers' => [ '10.10.0.1' ] ]);
+        $u = new Updater("example.com", [ 'nameservers' => [ '10.10.0.1' ] ]);
 
         //
         // add each RR to the same object, so we can build a build compressed name list
@@ -241,7 +249,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
             //
             // parse the line
             //
-            $a = Net_DNS2_RR::fromString($line);
+            $a = RR::fromString($line);
 
             //
             // check that the object is right
@@ -268,7 +276,7 @@ class Tests_Net_DNS2_ParserTest extends PHPUnit\Framework\TestCase
         // parse the binary
         //
         $data = $request->get();
-        $response = new Net_DNS2_Packet_Response($data, strlen($data));
+        $response = new ResponsePacket($data, strlen($data));
 
         //
         // get the authority section of the response, and clean up the
