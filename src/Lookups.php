@@ -7,6 +7,73 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\RR\A;
+use JDWX\DNSQuery\RR\AAAA;
+use JDWX\DNSQuery\RR\AFSDB;
+use JDWX\DNSQuery\RR\ALIAS;
+use JDWX\DNSQuery\RR\AMTRELAY;
+use JDWX\DNSQuery\RR\ANY;
+use JDWX\DNSQuery\RR\APL;
+use JDWX\DNSQuery\RR\ATMA;
+use JDWX\DNSQuery\RR\AVC;
+use JDWX\DNSQuery\RR\CAA;
+use JDWX\DNSQuery\RR\CDNSKEY;
+use JDWX\DNSQuery\RR\CDS;
+use JDWX\DNSQuery\RR\CERT;
+use JDWX\DNSQuery\RR\CNAME;
+use JDWX\DNSQuery\RR\CSYNC;
+use JDWX\DNSQuery\RR\DHCID;
+use JDWX\DNSQuery\RR\DLV;
+use JDWX\DNSQuery\RR\DNAME;
+use JDWX\DNSQuery\RR\DNSKEY;
+use JDWX\DNSQuery\RR\DS;
+use JDWX\DNSQuery\RR\EID;
+use JDWX\DNSQuery\RR\EUI48;
+use JDWX\DNSQuery\RR\EUI64;
+use JDWX\DNSQuery\RR\HINFO;
+use JDWX\DNSQuery\RR\HIP;
+use JDWX\DNSQuery\RR\IPSECKEY;
+use JDWX\DNSQuery\RR\ISDN;
+use JDWX\DNSQuery\RR\KEY;
+use JDWX\DNSQuery\RR\KX;
+use JDWX\DNSQuery\RR\L32;
+use JDWX\DNSQuery\RR\L64;
+use JDWX\DNSQuery\RR\LOC;
+use JDWX\DNSQuery\RR\LP;
+use JDWX\DNSQuery\RR\MX;
+use JDWX\DNSQuery\RR\NAPTR;
+use JDWX\DNSQuery\RR\NID;
+use JDWX\DNSQuery\RR\NIMLOC;
+use JDWX\DNSQuery\RR\NS;
+use JDWX\DNSQuery\RR\NSAP;
+use JDWX\DNSQuery\RR\NSEC;
+use JDWX\DNSQuery\RR\NSEC3;
+use JDWX\DNSQuery\RR\NSEC3PARAM;
+use JDWX\DNSQuery\RR\OPENPGPKEY;
+use JDWX\DNSQuery\RR\OPT;
+use JDWX\DNSQuery\RR\PTR;
+use JDWX\DNSQuery\RR\PX;
+use JDWX\DNSQuery\RR\RP;
+use JDWX\DNSQuery\RR\RRSIG;
+use JDWX\DNSQuery\RR\RT;
+use JDWX\DNSQuery\RR\SIG;
+use JDWX\DNSQuery\RR\SMIMEA;
+use JDWX\DNSQuery\RR\SOA;
+use JDWX\DNSQuery\RR\SPF;
+use JDWX\DNSQuery\RR\SRV;
+use JDWX\DNSQuery\RR\SSHFP;
+use JDWX\DNSQuery\RR\TA;
+use JDWX\DNSQuery\RR\TALINK;
+use JDWX\DNSQuery\RR\TKEY;
+use JDWX\DNSQuery\RR\TLSA;
+use JDWX\DNSQuery\RR\TSIG;
+use JDWX\DNSQuery\RR\TXT;
+use JDWX\DNSQuery\RR\TYPE65534;
+use JDWX\DNSQuery\RR\URI;
+use JDWX\DNSQuery\RR\WKS;
+use JDWX\DNSQuery\RR\X25;
+
+
 /**
  * DNS Library for handling lookups and updates.
  *
@@ -333,7 +400,7 @@ class Lookups
     ];
 
     /*
-     * Qtypes and Metatypes - defined in RFC2929 section 3.1
+     * Q-types and Meta-types - defined in RFC2929 section 3.1
      */
     public static array $rr_qtypes_by_id      = [];
     public static array $rr_qtypes_by_name    = [
@@ -359,76 +426,76 @@ class Lookups
     public static array $rr_types_class_to_id = [];
     public static array $rr_types_id_to_class = [
 
-        1           => 'Net_DNS2_RR_A',
-        2           => 'Net_DNS2_RR_NS',
-        5           => 'Net_DNS2_RR_CNAME',
-        6           => 'Net_DNS2_RR_SOA',
-        11          => 'Net_DNS2_RR_WKS',
-        12          => 'Net_DNS2_RR_PTR',
-        13          => 'Net_DNS2_RR_HINFO',
-        15          => 'Net_DNS2_RR_MX',
-        16          => 'Net_DNS2_RR_TXT',
-        17          => 'Net_DNS2_RR_RP',
-        18          => 'Net_DNS2_RR_AFSDB',
-        19          => 'Net_DNS2_RR_X25',
-        20          => 'Net_DNS2_RR_ISDN',
-        21          => 'Net_DNS2_RR_RT',
-        22          => 'Net_DNS2_RR_NSAP',
-        24          => 'Net_DNS2_RR_SIG',
-        25          => 'Net_DNS2_RR_KEY',
-        26          => 'Net_DNS2_RR_PX',
-        28          => 'Net_DNS2_RR_AAAA',
-        29          => 'Net_DNS2_RR_LOC',
-        31          => 'Net_DNS2_RR_EID',
-        32          => 'Net_DNS2_RR_NIMLOC',
-        33          => 'Net_DNS2_RR_SRV',
-        34          => 'Net_DNS2_RR_ATMA',
-        35          => 'Net_DNS2_RR_NAPTR',
-        36          => 'Net_DNS2_RR_KX',
-        37          => 'Net_DNS2_RR_CERT',
-        39          => 'Net_DNS2_RR_DNAME',
-        41          => 'Net_DNS2_RR_OPT',
-        42          => 'Net_DNS2_RR_APL',
-        43          => 'Net_DNS2_RR_DS',
-        44          => 'Net_DNS2_RR_SSHFP',
-        45          => 'Net_DNS2_RR_IPSECKEY',
-        46          => 'Net_DNS2_RR_RRSIG',
-        47          => 'Net_DNS2_RR_NSEC',
-        48          => 'Net_DNS2_RR_DNSKEY',
-        49          => 'Net_DNS2_RR_DHCID',
-        50          => 'Net_DNS2_RR_NSEC3',
-        51          => 'Net_DNS2_RR_NSEC3PARAM',
-        52          => 'Net_DNS2_RR_TLSA',
-        53          => 'Net_DNS2_RR_SMIMEA',
-        55          => 'Net_DNS2_RR_HIP',
-        58          => 'Net_DNS2_RR_TALINK',
-        59          => 'Net_DNS2_RR_CDS',
-        60          => 'Net_DNS2_RR_CDNSKEY',
-        61          => 'Net_DNS2_RR_OPENPGPKEY',
-        62          => 'Net_DNS2_RR_CSYNC',
-        99          => 'Net_DNS2_RR_SPF',
-        104         => 'Net_DNS2_RR_NID',
-        105         => 'Net_DNS2_RR_L32',
-        106         => 'Net_DNS2_RR_L64',
-        107         => 'Net_DNS2_RR_LP',
-        108         => 'Net_DNS2_RR_EUI48',
-        109         => 'Net_DNS2_RR_EUI64',
+        1           => A::class,
+        2           => NS::class,
+        5           => CNAME::class,
+        6           => SOA::class,
+        11          => WKS::class,
+        12          => PTR::class,
+        13          => HINFO::class,
+        15          => MX::class,
+        16          => TXT::class,
+        17          => RP::class,
+        18          => AFSDB::class,
+        19          => X25::class,
+        20          => ISDN::class,
+        21          => RT::class,
+        22          => NSAP::class,
+        24          => SIG::class,
+        25          => KEY::class,
+        26          => PX::class,
+        28          => AAAA::class,
+        29          => LOC::class,
+        31          => EID::class,
+        32          => NIMLOC::class,
+        33          => SRV::class,
+        34          => ATMA::class,
+        35          => NAPTR::class,
+        36          => KX::class,
+        37          => CERT::class,
+        39          => DNAME::class,
+        41          => OPT::class,
+        42          => APL::class,
+        43          => DS::class,
+        44          => SSHFP::class,
+        45          => IPSECKEY::class,
+        46          => RRSIG::class,
+        47          => NSEC::class,
+        48          => DNSKEY::class,
+        49          => DHCID::class,
+        50          => NSEC3::class,
+        51          => NSEC3PARAM::class,
+        52          => TLSA::class,
+        53          => SMIMEA::class,
+        55          => HIP::class,
+        58          => TALINK::class,
+        59          => CDS::class,
+        60          => CDNSKEY::class,
+        61          => OPENPGPKEY::class,
+        62          => CSYNC::class,
+        99          => SPF::class,
+        104         => NID::class,
+        105         => L32::class,
+        106         => L64::class,
+        107         => LP::class,
+        108         => EUI48::class,
+        109         => EUI64::class,
 
-        249         => 'Net_DNS2_RR_TKEY',
-        250         => 'Net_DNS2_RR_TSIG',
+        249         => TKEY::class,
+        250         => TSIG::class,
 
     //    251            - IXFR - handled as a full zone transfer (252)
     //    252            - AXFR - handled as a function call
 
-        255         => 'Net_DNS2_RR_ANY',
-        256         => 'Net_DNS2_RR_URI',
-        257         => 'Net_DNS2_RR_CAA',
-        258         => 'Net_DNS2_RR_AVC',
-        260         => 'Net_DNS2_RR_AMTRELAY',
-        32768       => 'Net_DNS2_RR_TA',
-        32769       => 'Net_DNS2_RR_DLV',
-        65401       => 'Net_DNS2_RR_ALIAS',
-        65534       => 'Net_DNS2_RR_TYPE65534'
+        255         => ANY::class,
+        256         => URI::class,
+        257         => CAA::class,
+        258         => AVC::class,
+        260         => AMTRELAY::class,
+        32768       => TA::class,
+        32769       => DLV::class,
+        65401       => ALIAS::class,
+        65534       => TYPE65534::class,
     ];
 
     /*

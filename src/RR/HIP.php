@@ -150,7 +150,7 @@ class HIP extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the algorithm and length values
@@ -184,7 +184,7 @@ class HIP extends RR
             //
             $offset = $packet->offset + $offset;
 
-            while ( ($offset - $packet->offset) < $this->rdlength) {
+            while ( ($offset - $packet->offset) < $this->rdLength) {
 
                 $this->rendezvous_servers[] = Packet::expand(
                     $packet, $offset

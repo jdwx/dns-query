@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Packet;
 
 
 use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Question;
 use JDWX\DNSQuery\RR\RR;
 
@@ -313,6 +314,28 @@ class Packet
         return trim($name, '.');
     }
 
+
+    /**
+     *  expands the domain name stored at a given offset in this DNS Packet
+     *  and throws an exception on failure (contrast static::expand()).
+     *
+     * @param int  &$offset             the offset into the given packet object
+     * @param bool $escape_dot_literals if we should escape periods in names
+     *
+     * @return string the expanded domain name
+     * @access public
+     *
+     * @throws Exception
+     */
+    public function expandEx( int & $offset, bool $escape_dot_literals = false) : string {
+        $x = $this::expand( $this, $offset, $escape_dot_literals );
+        if ( is_string( $x ) ) {
+            return $x;
+        }
+        throw new Exception( 'unable to expand domain in packet', Lookups::E_PARSE_ERROR );
+    }
+
+
     /**
      * parses a domain label from a DNS Packet at the given offset
      *
@@ -346,6 +369,28 @@ class Packet
 
         return $name;
     }
+
+
+    /**
+     * parses a domain label from a DNS Packet at the given offset and
+     * throws an exception on failure (contrast static::label()).
+     *
+     * @param int         &$offset the offset into the given packet object
+     *
+     * @return string the parsed label
+     * @access public
+     *
+     * @throws Exception
+     */
+    public function labelEx( int & $offset ) : string {
+        $x = $this::label( $this, $offset );
+        if ( is_string( $x ) ) {
+            return $x;
+        }
+        throw new Exception( 'unable to parse label in packet', Lookups::E_PARSE_ERROR );
+    }
+
+
 
     /**
      * copies the contents of the given packet, to the local packet object. this

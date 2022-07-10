@@ -129,7 +129,7 @@ class NSAP extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength == 20) {
+        if ($this->rdLength == 20) {
 
             //
             // get the AFI value

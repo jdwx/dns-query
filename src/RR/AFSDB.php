@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -79,6 +80,7 @@ class AFSDB extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -87,10 +89,11 @@ class AFSDB extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
             
             //
             // unpack the subtype
@@ -100,7 +103,7 @@ class AFSDB extends RR
             $this->subtype  = $x['subtype'];
             $offset         = $packet->offset + 2;
 
-            $this->hostname = Packet::expand($packet, $offset);
+            $this->hostname = $packet->expandEx( $offset );
 
             return true;
         }

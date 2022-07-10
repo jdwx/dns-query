@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\BitMap;
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -47,7 +48,7 @@ class NSEC extends RR
     public string $next_domain_name;
 
     /*
-     * identifies the RRset types that exist at the NSEC RR's owner name.
+     * identifies the RR set types that exist at the NSEC RR's owner name.
      */
     public array $type_bit_maps = [];
 
@@ -87,6 +88,7 @@ class NSEC extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -95,16 +97,17 @@ class NSEC extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // expand the next domain name
             //
             $offset = $packet->offset;
-            $this->next_domain_name = Packet::expand($packet, $offset);
+            $this->next_domain_name = $packet->expandEx( $offset );
 
             //
             // parse out the RRs from the bitmap

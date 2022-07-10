@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -94,6 +95,7 @@ class SRV extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -102,13 +104,15 @@ class SRV extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
             
             //
             // unpack the priority, weight and port
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('npriority/nweight/nport', $this->rdata);
 
             $this->priority = $x['priority'];
@@ -116,7 +120,7 @@ class SRV extends RR
             $this->port     = $x['port'];
 
             $offset         = $packet->offset + 6;
-            $this->target   = Packet::expand($packet, $offset);
+            $this->target   = $packet->expandEx( $offset );
 
             return true;
         }

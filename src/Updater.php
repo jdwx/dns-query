@@ -204,7 +204,7 @@ class Updater extends Net_DNS2
         $rr->name       = $name;
         $rr->ttl        = 0;
         $rr->class      = 'ANY';
-        $rr->rdlength   = -1;
+        $rr->rdLength   = -1;
         $rr->rdata      = '';    
 
         //
@@ -248,7 +248,7 @@ class Updater extends Net_DNS2
         $rr->ttl        = 0;
         $rr->type       = 'ANY';
         $rr->class      = 'ANY';
-        $rr->rdlength   = -1;
+        $rr->rdLength   = -1;
         $rr->rdata      = '';
 
         //
@@ -302,7 +302,7 @@ class Updater extends Net_DNS2
         $rr->name       = $name;
         $rr->ttl        = 0;
         $rr->class      = 'ANY';
-        $rr->rdlength   = -1;
+        $rr->rdLength   = -1;
         $rr->rdata      = '';    
 
         //
@@ -395,7 +395,7 @@ class Updater extends Net_DNS2
         $rr->name       = $name;
         $rr->ttl        = 0;
         $rr->class      = 'NONE';
-        $rr->rdlength   = -1;
+        $rr->rdLength   = -1;
         $rr->rdata      = '';    
 
         //
@@ -444,7 +444,7 @@ class Updater extends Net_DNS2
         $rr->ttl        = 0;
         $rr->type       = 'ANY';
         $rr->class      = 'ANY';
-        $rr->rdlength   = -1;
+        $rr->rdLength   = -1;
         $rr->rdata      = '';
 
         //
@@ -490,7 +490,7 @@ class Updater extends Net_DNS2
         $rr->ttl        = 0;
         $rr->type       = 'ANY';
         $rr->class      = 'NONE';
-        $rr->rdlength   = -1;
+        $rr->rdLength   = -1;
         $rr->rdata      = '';
 
         //
@@ -520,10 +520,10 @@ class Updater extends Net_DNS2
         //
         // check for an authentication method; either TSIG or SIG
         //
-        if (   ($this->auth_signature instanceof TSIG)
-            || ($this->auth_signature instanceof SIG)
+        if (   ($this->authSignature instanceof TSIG)
+            || ($this->authSignature instanceof SIG)
         ) {
-            $p->additional[] = $this->auth_signature;
+            $p->additional[] = $this->authSignature;
         }
 
         //
@@ -557,10 +557,10 @@ class Updater extends Net_DNS2
         //
         // check for an authentication method; either TSIG or SIG
         //
-        if (   ($this->auth_signature instanceof TSIG)
-            || ($this->auth_signature instanceof SIG)
+        if (   ($this->authSignature instanceof TSIG)
+            || ($this->authSignature instanceof SIG)
         ) {
-            $this->_packet->additional[] = $this->auth_signature;
+            $this->_packet->additional[] = $this->authSignature;
         }
 
         //

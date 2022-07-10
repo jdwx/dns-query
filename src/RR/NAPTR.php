@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -123,6 +124,7 @@ class NAPTR extends RR
         return false;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -131,25 +133,27 @@ class NAPTR extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
             
             //
             // unpack the order and preference
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('norder/npreference', $this->rdata);
-            
+
             $this->order        = $x['order'];
             $this->preference   = $x['preference'];
 
             $offset             = $packet->offset + 4;
 
-            $this->flags        = Packet::label($packet, $offset);
-            $this->services     = Packet::label($packet, $offset);
-            $this->regexp       = Packet::label($packet, $offset);
+            $this->flags        = $packet->labelEx( $offset );
+            $this->services     = $packet->labelEx( $offset );
+            $this->regexp       = $packet->labelEx( $offset );
 
-            $this->replacement  = Packet::expand($packet, $offset);
+            $this->replacement  = $packet->expandEx( $offset );
 
             return true;
         }

@@ -57,9 +57,9 @@ use JetBrains\PhpStorm\ArrayShape;
  *    |                      TTL                      |
  *    |                                               |
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    |                   RDLENGTH                    |
+ *    |                   rdLength                    |
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
- *    /                     RDATA                     /
+ *    /                     RData                     /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
@@ -89,7 +89,7 @@ abstract class RR
     /*
      * The length of the rdata field
      */
-    public int $rdlength;
+    public int $rdLength;
 
     /*
      * The resource record specific data as a packed binary string
@@ -140,6 +140,28 @@ abstract class RR
      *
      */
     abstract protected function rrGet(Packet $packet) : ?string;
+
+
+    /**
+     * returns a binary packet DNS RR object and throws an
+     * exception if it fails
+     *
+     * @param Packet $packet a Packet to use for compressed names
+     *
+     *
+     * @return string                   either returns a binary packed string
+     * @access protected
+     *
+     * @throws Exception
+     */
+    protected function rrGetEx( Packet $packet ) : string {
+        $x = $this->rrGet( $packet );
+        if ( is_string( $x ) ) {
+            return $x;
+        }
+        throw new Exception( "getting type-specific RDATA failed" );
+    }
+
 
     /**
      * Constructor - builds a new RR object
@@ -311,11 +333,12 @@ abstract class RR
         }
 
         $this->ttl      = $rr['ttl'];
-        $this->rdlength = $rr['rdlength'];
+        $this->rdLength = $rr['rdlength'];
         $this->rdata    = substr($packet->rdata, $packet->offset, $rr['rdlength']);
 
         return $this->rrSet($packet);
     }
+
 
     /**
      * returns a binary packed DNS RR object
@@ -325,6 +348,7 @@ abstract class RR
      * @return string
      * @access public
      *
+     * @throws Exception
      */
     public function get(Packet $packet) : string
     {
@@ -373,9 +397,8 @@ abstract class RR
         //
         // get the RR specific details
         //
-        if ($this->rdlength != -1) {
-
-            $rdata = $this->rrGet($packet);
+        if ($this->rdLength != -1) {
+             $rdata = $this->rrGetEx( $packet );
         }
 
         //
@@ -385,6 +408,7 @@ abstract class RR
 
         return $data;
     }
+
 
     /**
      * parses a binary packet, and returns the appropriate RR object,
@@ -492,7 +516,7 @@ abstract class RR
      *
      * @param string $line a standard DNS config line 
      *
-     * @return mixed       returns a new RR object for the given RR
+     * @return RR       returns a new RR object for the given RR
      * @throws Exception
      * @access public
      *
@@ -541,7 +565,7 @@ abstract class RR
                 //
             case ($value === 0):
 
-                $ttl = array_shift($values);
+                $ttl = (int) array_shift( $values );
                 break;
 
             case isset(Lookups::$classes_by_name[strtoupper($value)]):

@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -70,6 +71,7 @@ class DNAME extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -78,13 +80,14 @@ class DNAME extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset = $packet->offset;
-            $this->dname = Packet::expand($packet, $offset);
+            $this->dname = $packet->expandEx( $offset );
 
             return true;
         }

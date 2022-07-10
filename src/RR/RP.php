@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -31,10 +32,10 @@ use JDWX\DNSQuery\Packet\Packet;
  * RP Resource Record - RFC1183 section 2.2
  *
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                   mboxdname                   /
+ *    /                   mboxDName                   /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                   txtdname                    /
+ *    /                   txtDName                    /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
@@ -44,12 +45,12 @@ class RP extends RR
     /*
      * mailbox for the responsible person
      */
-    public string $mboxdname;
+    public string $mboxDName;
 
     /*
-     * is a domain name for which TXT RR's exists
+     * is a domain name for which TXT RRs exists
      */
-    public string $txtdname;
+    public string $txtDName;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -59,7 +60,7 @@ class RP extends RR
      *
      */
     protected function rrToString() : string {
-        return $this->cleanString($this->mboxdname) . '. ' . $this->cleanString($this->txtdname) . '.';
+        return $this->cleanString($this->mboxDName) . '. ' . $this->cleanString($this->txtDName) . '.';
     }
 
     /**
@@ -72,11 +73,12 @@ class RP extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->mboxdname    = $this->cleanString($rdata[0]);
-        $this->txtdname     = $this->cleanString($rdata[1]);
+        $this->mboxDName    = $this->cleanString($rdata[0]);
+        $this->txtDName     = $this->cleanString($rdata[1]);
 
         return true;
     }
+
 
     /**
      * parses the rdata of the Net_DNS2_Packet object
@@ -86,14 +88,15 @@ class RP extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset             = $packet->offset;
 
-            $this->mboxdname    = Packet::expand($packet, $offset, true);
-            $this->txtdname     = Packet::expand($packet, $offset);
+            $this->mboxDName    = $packet->expandEx( $offset, true );
+            $this->txtDName     = $packet->expandEx( $offset );
 
             return true;
         }
@@ -113,10 +116,10 @@ class RP extends RR
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->mboxdname) > 0) {
+        if (strlen($this->mboxDName) > 0) {
 
-            return $packet->compress( $this->mboxdname, $packet->offset ) .
-                $packet->compress( $this->txtdname, $packet->offset );
+            return $packet->compress( $this->mboxDName, $packet->offset ) .
+                $packet->compress( $this->txtDName, $packet->offset );
         }
 
         return null;

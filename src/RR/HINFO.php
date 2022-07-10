@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -84,6 +85,7 @@ class HINFO extends RR
         return false;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -92,15 +94,16 @@ class HINFO extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset = $packet->offset;
     
-            $this->cpu  = Packet::label($packet, $offset);
-            $this->os   = Packet::label($packet, $offset);
+            $this->cpu  = $packet->labelEx( $offset );
+            $this->os   = $packet->labelEx( $offset );
 
             return true;
         }

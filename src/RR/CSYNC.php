@@ -111,7 +111,7 @@ class CSYNC extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the serial and flags values

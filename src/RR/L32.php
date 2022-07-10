@@ -90,11 +90,12 @@ class L32 extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the values
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('npreference/C4locator', $this->rdata);
 
             $this->preference = $x['preference'];

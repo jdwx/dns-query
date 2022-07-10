@@ -108,7 +108,7 @@ class EUI64 extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $x = unpack('C8', $this->rdata);
             if (count($x) == 8) {

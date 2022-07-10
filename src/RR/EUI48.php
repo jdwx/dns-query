@@ -109,7 +109,7 @@ class EUI48 extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $x = unpack('C6', $this->rdata);
             if (count($x) == 6) {

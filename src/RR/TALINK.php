@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -77,6 +78,7 @@ class TALINK extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -85,14 +87,15 @@ class TALINK extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset         = $packet->offset;
 
-            $this->previous = Packet::label($packet, $offset);
-            $this->next     = Packet::label($packet, $offset);
+            $this->previous = $packet->labelEx( $offset );
+            $this->next     = $packet->labelEx( $offset );
 
             return true;
         }

@@ -118,7 +118,7 @@ class DHCID extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the id type and digest type
@@ -132,7 +132,7 @@ class DHCID extends RR
             // copy out the digest
             //
             $this->digest = base64_encode(
-                substr($this->rdata, 3, $this->rdlength - 3)
+                substr($this->rdata, 3, $this->rdLength - 3)
             );
 
             return true;

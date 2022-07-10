@@ -78,7 +78,7 @@ class TYPE65534 extends RR
      *
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
             $this->private_data  = $this->rdata;
 
             return true;

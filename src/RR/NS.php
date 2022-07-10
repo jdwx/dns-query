@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -31,7 +32,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * NS Resource Record - RFC1035 section 3.3.11
  *
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                   NSDNAME                     /
+ *    /                   NSD NAME                    /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
@@ -41,7 +42,7 @@ class NS extends RR
     /*
      * the hostname of the DNS server
      */
-    public string $nsdname;
+    public string $nsdName;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -51,7 +52,7 @@ class NS extends RR
      *
      */
     protected function rrToString() : string {
-        return $this->cleanString($this->nsdname) . '.';
+        return $this->cleanString($this->nsdName) . '.';
     }
 
     /**
@@ -64,9 +65,10 @@ class NS extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->nsdname = $this->cleanString(array_shift($rdata));
+        $this->nsdName = $this->cleanString(array_shift($rdata));
         return true;
     }
+
 
     /**
      * parses the rdata of the Net_DNS2_Packet object
@@ -76,12 +78,13 @@ class NS extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset = $packet->offset;
-            $this->nsdname = Packet::expand($packet, $offset);
+            $this->nsdName = $packet->expandEx( $offset );
 
             return true;
         }
@@ -101,9 +104,9 @@ class NS extends RR
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->nsdname) > 0) {
+        if (strlen($this->nsdName) > 0) {
 
-            return $packet->compress($this->nsdname, $packet->offset);
+            return $packet->compress($this->nsdName, $packet->offset);
         }
         
         return null;

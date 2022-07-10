@@ -110,7 +110,7 @@ class DNSKEY extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the flags, protocol and algorithm
@@ -176,7 +176,7 @@ class DNSKEY extends RR
     protected function getKeyTag() : int
     {
         $key = array_values(unpack("C*", $this->rdata));
-        $keysize = $this->rdlength;
+        $keysize = $this->rdLength;
 
         $ac = 0;
         for( $i = 0; $i < $keysize; $i++ )

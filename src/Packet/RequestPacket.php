@@ -57,16 +57,24 @@ class RequestPacket extends Packet
      * builds a new Net_DNS2_Packet_Request object
      *
      * @param string $name  the domain name for the packet
-     * @param string $type  the DNS RR type for the packet
-     * @param string $class the DNS class for the packet
+     * @param ?string $type  the DNS RR type for the packet
+     * @param ?string $class the DNS class for the packet
      *
      * @return bool
      * @throws Exception
      * @access public
      *
      */
-    public function set( string $name, string $type = 'A', string $class = 'IN' ) : bool
+    public function set( string $name, ?string $type = null, ?string $class = null ) : bool
     {
+        if ( ! is_string( $type ) ) {
+            $type = 'A';
+        }
+
+        if ( ! is_string( $class ) ) {
+            $class = 'IN';
+        }
+
         //
         // generate a new header
         //

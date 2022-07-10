@@ -89,7 +89,7 @@ class APL extends RR
 
                 $i = [
 
-                    'address_family'    => $m[2],
+                    'address_family'    => (int) $m[2],
                     'prefix'            => $m[4],
                     'n'                 => ($m[1] == '!') ? 1 : 0,
                     'afd_part'          => strtolower($m[3])
@@ -119,11 +119,11 @@ class APL extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset = 0;
 
-            while ($offset < $this->rdlength) {
+            while ($offset < $this->rdLength) {
 
                 //
                 // unpack the family, prefix, negate and length values

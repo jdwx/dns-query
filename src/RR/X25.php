@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -40,7 +41,7 @@ class X25 extends RR
     /*
      * The PSDN address
       */
-    public string $psdnaddress;
+    public string $psdnAddress;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -51,7 +52,7 @@ class X25 extends RR
      */
     protected function rrToString() : string
     {
-        return $this->formatString($this->psdnaddress);
+        return $this->formatString($this->psdnAddress);
     }
 
     /**
@@ -67,12 +68,13 @@ class X25 extends RR
         $data = $this->buildString($rdata);
         if (count($data) == 1) {
 
-            $this->psdnaddress = $data[0];
+            $this->psdnAddress = $data[0];
             return true;
         }
 
         return false;
     }
+
 
     /**
      * parses the rdata of the Net_DNS2_Packet object
@@ -82,11 +84,12 @@ class X25 extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
-            $this->psdnaddress = Packet::label($packet, $packet->offset);
+            $this->psdnAddress = $packet->labelEx( $packet->offset );
             return true;
         }
 
@@ -105,9 +108,9 @@ class X25 extends RR
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->psdnaddress) > 0) {
+        if (strlen($this->psdnAddress) > 0) {
 
-            $data = chr(strlen($this->psdnaddress)) . $this->psdnaddress;
+            $data = chr(strlen($this->psdnAddress)) . $this->psdnAddress;
             
             $packet->offset += strlen($data);
 

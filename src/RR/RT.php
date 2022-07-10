@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -78,6 +79,7 @@ class RT extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -86,9 +88,10 @@ class RT extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the preference
@@ -98,7 +101,7 @@ class RT extends RR
             $this->preference       = $x['preference'];
             $offset                 = $packet->offset + 2;
 
-            $this->intermediatehost =  Packet::expand($packet, $offset);
+            $this->intermediatehost =  $packet->expandEx( $offset );
 
             return true;
         }

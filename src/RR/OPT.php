@@ -62,7 +62,7 @@ class OPT extends RR
     /*
      * the extended response code stored in the TTL
      */
-    public int $extended_rcode;
+    public int $extended_response_code;
 
     /*
      * the implementation level
@@ -81,11 +81,11 @@ class OPT extends RR
 
     /**
      * Constructor - builds a new Net_DNS2_RR_OPT object; normally you wouldn't call
-     * this directly, but OPT RR's are a little different
+     * this directly, but OPT RRs are a little different
      *
-     * @param ?Packet & $packet a Packet or null to create an empty object
-     * @param ?array           $rr      an array with RR parse values or null to
-     *                                 create an empty object
+     * @param ?Packet   &$packet a Packet or null to create an empty object
+     * @param ?array    $rr      an array with RR parse values or null to
+     *                           create an empty object
      *
      * @throws Exception
      * @access public
@@ -98,16 +98,16 @@ class OPT extends RR
         // passing in binary data to parse, we just want a clean/empty object.
         //
         $this->type             = 'OPT';
-        $this->rdlength         = 0;
+        $this->rdLength         = 0;
 
         $this->option_length    = 0;
-        $this->extended_rcode   = 0;
+        $this->extended_response_code   = 0;
         $this->version          = 0;
         $this->do               = 0;
         $this->z                = 0;
 
         //
-        // everthing else gets passed through to the parent.
+        // everything else gets passed through to the parent.
         //
         if ( (!is_null($packet)) && (!is_null($rr)) ) {
 
@@ -146,9 +146,10 @@ class OPT extends RR
         $this->option_data      = array_shift($rdata);
         $this->option_length    = strlen($this->option_data);
 
+        /** @noinspection SpellCheckingInspection */
         $x = unpack('Cextended/Cversion/Cdo/Cz', pack('N', $this->ttl));
 
-        $this->extended_rcode   = $x['extended'];
+        $this->extended_response_code   = $x['extended'];
         $this->version          = $x['version'];
         $this->do               = ($x['do'] >> 7);
         $this->z                = $x['z'];
@@ -170,9 +171,10 @@ class OPT extends RR
         //
         // parse out the TTL value
         //
+        /** @noinspection SpellCheckingInspection */
         $x = unpack('Cextended/Cversion/Cdo/Cz', pack('N', $this->ttl));
 
-        $this->extended_rcode   = $x['extended'];
+        $this->extended_response_code   = $x['extended'];
         $this->version          = $x['version'];
         $this->do               = ($x['do'] >> 7);
         $this->z                = $x['z'];
@@ -180,11 +182,12 @@ class OPT extends RR
         //
         // parse the data, if there is any
         //
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the code and length
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('noption_code/noption_length', $this->rdata);
 
             $this->option_code      = $x['option_code'];
@@ -213,9 +216,10 @@ class OPT extends RR
         //
         // build the TTL value based on the local values
         //
+        /** @noinspection SpellCheckingInspection */
         $ttl = unpack(
             'N', 
-            pack('CCCC', $this->extended_rcode, $this->version, ($this->do << 7), 0)
+            pack('CCCC', $this->extended_response_code, $this->version, ($this->do << 7), 0)
         );
 
         $this->ttl = $ttl[1];

@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 
@@ -32,10 +33,10 @@ use JDWX\DNSQuery\Packet\Packet;
  * SOA Resource Record - RFC1035 section 3.3.13
  *
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                     MNAME                     /
+ *    /                     mName                     /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                     RNAME                     /
+ *    /                     rName                     /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *    |                    SERIAL                     |
  *    |                                               |
@@ -59,12 +60,12 @@ class SOA extends RR
     /*
      * The master DNS server
      */
-    public string $mname;
+    public string $mName;
 
     /*
      * mailbox of the responsible person
      */
-    public string $rname;
+    public string $rName;
 
     /*
      * serial number
@@ -99,8 +100,8 @@ class SOA extends RR
      *
      */
     protected function rrToString() : string {
-        return $this->cleanString($this->mname) . '. ' . 
-            $this->cleanString($this->rname) . '. ' . 
+        return $this->cleanString($this->mName) . '. ' .
+            $this->cleanString($this->rName) . '. ' .
             $this->serial . ' ' . $this->refresh . ' ' . $this->retry . ' ' . 
             $this->expire . ' ' . $this->minimum;
     }
@@ -115,8 +116,8 @@ class SOA extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->mname    = $this->cleanString($rdata[0]);
-        $this->rname    = $this->cleanString($rdata[1]);
+        $this->mName    = $this->cleanString($rdata[0]);
+        $this->rName    = $this->cleanString($rdata[1]);
 
         $this->serial   = $rdata[2];
         $this->refresh  = $rdata[3];
@@ -127,6 +128,7 @@ class SOA extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -135,21 +137,23 @@ class SOA extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // parse the 
             //
             $offset = $packet->offset;
 
-            $this->mname = Packet::expand($packet, $offset);
-            $this->rname = Packet::expand($packet, $offset, true);
+            $this->mName = $packet->expandEx( $offset );
+            $this->rName = $packet->expandEx( $offset, true);
 
             //
             // get the SOA values
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack(
                 '@' . $offset . '/Nserial/Nrefresh/Nretry/Nexpire/Nminimum/', 
                 $packet->rdata
@@ -179,10 +183,10 @@ class SOA extends RR
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->mname) > 0) {
+        if (strlen($this->mName) > 0) {
     
-            $data = $packet->compress($this->mname, $packet->offset);
-            $data .= $packet->compress($this->rname, $packet->offset);
+            $data = $packet->compress($this->mName, $packet->offset);
+            $data .= $packet->compress($this->rName, $packet->offset);
 
             $data .= pack(
                 'N5', $this->serial, $this->refresh, $this->retry, 

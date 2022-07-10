@@ -148,7 +148,7 @@ class LOC extends RR
             //
             // latitude
             //
-            $latdeg     = $x[1];
+            $latdeg     = (int) $x[1];
             $latmin     = (isset($x[3])) ? $x[3] : 0;
             $latsec     = (isset($x[5])) ? $x[5] : 0;
             $lathem     = strtoupper($x[6]);
@@ -158,7 +158,7 @@ class LOC extends RR
             //
             // longitude
             //
-            $londeg     = $x[7];
+            $londeg     = (int) $x[7];
             $lonmin     = (isset($x[9])) ? $x[9] : 0;
             $lonsec     = (isset($x[11])) ? $x[11] : 0;
             $lonhem     = strtoupper($x[12]);
@@ -172,7 +172,7 @@ class LOC extends RR
             $this->size         = (isset($x[15])) ? $x[15] : 1;
             $this->horiz_pre    = ((isset($x[17])) ? $x[17] : 10000);
             $this->vert_pre     = ((isset($x[19])) ? $x[19] : 10);
-            $this->altitude     = $x[13];
+            $this->altitude     = (float) $x[13];
 
             return true;
         }
@@ -191,7 +191,7 @@ class LOC extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ( $this->rdlength <= 0 ) {
+        if ( $this->rdLength <= 0 ) {
             return false;
         }
 

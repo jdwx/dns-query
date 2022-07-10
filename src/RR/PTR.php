@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -31,7 +32,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * PTR Resource Record - RFC1035 section 3.3.12
  *
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                   PTRDNAME                    /
+ *    /                   ptrDName                    /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
@@ -40,7 +41,7 @@ class PTR extends RR
     /*
      * the hostname of the PTR entry
      */
-    public string $ptrdname;
+    public string $ptrDName;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -51,7 +52,7 @@ class PTR extends RR
      */
     protected function rrToString() : string
     {
-        return rtrim($this->ptrdname, '.') . '.';
+        return rtrim($this->ptrDName, '.') . '.';
     }
 
     /**
@@ -64,9 +65,10 @@ class PTR extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->ptrdname = rtrim(implode(' ', $rdata), '.');
+        $this->ptrDName = rtrim(implode(' ', $rdata), '.');
         return true;
     }
+
 
     /**
      * parses the rdata of the Net_DNS2_Packet object
@@ -76,12 +78,13 @@ class PTR extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $offset = $packet->offset;
-            $this->ptrdname = Packet::expand($packet, $offset);
+            $this->ptrDName = $packet->expandEx( $offset );
 
             return true;
         }
@@ -101,9 +104,9 @@ class PTR extends RR
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->ptrdname) > 0) {
+        if (strlen($this->ptrDName) > 0) {
 
-            return $packet->compress($this->ptrdname, $packet->offset);
+            return $packet->compress($this->ptrDName, $packet->offset);
         }
 
         return null;

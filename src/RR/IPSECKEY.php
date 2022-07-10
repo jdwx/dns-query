@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 
@@ -69,7 +70,7 @@ class IPSECKEY extends RR
      *  3    wire-encoded domain name (not compressed)
      *
      */
-    public string $gateway_type;
+    public int $gateway_type;
 
     /*
      * The algorithm used
@@ -81,7 +82,7 @@ class IPSECKEY extends RR
      *  2    RSA key is present
      *
      */
-    public string $algorithm;
+    public int $algorithm;
 
     /*
      * The gateway information
@@ -139,10 +140,10 @@ class IPSECKEY extends RR
         // load the data
         //
         $precedence     = array_shift($rdata);
-        $gateway_type   = array_shift($rdata);
-        $algorithm      = array_shift($rdata);
+        $gateway_type   = (int) array_shift( $rdata );
+        $algorithm      = (int) array_shift( $rdata );
         $gateway        = trim(strtolower(trim(array_shift($rdata))), '.');
-        $key            = array_shift($rdata);
+        $key            = array_shift($rdata) ?? "";
         
         //
         // validate it
@@ -201,18 +202,20 @@ class IPSECKEY extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
+     * @param Packet $packet a Packet to parse the RR from
      *
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // parse off the precedence, gateway type and algorithm
@@ -253,7 +256,7 @@ class IPSECKEY extends RR
             case self::GATEWAY_TYPE_DOMAIN:
 
                 $doffset = $offset + $packet->offset;
-                $this->gateway = Packet::expand($packet, $doffset);
+                $this->gateway = $packet->expandEx( $doffset );
                 $offset = ($doffset - $packet->offset);
                 break;
 
@@ -287,8 +290,7 @@ class IPSECKEY extends RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Packet $packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
+     * @param Packet $packet a Packet to use for compressed names
      *
      * @return ?string                   either returns a binary packed
      *                                 string or null on failure

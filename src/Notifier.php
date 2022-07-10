@@ -156,10 +156,10 @@ class Notifier extends Net_DNS2
         //
         // check for an authentication method; either TSIG or SIG
         //
-        if (   ($this->auth_signature instanceof TSIG)
-            || ($this->auth_signature instanceof SIG)
+        if (   ($this->authSignature instanceof TSIG)
+            || ($this->authSignature instanceof SIG)
         ) {
-            $p->additional[] = $this->auth_signature;
+            $p->additional[] = $this->authSignature;
         }
 
         //
@@ -176,7 +176,7 @@ class Notifier extends Net_DNS2
     /**
      * executes the notify request
      *
-     * @param ?ResponsePacket & $response contains a reference to the response object after running
+     * @param ?ResponsePacket $response contains a reference to the response object after running
      *
      * @return bool
      * @throws Exception
@@ -188,10 +188,10 @@ class Notifier extends Net_DNS2
         //
         // check for an authentication method; either TSIG or SIG
         //
-        if (   ($this->auth_signature instanceof TSIG)
-            || ($this->auth_signature instanceof SIG)
+        if (   ($this->authSignature instanceof TSIG)
+            || ($this->authSignature instanceof SIG)
         ) {
-            $this->_packet->additional[] = $this->auth_signature;
+            $this->_packet->additional[] = $this->authSignature;
         }
 
         //

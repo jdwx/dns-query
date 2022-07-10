@@ -68,7 +68,7 @@ class AAAA extends RR
     /**
      * parses the rdata portion from a standard DNS config line
      *
-     * @param string [] $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
@@ -104,7 +104,7 @@ class AAAA extends RR
         //
         // must be 8 x 16bit chunks, or 16 x 8bit
         //
-        if ($this->rdlength == 16) {
+        if ($this->rdLength == 16) {
 
             //
             // PHP's inet_ntop returns IPv6 addresses in their compressed form,

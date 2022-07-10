@@ -144,7 +144,6 @@ class CERT extends RR
         //
         $this->format = array_shift($rdata);
         if (!is_numeric($this->format)) {
-
             $mnemonic = strtoupper(trim($this->format));
             if (!isset($this->cert_format_name_to_id[$mnemonic])) {
 
@@ -152,7 +151,7 @@ class CERT extends RR
             }
 
             $this->format = $this->cert_format_name_to_id[$mnemonic];
-        } elseif (!isset($this->cert_format_id_to_name[$this->format])) {
+        } elseif ( ! isset( $this->cert_format_id_to_name[ (int) $this->format ] ) ) {
              return false;
         }
     
@@ -199,7 +198,7 @@ class CERT extends RR
      */
     protected function rrSet(Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the format, keytag and algorithm
@@ -213,7 +212,7 @@ class CERT extends RR
             //
             // copy the certificate
             //
-            $this->certificate  = substr($this->rdata, 5, $this->rdlength - 5);
+            $this->certificate  = substr($this->rdata, 5, $this->rdLength - 5);
 
             return true;
         }

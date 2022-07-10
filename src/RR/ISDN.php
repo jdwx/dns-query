@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -42,7 +43,7 @@ class ISDN extends RR
     /*
      * ISDN Number
      */
-    public string $isdnaddress;
+    public string $isdnAddress;
     
     /*
      * Sub-Address
@@ -58,7 +59,7 @@ class ISDN extends RR
      */
     protected function rrToString() : string
     {
-        return $this->formatString( $this->isdnaddress ) . ' ISDN.php' .
+        return $this->formatString( $this->isdnAddress ) . ' ISDN.php' .
             $this->formatString($this->sa);
     }
 
@@ -76,7 +77,7 @@ class ISDN extends RR
         $data = $this->buildString($rdata);
         if (count($data) >= 1) {
 
-            $this->isdnaddress = $data[0];
+            $this->isdnAddress = $data[0];
             if (isset($data[1])) {
                 
                 $this->sa = $data[1];
@@ -88,6 +89,7 @@ class ISDN extends RR
         return false;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -96,19 +98,20 @@ class ISDN extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
-            $this->isdnaddress = Packet::label($packet, $packet->offset);
+            $this->isdnAddress = $packet->labelEx($packet->offset );
 
             //
             // look for a SA (sub address) - it's optional
             //
-            if ( (strlen($this->isdnaddress) + 1) < $this->rdlength) {
+            if ( (strlen($this->isdnAddress) + 1) < $this->rdLength) {
 
-                $this->sa = Packet::label($packet, $packet->offset);
+                $this->sa = $packet->labelEx( $packet->offset );
             } else {
             
                 $this->sa = '';
@@ -133,9 +136,9 @@ class ISDN extends RR
      */
     protected function rrGet( Packet $packet) : ?string
     {
-        if (strlen($this->isdnaddress) > 0) {
+        if (strlen($this->isdnAddress) > 0) {
 
-            $data = chr(strlen($this->isdnaddress)) . $this->isdnaddress;
+            $data = chr(strlen($this->isdnAddress)) . $this->isdnAddress;
             if (!empty($this->sa)) {
 
                 $data .= chr(strlen($this->sa));

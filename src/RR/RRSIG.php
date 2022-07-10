@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
@@ -55,7 +56,7 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 
 /**
- * RRSIG Resource Record - RFC4034 sction 3.1
+ * RRSIG Resource Record - RFC4034 section 3.1
  *
  *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -82,7 +83,7 @@ class RRSIG extends RR
     /*
      * the RR type covered by this signature
      */
-    public string $typecovered;
+    public string $typeCovered;
 
     /*
      * the algorithm used for the signature
@@ -97,17 +98,17 @@ class RRSIG extends RR
     /*
      * the original TTL
      */
-    public string $origttl;
+    public string $origTTL;
 
     /*
      * the signature expiration
      */
-    public string $sigexp;
+    public string $sigExpiration;
 
     /*
      * the inception of the signature
     */
-    public string $sigincep;
+    public string $sigInception;
 
     /*
      * the keytag used
@@ -117,7 +118,7 @@ class RRSIG extends RR
     /*
      * the signer's name
      */
-    public string $signname;
+    public string $signName;
 
     /*
      * the signature
@@ -132,10 +133,10 @@ class RRSIG extends RR
      *
      */
     protected function rrToString() : string {
-        return $this->typecovered . ' ' . $this->algorithm . ' ' . 
-            $this->labels . ' ' . $this->origttl . ' ' .
-            $this->sigexp . ' ' . $this->sigincep . ' ' . 
-            $this->keytag . ' ' . $this->cleanString($this->signname) . '. ' . 
+        return $this->typeCovered . ' ' . $this->algorithm . ' ' .
+            $this->labels . ' ' . $this->origTTL . ' ' .
+            $this->sigExpiration . ' ' . $this->sigInception . ' ' .
+            $this->keytag . ' ' . $this->cleanString($this->signName) . '. ' .
             $this->signature;
     }
 
@@ -149,14 +150,14 @@ class RRSIG extends RR
      *
      */
     protected function rrFromString(array $rdata) : bool {
-        $this->typecovered  = strtoupper(array_shift($rdata));
+        $this->typeCovered  = strtoupper(array_shift($rdata));
         $this->algorithm    = array_shift($rdata);
         $this->labels       = array_shift($rdata);
-        $this->origttl      = array_shift($rdata);
-        $this->sigexp       = array_shift($rdata);
-        $this->sigincep     = array_shift($rdata);
+        $this->origTTL      = array_shift($rdata);
+        $this->sigExpiration       = array_shift($rdata);
+        $this->sigInception     = array_shift($rdata);
         $this->keytag       = array_shift($rdata);
-        $this->signname     = $this->cleanString(array_shift($rdata));
+        $this->signName     = $this->cleanString(array_shift($rdata));
 
         foreach ($rdata as $line) {
 
@@ -168,6 +169,7 @@ class RRSIG extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -176,28 +178,30 @@ class RRSIG extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack 
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack(
                 'ntc/Calgorithm/Clabels/Norigttl/Nsigexp/Nsigincep/nkeytag', 
                 $this->rdata
             );
 
-            $this->typecovered  = Lookups::$rr_types_by_id[$x['tc']];
+            $this->typeCovered  = Lookups::$rr_types_by_id[$x['tc']];
             $this->algorithm    = $x['algorithm'];
             $this->labels       = $x['labels'];
-            $this->origttl      = Net_DNS2::expandUint32($x['origttl']);
+            $this->origTTL      = Net_DNS2::expandUint32($x['origttl']);
 
             //
             // the dates are in GM time
             //
-            $this->sigexp       = gmdate('YmdHis', $x['sigexp']);
-            $this->sigincep     = gmdate('YmdHis', $x['sigincep']);
+            $this->sigExpiration       = gmdate('YmdHis', $x['sigexp']);
+            $this->sigInception     = gmdate('YmdHis', $x['sigincep']);
 
             //
             // get the keytag
@@ -210,9 +214,7 @@ class RRSIG extends RR
             $offset             = $packet->offset + 18;
             $sigoffset          = $offset;
 
-            $this->signname     = strtolower(
-                Packet::expand($packet, $sigoffset)
-            );
+            $this->signName     = strtolower( $packet->expandEx( $sigoffset ) );
             $this->signature    = base64_encode(
                 substr($this->rdata, 18 + ($sigoffset - $offset))
             );
@@ -241,23 +243,24 @@ class RRSIG extends RR
             // parse the values out of the dates
             //
             preg_match(
-                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigexp, $e
+                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigExpiration, $e
             );
             preg_match(
-                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigincep, $i
+                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigInception, $i
             );
 
             //
             // pack the value
             //
+            /** @noinspection SpellCheckingInspection */
             $data = pack(
                 'nCCNNNn', 
-                Lookups::$rr_types_by_name[$this->typecovered],
+                Lookups::$rr_types_by_name[$this->typeCovered],
                 $this->algorithm,
                 $this->labels,
-                $this->origttl,
-                gmmktime($e[4], $e[5], $e[6], $e[2], $e[3], $e[1]),
-                gmmktime($i[4], $i[5], $i[6], $i[2], $i[3], $i[1]),
+                $this->origTTL,
+                gmmktime( (int) $e[4], (int) $e[5], (int) $e[6], (int) $e[2], (int) $e[3], (int) $e[1]),
+                gmmktime( (int) $i[4], (int) $i[5], (int) $i[6], (int) $i[2], (int) $i[3], (int) $i[1]),
                 $this->keytag
             );
 
@@ -265,7 +268,7 @@ class RRSIG extends RR
             // the signer name is special; it's not allowed to be compressed 
             // (see section 3.1.7)
             //
-            $names = explode('.', strtolower($this->signname));
+            $names = explode('.', strtolower($this->signName));
             foreach ($names as $name) {
     
                 $data .= chr(strlen($name));

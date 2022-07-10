@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -36,7 +37,7 @@ use JDWX\DNSQuery\Packet\Packet;
  *    /                    MAP822                     /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    /                    MAPX400                    /
+ *    /                    MAP X400                   /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--
  *
@@ -49,14 +50,14 @@ class PX extends RR
     public string $preference;
 
     /* 
-     * the RFC822 part of the MCGAM
+     * the RFC822 part of the MIXER-conformant Global Address Mapping
      */
     public string $map822;
 
     /*
-     * the X.400 part of the MCGAM
+     * the X.400 part of the MIXER-conformant Global Address Mapping
      */
-    public string $mapx400;
+    public string $mapX400;
 
     /**
      * method to return the rdata portion of the packet as a string
@@ -67,7 +68,7 @@ class PX extends RR
      */
     protected function rrToString() : string {
         return $this->preference . ' ' . $this->cleanString($this->map822) . '. ' . 
-            $this->cleanString($this->mapx400) . '.';
+            $this->cleanString($this->mapX400) . '.';
     }
 
     /**
@@ -82,10 +83,11 @@ class PX extends RR
     protected function rrFromString(array $rdata) : bool {
         $this->preference   = $rdata[0];
         $this->map822       = $this->cleanString($rdata[1]);
-        $this->mapx400      = $this->cleanString($rdata[2]);
+        $this->mapX400      = $this->cleanString($rdata[2]);
 
         return true;
     }
+
 
     /**
      * parses the rdata of the Net_DNS2_Packet object
@@ -95,20 +97,22 @@ class PX extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // parse the preference
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('npreference', $this->rdata);
             $this->preference = $x['preference'];
 
             $offset         = $packet->offset + 2;
 
-            $this->map822   = Packet::expand($packet, $offset);
-            $this->mapx400  = Packet::expand($packet, $offset);
+            $this->map822   = $packet->expandEx( $offset );
+            $this->mapX400  = $packet->expandEx( $offset );
 
             return true;
         }
@@ -134,7 +138,7 @@ class PX extends RR
             $packet->offset += 2;
 
             $data .= $packet->compress($this->map822, $packet->offset);
-            $data .= $packet->compress($this->mapx400, $packet->offset);
+            $data .= $packet->compress($this->mapX400, $packet->offset);
 
             return $data;
         }

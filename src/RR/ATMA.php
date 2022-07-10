@@ -107,7 +107,7 @@ class ATMA extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the format
@@ -124,7 +124,7 @@ class ATMA extends RR
 
             } elseif ($this->format == 1) {
 
-                $this->address = substr($this->rdata, 1, $this->rdlength - 1);
+                $this->address = substr($this->rdata, 1, $this->rdLength - 1);
 
             } else {
 

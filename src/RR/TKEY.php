@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 
@@ -79,7 +80,7 @@ class TKEY extends RR
     /*
      * map the mod IDs to names so we can validate
      */
-    public array $tsgi_mode_id_to_name = [
+    public array $tsig_mode_id_to_name = [
 
         self::TSIG_MODE_RES           => 'Reserved',
         self::TSIG_MODE_SERV_ASSIGN   => 'Server Assignment',
@@ -141,6 +142,7 @@ class TKEY extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -149,20 +151,22 @@ class TKEY extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
         
             //
             // expand the algorithm
             //
             $offset = $packet->offset;
-            $this->algorithm = Packet::expand($packet, $offset);
+            $this->algorithm = $packet->expandEx( $offset );
             
             //
             // unpack inception, expiration, mode, error and key size
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack(
                 '@' . $offset . '/Ninception/Nexpiration/nmode/nerror/nkey_size', 
                 $packet->rdata
@@ -188,6 +192,7 @@ class TKEY extends RR
             //
             // unpack the other length
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('@' . $offset . '/nother_size', $packet->rdata);
             
             $this->other_size = $x['other_size'];
@@ -238,6 +243,7 @@ class TKEY extends RR
             //
             // pack in the inception, expiration, mode, error and key size
             //
+            /** @noinspection SpellCheckingInspection */
             $data .= pack(
                 'NNnnn', $this->inception, $this->expiration, 
                 $this->mode, 0, $this->key_size

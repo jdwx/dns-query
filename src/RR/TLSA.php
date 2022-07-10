@@ -102,7 +102,7 @@ class TLSA extends RR
      *
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // unpack the format, keytag and algorithm
@@ -116,7 +116,7 @@ class TLSA extends RR
             //
             // copy the certificate
             //
-            $this->certificate  = substr($this->rdata, 3, $this->rdlength - 3);
+            $this->certificate  = substr($this->rdata, 3, $this->rdLength - 3);
 
             return true;
         }

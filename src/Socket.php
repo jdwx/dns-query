@@ -149,7 +149,7 @@ class Socket
         // create socket
         //
         $errno = 0;
-        $errstr = "";
+        $errorString = "";
 
         switch($this->type) {
         case Socket::SOCK_STREAM:
@@ -158,14 +158,14 @@ class Socket
 
                 $this->sock = @stream_socket_client(
                     'tcp://' . $this->host . ':' . $this->port, 
-                    $errno, $errstr, $this->timeout, 
+                    $errno, $errorString, $this->timeout,
                     STREAM_CLIENT_CONNECT, $context
                 );
             } elseif ( Net_DNS2::isIPv6( $this->host ) ) {
 
                 $this->sock = @stream_socket_client(
                     'tcp://[' . $this->host . ']:' . $this->port, 
-                    $errno, $errstr, $this->timeout, 
+                    $errno, $errorString, $this->timeout,
                     STREAM_CLIENT_CONNECT, $context
                 );
             } else {
@@ -182,14 +182,14 @@ class Socket
 
                 $this->sock = @stream_socket_client(
                     'udp://' . $this->host . ':' . $this->port, 
-                    $errno, $errstr, $this->timeout, 
+                    $errno, $errorString, $this->timeout,
                     STREAM_CLIENT_CONNECT, $context
                 );
             } elseif ( Net_DNS2::isIPv6( $this->host ) ) {
 
                 $this->sock = @stream_socket_client(
                     'udp://[' . $this->host . ']:' . $this->port, 
-                    $errno, $errstr, $this->timeout, 
+                    $errno, $errorString, $this->timeout,
                     STREAM_CLIENT_CONNECT, $context
                 );
             } else {
@@ -207,7 +207,7 @@ class Socket
 
         if ($this->sock === false) {
 
-            $this->last_error = $errstr;
+            $this->last_error = $errorString;
             return false;
         }
 
@@ -243,7 +243,7 @@ class Socket
      *   
      * @return bool
      * @access public
-     *
+     * @suppress PhanTypeMismatchArgumentInternal
      */
     public function write( string $data ) : bool
     {
@@ -392,7 +392,7 @@ class Socket
         // return all the data properly; but the looping code I added broke UDP
         // packets. my fault.
         //
-        // the sockets library works much better.
+        // the "sockets" library works much better.
         //
         if ($this->type == Socket::SOCK_STREAM) {
 

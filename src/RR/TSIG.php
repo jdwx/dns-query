@@ -196,6 +196,7 @@ class TSIG extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Packet object
      *
@@ -204,21 +205,23 @@ class TSIG extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet(Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // expand the algorithm
             //
-            $newoffset          = $packet->offset;
-            $this->algorithm    = Packet::expand($packet, $newoffset);
-            $offset             = $newoffset - $packet->offset;
+            $newOffset          = $packet->offset;
+            $this->algorithm    = $packet->expandEx( $newOffset );
+            $offset             = $newOffset - $packet->offset;
 
             //
             // unpack time, fudge and mac_size
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack(
                 '@' . $offset . '/ntime_high/Ntime_low/nfudge/nmac_size', 
                 $this->rdata
@@ -242,6 +245,7 @@ class TSIG extends RR
             //
             // unpack the original id, error, and other_length values
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack(
                 '@' . $offset . '/noriginal_id/nerror/nother_length', 
                 $this->rdata
@@ -268,6 +272,7 @@ class TSIG extends RR
                 //
                 // other data is a 48bit timestamp
                 //
+                /** @noinspection SpellCheckingInspection */
                 $x = unpack(
                     'nhigh/nlow', 
                     substr($this->rdata, $offset + 6, $this->other_length)
@@ -339,6 +344,7 @@ class TSIG extends RR
             //
             // add the rest of the values
             //
+            /** @noinspection SpellCheckingInspection */
             $sig_data .= pack(
                 'nNnnn', 0, $this->time_signed, $this->fudge, 
                 $this->error, $this->other_length
@@ -408,7 +414,7 @@ class TSIG extends RR
      * signs the given data with the given key, and returns the result
      *
      * @param string $data      the data to sign
-     * @param ?string $key       key to use for signing
+     * @param string $key       key to use for signing
      * @param string $algorithm the algorithm to use; defaults to MD5
      *
      * @return string the signed digest
@@ -416,7 +422,7 @@ class TSIG extends RR
      * @access private
      *
      */
-    private function _signHMAC( string $data, ?string $key = null, string $algorithm = self::HMAC_MD5) : string
+    private function _signHMAC( string $data, string $key, string $algorithm = self::HMAC_MD5) : string
     {
         if (!isset(self::$hash_algorithms[$algorithm])) {
 

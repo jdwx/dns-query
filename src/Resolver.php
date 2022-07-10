@@ -96,10 +96,10 @@ class Resolver extends Net_DNS2
         //
         // check for an authentication method; either TSIG or SIG
         //
-        if (   ($this->auth_signature instanceof TSIG)
-            || ($this->auth_signature instanceof SIG)
+        if (   ($this->authSignature instanceof TSIG)
+            || ($this->authSignature instanceof SIG)
         ) {
-            $packet->additional[]       = $this->auth_signature;
+            $packet->additional[]       = $this->authSignature;
             $packet->header->arcount    = count($packet->additional);
         }
 
@@ -149,7 +149,7 @@ class Resolver extends Net_DNS2
         //
         $packet_hash = '';
 
-        if ( $this->use_cache && $this->cacheable( $type ) ) {
+        if ( $this->useCache && $this->cacheable( $type ) ) {
 
             //
             // open the cache
@@ -236,7 +236,7 @@ class Resolver extends Net_DNS2
         //
         // cache the response object
         //
-        if ( $this->use_cache && $this->cacheable( $type ) ) {
+        if ( $this->useCache && $this->cacheable( $type ) ) {
 
             $this->cache->put($packet_hash, $response);
         }
@@ -287,10 +287,10 @@ class Resolver extends Net_DNS2
         //
         // check for an authentication method; either TSIG or SIG
         //
-        if (   ($this->auth_signature instanceof TSIG)
-            || ($this->auth_signature instanceof SIG)
+        if (   ($this->authSignature instanceof TSIG)
+            || ($this->authSignature instanceof SIG)
         ) {
-            $packet->additional[]       = $this->auth_signature;
+            $packet->additional[]       = $this->authSignature;
             $packet->header->arcount    = count($packet->additional);
         }
 

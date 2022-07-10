@@ -46,17 +46,17 @@ class PrivateKey
     /*
      * the sign name for the signature
      */
-    public string $signname;
+    public string $signName;
 
     /*
      * the algorithm used for the signature
      */
-    public string $algorithm;
+    public int $algorithm;
 
     /*
      * the key format of the signature
      */
-    public string $key_format;
+    public string $keyFormat;
 
     /*
      * the openssl private key id
@@ -71,12 +71,12 @@ class PrivateKey
     /*
      * RSA: public exponent
      */
-    private string $_public_exponent;
+    private string $_publicExponent;
 
     /*
      * RSA: private exponent
      */
-    private string $_private_exponent;
+    private string $_privateExponent;
 
     /*
      * RSA: prime1
@@ -121,12 +121,12 @@ class PrivateKey
     /*
      * DSA: private value
      */
-    public string $private_value;
+    public string $privateValue;
 
     /*
      * DSA: public value
      */
-    public string $public_value;
+    public string $publicValue;
 
     /**
      * Constructor - base constructor the private key container class
@@ -195,9 +195,9 @@ class PrivateKey
         //
         if (preg_match("/K(.*)\.\+(\d{3})\+(\d*)\.private/", $keyname, $matches)) {
             
-            $this->signname    = $matches[1];
-            $this->algorithm   = $matches[2];
-            $this->keytag      = $matches[3];
+            $this->signName    = $matches[1];
+            $this->algorithm   = (int) $matches[2];
+            $this->keytag      = (int) $matches[3];
 
         } else {
 
@@ -229,7 +229,7 @@ class PrivateKey
             switch(strtolower($key)) {
 
             case 'private-key-format':
-                $this->key_format = $value;
+                $this->keyFormat = $value;
                 break;
 
             case 'algorithm':
@@ -250,11 +250,11 @@ class PrivateKey
                 break;
 
             case 'publicexponent':
-                $this->_public_exponent = $value;
+                $this->_publicExponent = $value;
                 break;
 
             case 'privateexponent':
-                $this->_private_exponent = $value;
+                $this->_privateExponent = $value;
                 break;
         
             case 'prime1':
@@ -293,11 +293,11 @@ class PrivateKey
                 break;
 
             case 'private_value(x)':
-                $this->private_value = $value;
+                $this->privateValue = $value;
                 break;
 
             case 'public_value(y)':
-                $this->public_value = $value;
+                $this->publicValue = $value;
                 break;
 
             default:
@@ -321,8 +321,8 @@ class PrivateKey
                 'rsa' => [
 
                     'n' => base64_decode( $this->_modulus ),
-                    'e' => base64_decode( $this->_public_exponent ),
-                    'd' => base64_decode( $this->_private_exponent ),
+                    'e' => base64_decode( $this->_publicExponent ),
+                    'd' => base64_decode( $this->_privateExponent ),
                     'p' => base64_decode( $this->_prime1 ),
                     'q' => base64_decode( $this->_prime2 ),
                     'dmp1' => base64_decode( $this->_exponent1 ),
@@ -337,8 +337,8 @@ class PrivateKey
                     'p' => base64_decode( $this->prime ),
                     'q' => base64_decode( $this->subprime ),
                     'g' => base64_decode( $this->base ),
-                    'priv_key' => base64_decode( $this->private_value ),
-                    'pub_key' => base64_decode( $this->public_value )
+                    'priv_key' => base64_decode( $this->privateValue ),
+                    'pub_key' => base64_decode( $this->publicValue )
                 ]
             ],
             default => throw new Exception(

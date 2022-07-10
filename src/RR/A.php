@@ -88,7 +88,7 @@ class A extends RR
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             $this->address = inet_ntop($this->rdata);
             if ($this->address !== false) {

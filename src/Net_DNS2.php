@@ -196,13 +196,13 @@ class Net_DNS2
     /*
      * the last exception that was generated
      */
-    public ?Exception $last_exception = null;
+    public ?Exception $lastException = null;
 
     /**
      * the list of exceptions by name server
      * @var Exception[]
      */
-    public array $last_exception_list = [];
+    public array $lastExceptionList = [];
 
     /*
      * name server list specified as IPv4 or IPv6 addresses
@@ -218,7 +218,7 @@ class Net_DNS2
     /*
      * the TSIG or SIG RR object for authentication
      */
-    protected TSIG|SIG|null $auth_signature = null;
+    protected TSIG|SIG|null $authSignature = null;
 
     /*
      * the shared memory segment id for the local cache
@@ -228,7 +228,7 @@ class Net_DNS2
     /*
      * internal setting for enabling cache
      */
-    protected bool $use_cache = false;
+    protected bool $useCache = false;
 
     /**
      * Constructor - base constructor for the Resolver and Updater
@@ -267,7 +267,7 @@ class Net_DNS2
             if (extension_loaded('shmop')) {
 
                 $this->cache = new ShmCache();
-                $this->use_cache = true;
+                $this->useCache = true;
             } else {
 
                 throw new Exception(
@@ -279,11 +279,11 @@ class Net_DNS2
         case 'file':
 
             $this->cache = new FileCache();
-            $this->use_cache = true;
+            $this->useCache = true;
 
             break;  
         case 'none':
-            $this->use_cache = false;
+            $this->useCache = false;
             break;
         default:
 
@@ -605,7 +605,7 @@ class Net_DNS2
         //
         if ($key_name instanceof TSIG) {
 
-            $this->auth_signature = $key_name;
+            $this->authSignature = $key_name;
 
         } else {
 
@@ -614,15 +614,17 @@ class Net_DNS2
             // to be added as the last additional entry so we'll add it just
             // before we send.
             //
-            $this->auth_signature = RR::fromString(
+            $xx = RR::fromString(
                 strtolower(trim($key_name)) .
                 ' TSIG '. $signature
             );
+            assert( $xx instanceof TSIG );
+            $this->authSignature = $xx;
 
             //
             // set the algorithm to use
             //
-            $this->auth_signature->algorithm = $algorithm;
+            $this->authSignature->algorithm = $algorithm;
         }
           
         return true;
@@ -657,7 +659,7 @@ class Net_DNS2
         //
         if ($filename instanceof SIG) {
 
-            $this->auth_signature = $filename;
+            $this->authSignature = $filename;
 
         } else {
         
@@ -669,47 +671,47 @@ class Net_DNS2
             //
             // create a new SIG object
             //
-            $this->auth_signature = new SIG();
+            $this->authSignature = new SIG();
 
             //
             // reset some values
             //
-            $this->auth_signature->name         = $private->signname;
-            $this->auth_signature->ttl          = 0;
-            $this->auth_signature->class        = 'ANY';
+            $this->authSignature->name         = $private->signName;
+            $this->authSignature->ttl          = 0;
+            $this->authSignature->class        = 'ANY';
 
             //
             // these values are pulled from the private key
             //
-            $this->auth_signature->algorithm    = $private->algorithm;
-            $this->auth_signature->keytag       = $private->keytag;
-            $this->auth_signature->signname     = $private->signname;
+            $this->authSignature->algorithm    = $private->algorithm;
+            $this->authSignature->keytag       = $private->keytag;
+            $this->authSignature->signName     = $private->signName;
 
             //
             // these values are hard-coded for SIG0
             //
-            $this->auth_signature->typecovered  = 'SIG0';
-            $this->auth_signature->labels       = 0;
-            $this->auth_signature->origttl      = 0;
+            $this->authSignature->typeCovered  = 'SIG0';
+            $this->authSignature->labels       = 0;
+            $this->authSignature->origTTL      = 0;
 
             //
             // generate the dates
             //
             $t = time();
 
-            $this->auth_signature->sigincep     = gmdate('YmdHis', $t);
-            $this->auth_signature->sigexp       = gmdate('YmdHis', $t + 500);
+            $this->authSignature->sigInception     = gmdate('YmdHis', $t);
+            $this->authSignature->sigExpiration       = gmdate('YmdHis', $t + 500);
 
             //
             // store the private key in the SIG object for later.
             //
-            $this->auth_signature->private_key  = $private;
+            $this->authSignature->privateKey  = $private;
         }
 
         //
         // only RSA algorithms are supported for SIG(0)
         //
-        switch($this->auth_signature->algorithm) {
+        switch($this->authSignature->algorithm) {
         case Lookups::DNSSEC_ALGORITHM_RSAMD5:
         case Lookups::DNSSEC_ALGORITHM_RSASHA1:
         case Lookups::DNSSEC_ALGORITHM_RSASHA256:
@@ -870,9 +872,9 @@ class Net_DNS2
 
             if ($ns === false) {
 
-                if ( ! is_null( $this->last_exception ) ) {
+                if ( ! is_null( $this->lastException ) ) {
 
-                    throw $this->last_exception;
+                    throw $this->lastException;
                 } else {
 
                     throw new Exception(
@@ -901,8 +903,8 @@ class Net_DNS2
 
                 } catch(Exception $e) {
 
-                    $this->last_exception = $e;
-                    $this->last_exception_list[$ns] = $e;
+                    $this->lastException = $e;
+                    $this->lastExceptionList[$ns] = $e;
 
                     continue;
                 }
@@ -927,8 +929,8 @@ class Net_DNS2
 
                 } catch(Exception $e) {
 
-                    $this->last_exception = $e;
-                    $this->last_exception_list[$ns] = $e;
+                    $this->lastException = $e;
+                    $this->lastExceptionList[$ns] = $e;
 
                     continue;
                 }
@@ -939,7 +941,7 @@ class Net_DNS2
             //
             if ($request->header->id != $response->header->id) {
 
-                $this->last_exception = new Exception(
+                $this->lastException = new Exception(
 
                     'invalid header: the request and response id do not match.',
                     Lookups::E_HEADER_INVALID,
@@ -948,7 +950,7 @@ class Net_DNS2
                     $response
                 );
 
-                $this->last_exception_list[$ns] = $this->last_exception;
+                $this->lastExceptionList[$ns] = $this->lastException;
                 continue;
             }
 
@@ -959,7 +961,7 @@ class Net_DNS2
             //
             if ($response->header->qr != Lookups::QR_RESPONSE) {
             
-                $this->last_exception = new Exception(
+                $this->lastException = new Exception(
 
                     'invalid header: the response provided is not a response packet.',
                     Lookups::E_HEADER_INVALID,
@@ -968,7 +970,7 @@ class Net_DNS2
                     $response
                 );
 
-                $this->last_exception_list[$ns] = $this->last_exception;
+                $this->lastExceptionList[$ns] = $this->lastException;
                 continue;
             }
 
@@ -977,7 +979,7 @@ class Net_DNS2
             //
             if ($response->header->rcode != Lookups::RCODE_NOERROR) {
             
-                $this->last_exception = new Exception(
+                $this->lastException = new Exception(
                 
                     'DNS request failed: ' . 
                     Lookups::$result_code_messages[$response->header->rcode],
@@ -987,7 +989,7 @@ class Net_DNS2
                     $response
                 );
 
-                $this->last_exception_list[$ns] = $this->last_exception;
+                $this->lastExceptionList[$ns] = $this->lastException;
                 continue;
             }
 

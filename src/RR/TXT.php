@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -82,6 +83,7 @@ class TXT extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -90,16 +92,17 @@ class TXT extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
             
-            $length = $packet->offset + $this->rdlength;
+            $length = $packet->offset + $this->rdLength;
             $offset = $packet->offset;
 
             while ($length > $offset) {
 
-                $this->text[] = Packet::label($packet, $offset);
+                $this->text[] = $packet->labelEx( $offset );
             }
 
             return true;
@@ -111,16 +114,15 @@ class TXT extends RR
     /**
      * returns the rdata portion of the DNS packet
      *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
+     * @param Packet    $packet a Packet to use for compressed names
      *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
+     * @return ?string  either returns a binary packed
+     *                  string or null on failure
      * @access protected
      *
      */
     protected function rrGet( Packet $packet) : ?string {
-        $data = null;
+        $data = '';
 
         foreach ($this->text as $t) {
             $data .= chr(strlen($t)) . $t;
@@ -130,4 +132,6 @@ class TXT extends RR
 
         return $data;
     }
+
+
 }

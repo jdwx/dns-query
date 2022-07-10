@@ -82,9 +82,9 @@ class OPENPGPKEY extends RR
      *
      */
     protected function rrSet( Packet $packet) : bool {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
-            $this->key = base64_encode(substr($this->rdata, 0, $this->rdlength));
+            $this->key = base64_encode(substr($this->rdata, 0, $this->rdLength));
 
             return true;
         }

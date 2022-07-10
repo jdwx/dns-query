@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
 
@@ -154,6 +155,7 @@ class AMTRELAY extends RR
         return true;
     }
 
+
     /**
      * parses the rdata of the Net_DNS2_Packet object
      *
@@ -162,10 +164,11 @@ class AMTRELAY extends RR
      * @return bool
      * @access protected
      *
+     * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
     {
-        if ($this->rdlength > 0) {
+        if ($this->rdLength > 0) {
 
             //
             // parse off the first two octets
@@ -207,7 +210,7 @@ class AMTRELAY extends RR
 
             case self::AMTRELAY_TYPE_DOMAIN:
                 $doffset = $packet->offset + $offset;
-                $this->relay = Packet::label($packet, $doffset);
+                $this->relay = $packet->labelEx( $doffset );
 
                 break;
 
