@@ -11,8 +11,8 @@ This package has recently been forked from pear/net_dns2 with the following obje
 Here are some backwards-incompatible changes planned:
 * PEAR support is being removed.
 * Certain things that were previously optional (e.g., the [filter extension](https://www.php.net/manual/en/book.filter.php)) are now required.
-* PSR-4 namespaces are being introduced.
-* Replacing the array-style options configuration with explicit methods.
+* Use PSR-4 namespaces and compatible autoloading.
+* Replace the array-style options configuration with fluent setters.
 * Changing the cache implementation
 * Changing variable names
 
@@ -29,7 +29,7 @@ only for *our* new development.
   * Support for IPv4 and IPv6, TCP and UDP sockets.
   * Includes a separate, more intuitive "Updater" class for handling dynamic update
   * Support zone signing using TSIG and SIG(0) for updates and zone transfers
-  * Includes a local cache using shared memory or flat file to improve performance
+  * Supports using PSR-6/PSR-16 caching implementations to improve performance
   * includes many more RRs, including DNSSEC RRs.
 
 ## Installing DNSQuery ##
