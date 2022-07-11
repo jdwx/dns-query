@@ -46,34 +46,33 @@ use JDWX\DNSQuery\RR\TSIG;
 class Notifier extends Net_DNS2
 {
     /** @var RequestPacket object used for the notify request */
-    private RequestPacket $_packet;
+    private RequestPacket $packet;
 
     /**
      * Constructor - builds a new Net_DNS2_Notifier objected used for doing 
      * DNS notification for a changed zone
      *
      * @param string $zone    the domain name to use for DNS updates
-     * @param ?array  $options an array of config options or null
      *
      * @throws Exception
      * @access public
      *
      */
-    public function __construct( string $zone, ?array $options = null)
+    public function __construct( string $zone, array|string|null $nameServers = null, ?string $resolvConf = null )
     {
-        parent::__construct($options);
+        parent::__construct( $nameServers, $resolvConf );
 
         //
         // create the packet
         //
-        $this->_packet = new RequestPacket(
+        $this->packet = new RequestPacket(
             strtolower(trim($zone, " \n\r\t.")), 'SOA', 'IN'
         );
 
         //
         // make sure the opcode on the packet is set to NOTIFY
         //
-        $this->_packet->header->opcode = Lookups::OPCODE_NOTIFY;
+        $this->packet->header->opcode = Lookups::OPCODE_NOTIFY;
     }
 
     /**
@@ -88,11 +87,11 @@ class Notifier extends Net_DNS2
      */
     private function _checkName( string $name ) : void
     {
-        if (!preg_match('/' . $this->_packet->question[0]->qname . '$/', $name)) {
+        if (!preg_match('/' . $this->packet->question[0]->qname . '$/', $name)) {
             
             throw new Exception(
                 'name provided (' . $name . ') does not match zone name (' .
-                $this->_packet->question[0]->qname . ')',
+                $this->packet->question[0]->qname . ')',
                 Lookups::E_PACKET_INVALID
             );
         }
@@ -114,8 +113,8 @@ class Notifier extends Net_DNS2
         //
         // add the RR to the "notify" section
         //
-        if (!in_array($rr, $this->_packet->answer)) {
-            $this->_packet->answer[] = $rr;
+        if (!in_array($rr, $this->packet->answer)) {
+            $this->packet->answer[] = $rr;
         }
         return true;
     }
@@ -151,7 +150,7 @@ class Notifier extends Net_DNS2
         //
         // take a copy
         //
-        $p = $this->_packet;
+        $p = $this->packet;
 
         //
         // check for an authentication method; either TSIG or SIG
@@ -191,21 +190,21 @@ class Notifier extends Net_DNS2
         if (   ($this->authSignature instanceof TSIG)
             || ($this->authSignature instanceof SIG)
         ) {
-            $this->_packet->additional[] = $this->authSignature;
+            $this->packet->additional[] = $this->authSignature;
         }
 
         //
         // update the counts
         //
-        $this->_packet->header->qdcount = count($this->_packet->question);
-        $this->_packet->header->ancount = count($this->_packet->answer);
-        $this->_packet->header->nscount = count($this->_packet->authority);
-        $this->_packet->header->arcount = count($this->_packet->additional);
+        $this->packet->header->qdcount = count($this->packet->question);
+        $this->packet->header->ancount = count($this->packet->answer);
+        $this->packet->header->nscount = count($this->packet->authority);
+        $this->packet->header->arcount = count($this->packet->additional);
 
         //
         // make sure we have some data to send
         //
-        if ($this->_packet->header->qdcount == 0) {
+        if ($this->packet->header->qdcount == 0) {
             throw new Exception(
                 'empty headers- nothing to send!',
                 Lookups::E_PACKET_INVALID
@@ -215,13 +214,13 @@ class Notifier extends Net_DNS2
         //
         // send the packet and get back the response
         //
-        $response = $this->sendPacket($this->_packet, $this->use_tcp);
+        $response = $this->sendPacket($this->packet, $this->useTCP);
 
         //
         // clear the internal packet so if we make another request, we don't have
         // old data being sent.
         //
-        $this->_packet->reset();
+        $this->packet->reset();
 
         //
         // for notifies, we just need to know it worked. we don't actually need to

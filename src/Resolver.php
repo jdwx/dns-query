@@ -7,12 +7,15 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Cache\Cache;
+use JDWX\DNSQuery\Cache\ICache;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\OPT;
 use JDWX\DNSQuery\RR\RR;
 use JDWX\DNSQuery\RR\SIG;
 use JDWX\DNSQuery\RR\TSIG;
+use Psr\SimpleCache\CacheInterface;
 
 
 /**
@@ -38,19 +41,24 @@ use JDWX\DNSQuery\RR\TSIG;
  */
 class Resolver extends Net_DNS2
 {
-    /**
-     * Constructor - creates a new Net_DNS2_Resolver object
+
+
+    /** @var ?ICache A caching implementation, if one is desired. */
+    protected ICache|null $cache = null;
+
+    /*
+     * if we should set the recursion desired bit to 1 or 0.
      *
-     * @param ?array $options either an array with options or null
-     *
-     * @access public
-     *
-     * @throws Exception
+     * by default this is set to true, we want the DNS server to perform a recursive
+     * request. If set to false, the RD bit will be set to 0, and the server will
+     * not perform recursion on the request.
      */
-    public function __construct(?array $options = null)
-    {
-        parent::__construct($options);
-    }
+    public bool $recurse = true;
+
+    /** @var bool Use strict query mode (suppress CNAME-only answers) */
+    public bool $strictQueryMode = false;
+
+
 
     /**
      * does a basic DNS lookup query
@@ -66,10 +74,6 @@ class Resolver extends Net_DNS2
      */
     public function query( string $name, string $type = 'A', string $class = 'IN' ) : ResponsePacket
     {
-        //
-        // make sure we have some name servers set
-        //
-        $this->checkServers(Net_DNS2::RESOLV_CONF);
 
         //
         // we don't support incremental zone transfers; so if it's requested, a full
@@ -120,7 +124,7 @@ class Resolver extends Net_DNS2
             $opt->do = 1;
 
             // TODO: I am very suspicious of this line.  - jdwx
-            $opt->class = (string) $this->dnssec_payload_size;
+            $opt->class = (string) $this->dnssecPayloadSize;
 
             //
             // add the RR to the additional section.
@@ -132,11 +136,11 @@ class Resolver extends Net_DNS2
         //
         // set the DNSSEC AD or CD bits
         //
-        if ( $this->dnssec_ad_flag ) {
+        if ( $this->dnssecADFlag ) {
 
             $packet->header->ad = 1;
         }
-        if ( $this->dnssec_cd_flag ) {
+        if ( $this->dnssecCDFlag ) {
 
             $packet->header->cd = 1;
         }
@@ -149,25 +153,20 @@ class Resolver extends Net_DNS2
         //
         $packet_hash = '';
 
-        if ( $this->useCache && $this->cacheable( $type ) ) {
-
-            //
-            // open the cache
-            //
-            $this->cache->open(
-                $this->cache_file, $this->cache_size, $this->cache_serializer
-            );
+        if ( $this->cache && $this->cache::isTypeCacheable( $type ) ) {
 
             //
             // build the key and check for it in the cache.
             //
-            $packet_hash = md5(
-                $packet->question[0]->qname . '|' . $packet->question[0]->qtype
-            );
+            $packet_hash = $this->cache::hashRequest( $packet );
 
-            if ($this->cache->has($packet_hash)) {
+            $xx = $this->cache->get( $packet_hash );
+            if ( $xx ) {
 
-                return $this->cache->get($packet_hash);
+                //
+                // return the cached packet
+                //
+                return $xx;
             }
         }
 
@@ -187,7 +186,7 @@ class Resolver extends Net_DNS2
         // *always* use TCP for zone transfers. does this cause any problems?
         //
         $response = $this->sendPacket(
-            $packet, ($type == 'AXFR') ? true : $this->use_tcp
+            $packet, ($type == 'AXFR') ? true : $this->useTCP
         );
 
         //
@@ -197,7 +196,7 @@ class Resolver extends Net_DNS2
         // only do this is strict_query_mode is turned on, AND we've received
         // some answers; no point doing any else if there were no answers.
         //
-        if ( $this->strict_query_mode
+        if ( $this->strictQueryMode
             && ($response->header->ancount > 0) 
         ) {
 
@@ -236,12 +235,13 @@ class Resolver extends Net_DNS2
         //
         // cache the response object
         //
-        if ( $this->useCache && $this->cacheable( $type ) ) {
+        if ( $this->cache && $this->cache::isTypeCacheable( $type ) ) {
             $this->cache->put($packet_hash, $response);
         }
 
         return $response;
     }
+
 
     /**
      * does an inverse query for the given RR; most DNS servers do not implement 
@@ -256,11 +256,6 @@ class Resolver extends Net_DNS2
      */
     public function iquery(RR $rr) : ResponsePacket
     {
-        //
-        // make sure we have some name servers set
-        //
-        $this->checkServers(Net_DNS2::RESOLV_CONF);
-
         //
         // create an empty packet
         //
@@ -296,6 +291,74 @@ class Resolver extends Net_DNS2
         //
         // send the packet and get back the response
         //
-        return $this->sendPacket($packet, $this->use_tcp);
+        return $this->sendPacket($packet, $this->useTCP);
     }
+
+
+    /**
+     * Adds a caching implementation to the resolver object.
+     *
+     * @param ICache $i_cache
+     * @return static
+     */
+    public function setCache( ICache $i_cache ) : static {
+        $this->cache = $i_cache;
+        return $this;
+    }
+
+
+    /**
+     * Adds a default caching implementation.
+     */
+    public function setCacheDefault() : static {
+        $cache = new Cache();
+        return $this->setCache( $cache );
+    }
+
+
+    /**
+     * Adds a default caching implementation using a provided PSR-16 cache.
+     */
+    public function setCacheInterface( CacheInterface $i_cacheInterface ) : static {
+        $cache = new Cache( $i_cacheInterface );
+        return $this->setCache( $cache );
+    }
+
+
+    public function setRecurse( bool $i_recurse ) : static {
+        $this->recurse = $i_recurse;
+        return $this;
+    }
+
+
+    /**
+     * Enables strict query mode.
+     *
+     * By default, according to RFC 1034,
+     * CNAME RRs cause special action in DNS software.  When a name server
+     * fails to find a desired RR in the resource set associated with the
+     * domain name, it checks to see if the resource set consists of a CNAME
+     * record with a matching class.  If so, the name server includes the CNAME
+     * record in the response and restarts the query at the domain name
+     * specified in the data field of the CNAME record.
+     *
+     * this can cause "unexpected" behaviours, since i'm sure *most* people
+     * don't know DNS does this; there may be cases where the resolver returns a
+     * positive response, even though the hostname the user looked up did not
+     * actually exist.
+     *
+     * Enable strict query mode means that if the hostname that was looked up isn't
+     * actually in the answer section of the response, the resolver will return an
+     * empty answer section, instead of an answer section that could contain
+     * CNAME records.
+     *
+     * @param bool $i_strictQueryMode   Whether to enable strict mode or not.
+     */
+    public function setStrictQueryMode( bool $i_strictQueryMode = true ) : static {
+        $this->strictQueryMode = $i_strictQueryMode;
+        return $this;
+    }
+
+
 }
+

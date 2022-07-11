@@ -6,17 +6,20 @@ This package has recently been forked from pear/net_dns2 with the following obje
 * Pass my organization's internal code quality standards.
 * Develop additional unit tests.
 
-The internal use-case that prompted this fork is new development 
-(or, at least, a new implementation of code previously based on the
-entirely stale PHP4-era Net_DNS code).  As such, *large* changes are
-in progress that are not yet adequately tested.  I apologize that backwards
-compatibility is **not** a priority; this is likely only suited for 
-new development, and possibly only for *my* new development.
+*Large* changes are in progress that are not yet adequately tested.  
 
 Here are some backwards-incompatible changes planned:
 * PEAR support is being removed.
 * Certain things that were previously optional (e.g., the [filter extension](https://www.php.net/manual/en/book.filter.php)) are now required.
 * PSR-4 namespaces are being introduced.
+* Replacing the array-style options configuration with explicit methods.
+* Changing the cache implementation
+* Changing variable names
+
+I apologize that backwards compatibility is **not** a priority; my company
+required adherence to certain coding standards in order to support this work.
+This is therefore likely only suited for new development, and possibly
+only for *our* new development.
 
 # DNSQuery - Native PHP DNS Resolver and Updater #
 

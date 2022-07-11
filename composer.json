@@ -30,7 +30,8 @@
     "ext-filter": "*",
     "ext-openssl": "*",
     "ext-sockets": "*",
-    "ext-ctype": "*"
+    "ext-ctype": "*",
+    "cache/array-adapter": "^1.2"
   },
   "require-dev": {
     "phpunit/phpunit": "^9",

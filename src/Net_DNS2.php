@@ -7,9 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
-use JDWX\DNSQuery\Cache\Cache;
-use JDWX\DNSQuery\Cache\FileCache;
-use JDWX\DNSQuery\Cache\ShmCache;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\RR;
@@ -24,14 +21,6 @@ use JDWX\DNSQuery\RR\TSIG;
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
- * @author    Mike Pultz <mike@mikepultz.com>
- * @copyright 2020 Mike Pultz <mike@mikepultz.com>
- * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @link      https://netdns2.com/
- * @since     File available since Release 0.6.0
- *
  */
 
 /**
@@ -43,7 +32,7 @@ class Net_DNS2
     /*
      * the current version of this library
      */
-    public const VERSION = '1.5.3';
+    public const VERSION = '2.0.0';
 
     /*
      * the default path to a resolv.conf file
@@ -57,157 +46,67 @@ class Net_DNS2
      * local settings. This is disabled by default to remain backwards compatible.
      *
      */
-    public bool $use_resolv_options = false;
+    protected bool $useResolvOptions = false;
 
-    /*
-     * use TCP only (true/false)
-     */
-    public bool $use_tcp = false;
+    /** @var bool use TCP only (true/false) */
+    protected bool $useTCP = false;
 
     /*
      * DNS Port to use (53)
      */
-    public int $dns_port = 53;
+    protected int $dnsPort = 53;
 
     /*
      * the ip/port for use as a local socket
      */
-    public string $local_host = '';
-    public int $local_port = 0;
+    protected string $localHost = '';
+    protected int $localPort = 0;
 
     /*
      * timeout value for socket connections
      */
-    public int $timeout = 5;
+    protected int $timeout = 5;
 
     /*
      * randomize the name servers list
      */
-    public bool $ns_random = false;
+    protected bool $nsRandom = false;
 
     /*
      * default domains
      */
-    public string $domain = '';
+    protected string $domain = '';
 
     /*
      * domain search list - not actually used right now
      */
-    public array $search_list = [];
+    public array $searchList = [];
 
-    /*
-     * enable cache; either "shared", "file" or "none"
-     */
-    public string $cache_type = 'none';
+    /** @var bool If set, set the DO flag to 1 for DNSSEC requests */
+    protected bool $dnssec = false;
 
-    /*
-     * file name to use for shared memory segment or file cache
-     */
-    public string $cache_file = '/tmp/net_dns2.cache';
+    /** @var bool If set, set the AD flag in DNSSEC requests. */
+    protected bool $dnssecADFlag = false;
 
-    /*
-     * the max size of the cache file (in bytes)
-     */
-    public int $cache_size = 50000;
+    /** @var bool If set, set the CD flag in DNSSEC requests. */
+    protected bool $dnssecCDFlag = false;
 
-    /*
-     * the method to use for storing cache data; either "serialize" or "json"
-     *
-     * json is faster, but can't remember the class names; everything comes back
-     * as a "stdClass Object" but all the data is the same. serialize is
-     * slower, but will have all the class info.
-     *
-     * defaults to 'serialize'
-     */
-    public string $cache_serializer = 'serialize';
-
-    /*
-     * by default, according to RFC 1034
-     *
-     * CNAME RRs cause special action in DNS software.  When a name server
-     * fails to find a desired RR in the resource set associated with the
-     * domain name, it checks to see if the resource set consists of a CNAME
-     * record with a matching class.  If so, the name server includes the CNAME
-     * record in the response and restarts the query at the domain name
-     * specified in the data field of the CNAME record.
-     *
-     * this can cause "unexpected" behaviours, since i'm sure *most* people
-     * don't know DNS does this; there may be cases where Net_DNS2 returns a
-     * positive response, even though the hostname the user looked up did not
-     * actually exist.
-     *
-     * strict_query_mode means that if the hostname that was looked up isn't
-     * actually in the answer section of the response, Net_DNS2 will return an 
-     * empty answer section, instead of an answer section that could contain 
-     * CNAME records.
-     *
-     */
-    public bool $strict_query_mode = false;
-
-    /*
-     * if we should set the recursion desired bit to 1 or 0.
-     *
-     * by default this is set to true, we want the DNS server to perform a recursive
-     * request. If set to false, the RD bit will be set to 0, and the server will 
-     * not perform recursion on the request.
-     */
-    public bool $recurse = true;
-
-    /*
-     * request DNSSEC values, by setting the DO flag to 1; this actually makes
-     * the resolver add an OPT RR to the additional section, and sets the DO flag
-     * in this RR to 1
-     *
-     */
-    public bool $dnssec = false;
-
-    /*
-     * set the DNSSEC AD (Authentic Data) bit on/off; the AD bit on the request 
-     * side was previously undefined, and resolvers we instructed to always clear 
-     * the AD bit when sending a request.
-     *
-     * RFC6840 section 5.7 defines setting the AD bit in the query as a signal to
-     * the server that it wants the value of the AD bit, without needed to request
-     * all the DNSSEC data via the DO bit.
-     *
-     */
-    public bool $dnssec_ad_flag = false;
-
-    /*
-     * set the DNSSEC CD (Checking Disabled) bit on/off; turning this off means
-     * that the DNS resolver will perform its own signature validation so the DNS
-     * servers simply pass through all the details.
-     *
-     */
-    public bool $dnssec_cd_flag = false;
-
-    /*
-     * the EDNS(0) UDP payload size to use when making DNSSEC requests
-     * see RFC 4035 section 4.1 - EDNS Support.
-     *
-     * there are some different ideas on the suggested size to support; but it seems to
-     * be "at least" 1220 bytes, but SHOULD support 4000 bytes.
-     *
-     * we'll just support 4000
-     *
-     */
-    public int $dnssec_payload_size = 4000;
+    /** @var int The EDNS(0) UDP payload size to use when making DNSSEC requests */
+    protected int $dnssecPayloadSize = 4000;
 
     /*
      * the last exception that was generated
      */
-    public ?Exception $lastException = null;
+    protected ?Exception $lastException = null;
 
     /**
      * the list of exceptions by name server
      * @var Exception[]
      */
-    public array $lastExceptionList = [];
+    protected array $lastExceptionList = [];
 
-    /*
-     * name server list specified as IPv4 or IPv6 addresses
-     */
-    public array $nameservers = [];
+    /** @var string[] name server list specified as IPv4 or IPv6 addresses */
+    private array $nameServers = [];
 
     /**
      * local sockets
@@ -220,262 +119,199 @@ class Net_DNS2
      */
     protected TSIG|SIG|null $authSignature = null;
 
-    /*
-     * the shared memory segment id for the local cache
-     */
-    protected Cache|null $cache = null;
-
-    /*
-     * internal setting for enabling cache
-     */
-    protected bool $useCache = false;
 
     /**
      * Constructor - base constructor for the Resolver and Updater
      *
-     * @param ?array<string,mixed> $options array of options or null for none
+     * @access public
      *
      * @throws Exception
-     * @access public
-     *
      */
-    public function __construct(array $options = null)
-    {
-        //
-        // load any options that were provided
-        //
-        if (!empty($options)) {
-
-            foreach ($options as $key => $value) {
-
-                if ($key == 'nameservers') {
-
-                    $this->setServers($value);
-                } else {
-
-                    $this->$key = $value;
-                }
-            }
+    public function __construct( array|string|null $nameServers = null, ?string $resolvConf = null ) {
+        if ( ! is_null( $nameServers ) && ! is_null( $resolvConf ) ) {
+            throw new Exception( 'cannot specify both name servers and resolv.conf file' );
         }
-
-        //
-        // if we're set to use the local shared memory cache, then
-        // make sure it's been initialized
-        //
-        switch($this->cache_type) {
-        case 'shared':
-            if (extension_loaded('shmop')) {
-
-                $this->cache = new ShmCache();
-                $this->useCache = true;
-            } else {
-
-                throw new Exception(
-                    'shmop library is not available for cache',
-                    Lookups::E_CACHE_SHM_UNAVAIL
-                );
-            }
-            break;
-        case 'file':
-
-            $this->cache = new FileCache();
-            $this->useCache = true;
-
-            break;  
-        case 'none':
-            $this->useCache = false;
-            break;
-        default:
-
-            throw new Exception(
-                'un-supported cache type: ' . $this->cache_type,
-                Lookups::E_CACHE_UNSUPPORTED
-            );
+        if ( is_string( $resolvConf ) ) {
+            $this->useResolvConf( $resolvConf );
+        }
+        if ( is_string( $nameServers ) ) {
+            $this->setNameServer( $nameServers );
+        } elseif ( is_array( $nameServers ) ) {
+            $this->setNameServers( $nameServers );
         }
     }
 
-    /**
-     * autoload call-back function; used to autoload classes
-     *
-     * @param string $name the name of the class
-     *
-     * @return void
-     * @access public
-     *
-     */
-    public static function autoload( string $name ) : void
-    {
-        //
-        // only autoload our classes
-        //
-        if (strncmp($name, 'Net_DNS2', 8) == 0) {
-
-            /** @noinspection PhpIncludeInspection */
-            include str_replace('_', '/', $name) . '.php';
-        }
-    }
 
     /**
      * sets the name servers to be used, specified as IPv4 or IPv6 addresses
      *
-     * @param array|string $nameservers either an array of name servers, or a file name
-     *                           to parse, assuming it's in the resolv.conf format
+     * @param ?string $resolvConf a filename to parse in the resolv.conf format or null
+     *                             to use the default resolv.conf file
      *
-     * @return bool
+     * @return static
      * @throws Exception
      * @access public
      *
      */
-    public function setServers( array|string $nameservers) : bool
+    public function useResolvConf( ?string $resolvConf = null ) : static
     {
         //
-        // if it's an array, then use it directly
+        // temporary list of name servers; do it this way rather than just
+        // resetting the local nameservers value, just in case an exception
+        // is thrown here; this way we might avoid ending up with an empty
+        // list of nameservers.
         //
-        // otherwise, see if it's a path to a resolv.conf file and if so, load it
+        $ns = [];
+
+        if ( is_null( $resolvConf ) ) {
+            $resolvConf = self::RESOLV_CONF;
+        }
+
         //
-        if (is_array($nameservers)) {
+        // check to see if the file is readable
+        //
+        if ( is_readable( $resolvConf ) !== true ) {
+            throw new Exception(
+                'resolver file file provided is not readable: ' . $resolvConf,
+                Lookups::E_NS_INVALID_FILE
+            );
+        }
 
-            // collect valid IP addresses in a temporary list
-            $ipAddresses = [];
+        $data = file_get_contents( $resolvConf );
+        if ( $data === false ) {
+            throw new Exception(
+                'failed to read contents of file: ' . $resolvConf,
+                Lookups::E_NS_INVALID_FILE
+            );
+        }
 
-            foreach ($nameservers as $value) {
-                if (self::isIPv4($value) || self::isIPv6($value)) {
-                    $ipAddresses[] = $value;
-                } else {
-                    throw new Exception(
-                        'invalid nameserver entry: ' . $value,
-                        Lookups::E_NS_INVALID_ENTRY
-                    );
-                }
+        $lines = explode( "\n", $data );
+
+        foreach ( $lines as $line ) {
+
+            $line = trim( $line );
+
+            //
+            // ignore empty lines, and lines that are commented out
+            //
+            if ( ( strlen( $line ) == 0 )
+                || ( $line[ 0 ] == '#' )
+                || ( $line[ 0 ] == ';' )
+            ) {
+                continue;
             }
 
-            // only replace the nameservers list if no exception is thrown
-            $this->nameservers = $ipAddresses;
-
-        } else {
-
             //
-            // temporary list of name servers; do it this way rather than just 
-            // resetting the local nameservers value, just in case an exception
-            // is thrown here; this way we might avoid ending up with an empty 
-            // list of nameservers.
+            // ignore lines with no spaces in them.
             //
-            $ns = [];
+            if ( ! str_contains( $line, ' ' ) ) {
+                continue;
+            }
 
-            //
-            // check to see if the file is readable
-            //
-            if (is_readable($nameservers) === true) {
-    
-                $data = file_get_contents($nameservers);
-                if ($data === false) {
-                    throw new Exception(
-                        'failed to read contents of file: ' . $nameservers,
-                        Lookups::E_NS_INVALID_FILE
-                    );
-                }
+            [ $key, $value ] = preg_split( '/\s+/', $line, 2 );
 
-                $lines = explode("\n", $data);
+            $key = trim( strtolower( $key ) );
+            $value = trim( strtolower( $value ) );
 
-                foreach ($lines as $line) {
-                    
-                    $line = trim($line);
+            switch ( $key ) {
+                case 'nameserver':
 
                     //
-                    // ignore empty lines, and lines that are commented out
+                    // nameserver can be a IPv4 or IPv6 address
                     //
-                    if ( (strlen($line) == 0) 
-                        || ($line[0] == '#') 
-                        || ($line[0] == ';')
+                    if ( self::isIPv4( $value )
+                        || self::isIPv6( $value )
                     ) {
-                        continue;
+
+                        $ns[] = $value;
+                    } else {
+
+                        throw new Exception(
+                            'invalid nameserver entry: ' . $value,
+                            Lookups::E_NS_INVALID_ENTRY
+                        );
                     }
+                    break;
 
-                    //
-                    // ignore lines with no spaces in them.
-                    //
-                    if ( ! str_contains( $line, ' ' ) ) {
-                        continue;
-                    }
+                case 'domain':
+                    $this->domain = $value;
+                    break;
 
-                    [$key, $value] = preg_split('/\s+/', $line, 2);
+                case 'search':
+                    $this->searchList = preg_split( '/\s+/', $value );
+                    break;
 
-                    $key    = trim(strtolower($key));
-                    $value  = trim(strtolower($value));
+                case 'options':
+                    $this->parseOptions( $value );
+                    break;
 
-                    switch($key) {
-                    case 'nameserver':
-
-                        //
-                        // nameserver can be a IPv4 or IPv6 address
-                        //
-                        if ( self::isIPv4( $value )
-                            || self::isIPv6( $value )
-                        ) {
-
-                            $ns[] = $value;
-                        } else {
-
-                            throw new Exception(
-                                'invalid nameserver entry: ' . $value,
-                                Lookups::E_NS_INVALID_ENTRY
-                            );
-                        }
-                        break;
-
-                    case 'domain':
-                        $this->domain = $value;
-                        break;
-
-                    case 'search':
-                        $this->search_list = preg_split('/\s+/', $value);
-                        break;
-
-                    case 'options':
-                        $this->parseOptions($value);
-                        break;
-
-                    }
-                }
-
-                //
-                // if we don't have a domain, but we have a search list, then
-                // take the first entry on the search list as the domain
-                //
-                if ( (strlen($this->domain) == 0) 
-                    && (count($this->search_list) > 0) 
-                ) {
-                    $this->domain = $this->search_list[0];
-                }
-
-            } else {
-                throw new Exception(
-                    'resolver file file provided is not readable: ' . $nameservers,
-                    Lookups::E_NS_INVALID_FILE
-                );
-            }
-
-            //
-            // store the name servers locally
-            //
-            if (count($ns) > 0) {
-                $this->nameservers = $ns;
             }
         }
 
         //
-        // remove any duplicates; not sure if we should bother with this. if people
-        // put duplicate name servers, who I am to stop them?
+        // if we don't have a domain, but we have a search list, then
+        // take the first entry on the search list as the domain
         //
-        $this->nameservers = array_unique($this->nameservers);
+        if ( ( strlen( $this->domain ) == 0 )
+            && ( count( $this->searchList ) > 0 )
+        ) {
+            $this->domain = $this->searchList[ 0 ];
+        }
 
-        //
-        // check the name servers
-        //
-        $this->checkServers();
+        $this->setNameServers( $ns );
 
-        return true;
+        return $this;
+
     }
+
+
+    /**
+     * Shortcut to set a single name server.
+     *
+     * @param string $nameServer the IPv4 or IPv6 address of the desired name server
+     * @throws Exception
+     */
+    public function setNameServer( string $nameServer ) : static
+    {
+        return $this->setNameServers( [ $nameServer ] );
+    }
+
+
+    /**
+     * Sets the name servers to be used, specified as IPv4 or IPv6 addresses.
+     *
+     * @param string[] $nameServers a list of IPv4 or IPv6 addresses
+     *
+     * @throws Exception
+     */
+    public function setNameServers( array $nameServers ) : static {
+        // collect valid IP addresses in a temporary list
+        $ipAddresses = [];
+
+        foreach ( $nameServers as $value ) {
+            if (self::isIPv4($value) || self::isIPv6($value)) {
+                $ipAddresses[] = $value;
+            } else {
+                throw new Exception(
+                    'invalid nameserver entry: ' . $value,
+                    Lookups::E_NS_INVALID_ENTRY
+                );
+            }
+        }
+
+        // only replace the nameservers list if no exception is thrown
+        $ipAddresses = array_unique( $ipAddresses );
+        if ( empty( $ipAddresses ) ) {
+            throw new Exception(
+                'empty name servers list; you must provide a list of name '.
+                'servers, or the path to a resolv.conf file.',
+                Lookups::E_NS_INVALID_ENTRY
+            );
+        }
+        $this->nameServers = $ipAddresses;
+        return $this;
+    }
+
 
     /**
      * return the internal $sock array
@@ -520,7 +356,7 @@ class Net_DNS2
         // if overrides are disabled (the default), or the options list is empty for some
         // reason, then we don't need to do any of this work.
         //
-        if ( ! $this->use_resolv_options || (strlen($value) == 0) ) {
+        if ( ! $this->useResolvOptions || (strlen($value) == 0) ) {
 
             return;
         }
@@ -546,41 +382,12 @@ class Net_DNS2
             //
             } elseif (strncmp($option, 'rotate', 6) == 0) {
 
-                $this->ns_random = true;
+                $this->nsRandom = true;
             }
         }
 
     }
 
-    /**
-     * checks the list of name servers to make sure they're set
-     *
-     * @param array|string|null $default a path to a resolv.conf file or an array of servers.
-     *
-     * @return bool
-     * @throws Exception
-     * @access protected
-     *
-     */
-    protected function checkServers( array|string|null $default = null) : bool
-    {
-        if (empty($this->nameservers)) {
-
-            if (isset($default)) {
-
-                $this->setServers($default);
-            } else {
-
-                throw new Exception(
-                    'empty name servers list; you must provide a list of name '.
-                    'servers, or the path to a resolv.conf file.',
-                    Lookups::E_NS_INVALID_ENTRY
-                );
-            }
-        }
-    
-        return true;
-    }
 
 
     /**
@@ -729,24 +536,6 @@ class Net_DNS2
     }
 
     /**
-     * a simple function to determine if the RR type is cacheable
-     *
-     * @param string $_type the RR type string
-     *
-     * @return bool returns true/false if the RR type if cacheable
-     * @access public
-     *
-     */
-    public function cacheable( string $_type) : bool
-    {
-        return match ( $_type ) {
-            'AXFR', 'OPT' => false,
-            default => true,
-        };
-
-    }
-
-    /**
      * PHP doesn't support unsigned integers, but many of the RRs return
      * unsigned values (like SOA), so there is the possibility that the
      * value will overrun on 32bit systems, and you'll end up with a 
@@ -847,15 +636,7 @@ class Net_DNS2
             );
         }
 
-        reset($this->nameservers);
-        
-        //
-        // randomize the name server list if it's asked for
-        //
-        if ( $this->ns_random ) {
-
-            shuffle($this->nameservers);
-        }
+        $nameServers = $this->getNameServers();
 
         //
         // loop so we can handle server errors
@@ -866,8 +647,8 @@ class Net_DNS2
             //
             // grab the next DNS server
             //
-            $ns = current($this->nameservers);
-            next($this->nameservers);
+            $ns = current($nameServers);
+            next($nameServers);
 
             if ($ns === false) {
 
@@ -891,7 +672,7 @@ class Net_DNS2
             $max_udp_size = Lookups::DNS_MAX_UDP_SIZE;
             if ( $this->dnssec )
             {
-                $max_udp_size = $this->dnssec_payload_size;
+                $max_udp_size = $this->dnssecPayloadSize;
             }
 
             if ( $use_tcp || (strlen($data) > $max_udp_size) ) {
@@ -998,6 +779,7 @@ class Net_DNS2
         return $response;
     }
 
+
     /**
      * cleans up a failed socket and throws the given exception
      *
@@ -1062,16 +844,16 @@ class Net_DNS2
             // create the socket object
             //
             $this->sock[Socket::SOCK_STREAM][$_ns] = new Socket(
-                Socket::SOCK_STREAM, $_ns, $this->dns_port, $this->timeout
+                Socket::SOCK_STREAM, $_ns, $this->dnsPort, $this->timeout
             );
 
             //
             // if a local IP address / port is set, then add it
             //
-            if (strlen($this->local_host) > 0) {
+            if (strlen($this->localHost) > 0) {
 
                 $this->sock[Socket::SOCK_STREAM][$_ns]->bindAddress(
-                    $this->local_host, $this->local_port
+                    $this->localHost, $this->localPort
                 );
             }
 
@@ -1112,7 +894,7 @@ class Net_DNS2
                 // read the data off the socket
                 //
                 $result = $this->sock[Socket::SOCK_STREAM][$_ns]->read($size,
-                    $this->dnssec ? $this->dnssec_payload_size : Lookups::DNS_MAX_UDP_SIZE);
+                    $this->dnssec ? $this->dnssecPayloadSize : Lookups::DNS_MAX_UDP_SIZE);
 
                 if ( ($result === false) || ($size < Lookups::DNS_HEADER_SIZE) ) {
 
@@ -1202,7 +984,7 @@ class Net_DNS2
         } else {
 
             $result = $this->sock[Socket::SOCK_STREAM][$_ns]->read($size,
-                $this->dnssec ? $this->dnssec_payload_size : Lookups::DNS_MAX_UDP_SIZE);
+                $this->dnssec ? $this->dnssecPayloadSize : Lookups::DNS_MAX_UDP_SIZE);
 
             if ( ($result === false) || ($size < Lookups::DNS_HEADER_SIZE) ) {
 
@@ -1263,16 +1045,16 @@ class Net_DNS2
             // create the socket object
             //
             $this->sock[Socket::SOCK_DGRAM][$_ns] = new Socket(
-                Socket::SOCK_DGRAM, $_ns, $this->dns_port, $this->timeout
+                Socket::SOCK_DGRAM, $_ns, $this->dnsPort, $this->timeout
             );
 
             //
             // if a local IP address / port is set, then add it
             //
-            if (strlen($this->local_host) > 0) {
+            if (strlen($this->localHost) > 0) {
 
                 $this->sock[Socket::SOCK_DGRAM][$_ns]->bindAddress(
-                    $this->local_host, $this->local_port
+                    $this->localHost, $this->localPort
                 );
             }
 
@@ -1299,7 +1081,7 @@ class Net_DNS2
         $size = 0;
 
         $result = $this->sock[Socket::SOCK_DGRAM][$_ns]->read($size,
-            $this->dnssec ? $this->dnssec_payload_size : Lookups::DNS_MAX_UDP_SIZE);
+            $this->dnssec ? $this->dnssecPayloadSize : Lookups::DNS_MAX_UDP_SIZE);
 
         if (( $result === false) || ($size < Lookups::DNS_HEADER_SIZE)) {
 
@@ -1328,5 +1110,185 @@ class Net_DNS2
         //
         return $response;
     }
+
+
+    /**
+     * Gets the currently-configured name servers or loads them from the default resolv.conf
+     * if none are specified.
+     *
+     * @return string[] A list of IPv4 or IPv6 addresses of the configured nameservers.
+     * @throws Exception
+     */
+    public function getNameServers() : array {
+
+        if ( empty( $this->nameServers ) ) {
+            $this->useResolvConf();
+        }
+
+        $nameServers = array_merge( [], $this->nameServers );
+
+        //
+        // randomize the name server list if it's asked for
+        //
+        if ( $this->nsRandom ) {
+            shuffle($nameServers);
+        }
+
+        return $nameServers;
+    }
+
+
+    /**
+     * Set the DNS server port to use.  (Default is 53 for both TCP and UDP DNS.)
+     *
+     * @param int $i_dnsPort
+     * @return static
+     */
+    public function setDNSPort( int $i_dnsPort = 53 ) : static {
+        $this->dnsPort = $i_dnsPort;
+        return $this;
+    }
+
+
+    /**
+     * Request DNSSEC values, by setting the DO flag to 1; this actually makes
+     * the resolver add an OPT RR to the additional section, and sets the DO flag
+     * in this RR to 1
+     *
+     * @param bool $i_dnssec  Whether to use DNSSEC.
+     * @return static
+     */
+    public function setDNSSEC( bool $i_dnssec = true ) : static {
+        $this->dnssec = $i_dnssec;
+        return $this;
+    }
+
+
+    /**
+     * set the DNSSEC AD (Authentic Data) bit on/off; the AD bit on the request
+     * side was previously undefined, and resolvers we instructed to always clear
+     * the AD bit when sending a request.
+     *
+     * RFC6840 section 5.7 defines setting the AD bit in the query as a signal to
+     * the server that it wants the value of the AD bit, without needed to request
+     * all the DNSSEC data via the DO bit.
+     *
+     * @param bool $i_dnssecADFlag
+     * @return static
+     */
+    public function setDNSSECADFlag( bool $i_dnssecADFlag = true ) : static {
+        $this->dnssecADFlag = $i_dnssecADFlag;
+        return $this;
+    }
+
+
+    /**
+     * set the DNSSEC CD (Checking Disabled) bit on/off; turning this off means
+     * that the DNS resolver will perform its own signature validation so the DNS
+     * servers simply pass through all the details.
+     *
+     * @param bool $i_dnssecCDFlag
+     * @return static
+     */
+    public function setDNSSECCDFlag( bool $i_dnssecCDFlag = true ) : static {
+        $this->dnssecCDFlag = $i_dnssecCDFlag;
+        return $this;
+    }
+
+
+    /**
+     * the EDNS(0) UDP payload size to use when making DNSSEC requests
+     * see RFC 4035 section 4.1 - EDNS Support.
+     *
+     * there are some different ideas on the suggested size to support; but it seems to
+     * be "at least" 1220 bytes, but SHOULD support 4000 bytes.  If this is not
+     * set, the default is 4000 bytes.
+     *
+     * @param int $i_dnssecPayloadSize Payload size in bytes.
+     * @return static
+     */
+    public function setDNSSECPayloadSize( int $i_dnssecPayloadSize ) : static {
+        $this->dnssecPayloadSize = $i_dnssecPayloadSize;
+        return $this;
+    }
+
+
+    /**
+     * Set the local IP address to use.  (Default is empty, which means to use the
+     * default local IP address.)
+     *
+     * @param string $i_localHost
+     * @return static
+     */
+    public function setLocalHost( string $i_localHost = '' ) : static {
+        $this->localHost = $i_localHost;
+        return $this;
+    }
+
+
+    /**
+     * Set the local port to use.  (Default is 0, which means to use a
+     * local port selected by the OS.)
+     *
+     * @param int $i_localPort          Local port value to use.
+     * @return static                   Fluent interface.
+     */
+    public function setLocalPort( int $i_localPort = 0 ) : static {
+        $this->localPort = $i_localPort;
+        return $this;
+    }
+
+
+    /**
+     * Set whether to randomize the name server list.  (Default is false.)
+     *
+     * @param bool $i_randomize         true to randomize the name server list, false to not randomize
+     * @return static                   Fluent interface.
+     */
+    public function setRandomizeNameServers( bool $i_randomize = true ) : static {
+        $this->nsRandom = $i_randomize;
+        return $this;
+    }
+
+
+    /**
+     * Set the timeout value to use for socket connections.  (Default is 5 seconds.)
+     *
+     * @param int $i_timeout
+     * @return static
+     */
+    public function setTimeout( int $i_timeout ) : static {
+        $this->timeout = $i_timeout;
+        return $this;
+    }
+
+
+    /**
+     * Set whether to use options found in resolv.conf if one is parsed.
+     *
+     * Note that this will not affect the use of the resolv.conf file if it is loaded from the
+     * constructor.  So if you want this option, set it and then manually call useResolvConf().
+     *
+     * @param  bool $i_useResolvOptions Whether to use options found in resolv.conf
+     * @return static                   Fluent interface.
+     */
+    public function setUseResolvOptions( bool $i_useResolvOptions ) : static {
+        $this->useResolvOptions = $i_useResolvOptions;
+        return $this;
+    }
+
+
+    /** Default to using TCP for requests.  (TCP will always be used for large
+     * requests or AXFR requests.)
+     *
+     * @param  bool $i_useTCP Whether to use TCP for requests by default.
+     * @return static         Fluent interface.
+     */
+    public function setUseTCP( bool $i_useTCP = true ) : static {
+        $this->useTCP = $i_useTCP;
+        return $this;
+    }
+
+
 }
 

@@ -245,7 +245,8 @@ class LegacyParserTest extends TestCase {
         //
         // create a new updater object
         //
-        $u = new Updater( "example.com", [ 'nameservers' => [ '10.10.0.1' ] ] );
+        $u = new Updater( "example.com" );
+        $u->setNameServer( '10.10.0.1' );
 
         //
         // add each RR to the same object, so we can build a build compressed name list
@@ -290,7 +291,7 @@ class LegacyParserTest extends TestCase {
         // get the authority section of the response, and clean up the
         // rdata so everything will match.
         //
-        // the request packet doesn't have the rdlength and rdata fields
+        // the request packet doesn't have the rdLength and rdata fields
         // built yet, so it will throw off the hash
         //
         $response_authority = $response->authority;

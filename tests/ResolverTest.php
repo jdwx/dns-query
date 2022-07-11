@@ -34,7 +34,7 @@ class ResolverTest extends TestCase {
     public function testQueryGooglePublicDNS() : void {
 
         $ns = [ '8.8.8.8', '8.8.4.4' ];
-        $dns = new Resolver([ 'nameservers' => $ns ]);
+        $dns = new Resolver( $ns );
         $result = $dns->query( 'google.com', 'mx' );
         $this->googleMXResponseCheck( $result );
 
@@ -46,7 +46,7 @@ class ResolverTest extends TestCase {
      */
     public function testQueryCloudflarePublicDNS() : void {
         $ns = [ '1.1.1.1', '1.0.0.1' ];
-        $dns = new Resolver([ 'nameservers' => $ns ]);
+        $dns = ( new Resolver() )->setNameServers( $ns );
         $result = $dns->query( 'google.com', 'mx' );
         $this->googleMXResponseCheck( $result );
     }

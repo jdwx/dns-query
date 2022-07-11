@@ -44,15 +44,14 @@ class LegacyDNSSECTest extends TestCase {
     public function testDNSSEC() : void {
         $ns = [ '8.8.8.8', '8.8.4.4' ];
 
-        $r = new Resolver( [ 'nameservers' => $ns ] );
-
-        $r->dnssec = true;
+        $r = ( new Resolver( $ns ) )->setDNSSEC();
 
         $result = $r->query( 'org', 'SOA' );
 
         static::assertTrue( ( $result->header->ad == 1 ) );
-        static::assertTrue( ( $result->additional[ 0 ] instanceof OPT ) );
-        assert( $result->additional[ 0 ] instanceof OPT );
-        static::assertTrue( ( $result->additional[ 0 ]->do == 1 ) );
+        $add = $result->additional[ 0 ];
+        assert( $add instanceof OPT );
+        static::assertInstanceOf( OPT::class, $add );
+        static::assertTrue( ( $add->do == 1 ) );
     }
 }

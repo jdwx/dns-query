@@ -57,15 +57,14 @@ class Updater extends Net_DNS2
      * dynamic DNS updates
      *
      * @param string $zone    the domain name to use for DNS updates
-     * @param ?array  $options an array of config options or null
      *
      * @throws Exception
      * @access public
      *
      */
-    public function __construct( string $zone, ?array $options = null )
+    public function __construct( string $zone, array|string|null $nameServers = null, ?string $resolvConf = null )
     {
-        parent::__construct($options);
+        parent::__construct( $nameServers, $resolvConf );
 
         //
         // create the packet
@@ -549,10 +548,6 @@ class Updater extends Net_DNS2
      */
     public function update( ResponsePacket & $response = null ) : bool
     {
-        //
-        // make sure we have some name servers set
-        //
-        $this->checkServers(Net_DNS2::RESOLV_CONF);
 
         //
         // check for an authentication method; either TSIG or SIG
@@ -586,7 +581,7 @@ class Updater extends Net_DNS2
         //
         // send the packet and get back the response
         //
-        $response = $this->sendPacket($this->_packet, $this->use_tcp);
+        $response = $this->sendPacket($this->_packet, $this->useTCP);
 
         //
         // clear the internal packet so if we make another request, we don't have
