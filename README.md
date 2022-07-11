@@ -1,4 +1,4 @@
-## WARNING: This package is not currently in a usable state.
+## WARNING: This package is not currently in a usable state for anything but basic resolver queries.
 
 This package has recently been forked from pear/net_dns2 with the following objectives:
 
