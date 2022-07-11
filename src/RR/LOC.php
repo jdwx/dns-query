@@ -342,7 +342,7 @@ class LOC extends RR
      *
      * @param int    $deg the degree value
      * @param int    $min the minutes value
-     * @param int    $sec the seconds value
+     * @param float  $sec the seconds value
      * @param string $hem the hemisphere (N/E/S/W)
      *
      * @return float the decimal value

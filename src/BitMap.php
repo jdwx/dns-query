@@ -125,8 +125,9 @@ class BitMap
             //
             // get the type id for the RR
             //
-            $type = @Lookups::$rr_types_by_name[$rr];
-            if (isset($type)) {
+            if ( array_key_exists( $rr, Lookups::$rr_types_by_name ) ) {
+
+                $type = Lookups::$rr_types_by_name[$rr];
 
                 //
                 // skip meta types or qtypes

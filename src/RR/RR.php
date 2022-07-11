@@ -148,28 +148,31 @@ abstract class RR
 
 
     /**
-     * abstract definition - method to return a RR as a string; not to 
-     * be confused with the __toString() magic method.
+     * Return the rdata portion of the packet as a string.
      *
-     * @return string
-     * @access protected
+     * This is *not* the same as the __toString() magic method, which
+     * returns the whole RR.
+     *
+     * @return  string
+     * @access  protected
      *
      */
     abstract protected function rrToString() : string;
 
     /**
-     * abstract definition - parses a RR from a standard DNS config line
+     * Parse the rdata portion from a standard DNS config line
      *
-     * @param array $rdata a string split line of values for the rdata
+     * @param string[] $rdata a string split line of values for the rdata
      *
      * @return bool
      * @access protected
      *
      */
-    abstract protected function rrFromString(array $rdata) : bool;
+    abstract protected function rrFromString( array $rdata ) : bool;
 
     /**
-     * abstract definition - sets an RR from a Packet object
+     * Parse the rdata from the current position of the provided
+     * Packet object, advancing the packet's internal offset accordingly.
      *
      * @param Packet $packet a Packet to parse the RR from
      *
@@ -180,17 +183,16 @@ abstract class RR
     abstract protected function rrSet( Packet $packet) : bool;
 
     /**
-     * abstract definition - returns a binary packet DNS RR object
+     * Returns the rdata portion of the RR, advancing the referenced
+     * packet offset by the correct size.
      *
-     * @param Packet $packet a Packet to use for compressed names
+     * @param Packet $packet   a Packet to use for compressed names
      *
-     *
-     * @return ?string                   either returns a binary packed string or
-     *                                 null on failure
+     * @return ?string         returns a binary packed string or null on failure
      * @access protected
      *
      */
-    abstract protected function rrGet(Packet $packet) : ?string;
+    abstract protected function rrGet( Packet $packet ) : ?string;
 
 
     /**
@@ -518,12 +520,12 @@ abstract class RR
      *
      * @param string $line a standard DNS config line 
      *
-     * @return RR       returns a new RR object for the given RR
+     * @return static       returns a new RR object for the given RR
      * @throws Exception
      * @access public
      *
      */
-    public static function fromString( string $line ) : RR
+    public static function fromString( string $line ) : static
     {
         if (strlen($line) == 0) {
             throw new Exception(

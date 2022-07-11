@@ -63,7 +63,7 @@ class AMTRELAY extends RR
     /*
      * The type field indicates the format of the information that is stored in the relay field.
      */
-    public int $relay_type;
+    public int $relayType;
 
     /*
      * The relay field is the address or domain name of the AMT relay.
@@ -79,12 +79,12 @@ class AMTRELAY extends RR
      */
     protected function rrToString() : string
     {
-        $out = $this->precedence . ' ' . $this->discovery . ' ' . $this->relay_type . ' ' . $this->relay;
+        $out = $this->precedence . ' ' . $this->discovery . ' ' . $this->relayType . ' ' . $this->relay;
 
         //
         // 4.3.1 - If the relay type field is 0, the relay field MUST be ".".
         //
-        if ( ($this->relay_type == self::AMTRELAY_TYPE_NONE) || ($this->relay_type == self::AMTRELAY_TYPE_DOMAIN) )
+        if ( ($this->relayType == self::AMTRELAY_TYPE_NONE) || ($this->relayType == self::AMTRELAY_TYPE_DOMAIN) )
         {
             $out .= '.';
         }
@@ -108,7 +108,7 @@ class AMTRELAY extends RR
         //
         $this->precedence   = (int) array_shift( $rdata );
         $this->discovery    = (int) array_shift( $rdata );
-        $this->relay_type   = (int) array_shift( $rdata );
+        $this->relayType   = (int) array_shift( $rdata );
         $this->relay        = trim(strtolower(trim(array_shift($rdata))), '.');
 
         //
@@ -122,7 +122,7 @@ class AMTRELAY extends RR
         //
         // validate the type & relay values
         //
-        switch($this->relay_type) {
+        switch($this->relayType) {
         case self::AMTRELAY_TYPE_NONE:
             $this->relay = '';
             break;
@@ -178,14 +178,14 @@ class AMTRELAY extends RR
 
             $this->precedence   = $x['precedence'];
             $this->discovery    = ($x['second'] >> 7) & 0x1;
-            $this->relay_type   = $x['second'] & 0xf;
+            $this->relayType   = $x['second'] & 0xf;
 
             $offset = 2;
 
             //
             // parse the relay value based on the type
             //
-            switch($this->relay_type) {
+            switch($this->relayType) {
             case self::AMTRELAY_TYPE_NONE:
                 $this->relay = '';
                 break;
@@ -244,12 +244,12 @@ class AMTRELAY extends RR
         //
         // pack the precedence, discovery, and type
         //
-        $data = pack('CC', $this->precedence, ($this->discovery << 7) | $this->relay_type);
+        $data = pack('CC', $this->precedence, ($this->discovery << 7) | $this->relayType);
 
         //
         // add the relay data based on the type
         //
-        switch($this->relay_type) {
+        switch($this->relayType) {
         case self::AMTRELAY_TYPE_NONE:
             // add nothing
             break;

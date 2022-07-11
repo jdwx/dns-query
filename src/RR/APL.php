@@ -47,13 +47,7 @@ class APL extends RR
      */
     public array $apl_items = [];
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrToString() : string
     {
         $out = '';
@@ -72,15 +66,7 @@ class APL extends RR
         return trim($out);
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool
     {
         foreach ($rdata as $item) {
@@ -108,15 +94,7 @@ class APL extends RR
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrSet( Packet $packet) : bool
     {
         if ($this->rdLength > 0) {
@@ -128,6 +106,7 @@ class APL extends RR
                 //
                 // unpack the family, prefix, negate and length values
                 //   
+                /** @noinspection SpellCheckingInspection */
                 $x = unpack(
                     'naddress_family/Cprefix/Cextra', substr($this->rdata, $offset)
                 );
@@ -192,17 +171,7 @@ class APL extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string
     {
         if (count($this->apl_items) > 0) {

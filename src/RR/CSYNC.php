@@ -53,9 +53,7 @@ class CSYNC extends RR
      */
     public int $flags;
 
-    /*
-     * array of RR type names
-     */
+    /** @var string[] array of RR type names */
     public array $type_bit_maps = [];
 
     /**

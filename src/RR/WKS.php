@@ -73,32 +73,16 @@ class WKS extends RR
         return $data;
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool {
         $this->address  = strtolower(trim(array_shift($rdata), '.'));
         $this->protocol = (int) array_shift($rdata);
-        $this->bitmap   = $rdata;
+        $this->bitmap   = array_map( intval(...), $rdata );
 
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrSet( Packet $packet) : bool {
         if ($this->rdLength > 0) {
 
@@ -132,17 +116,7 @@ class WKS extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string {
         if (strlen($this->address) > 0) {
 
