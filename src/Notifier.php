@@ -164,10 +164,10 @@ class Notifier extends Net_DNS2
         //
         // update the counts
         //
-        $p->header->qdcount = count($p->question);
-        $p->header->ancount = count($p->answer);
-        $p->header->nscount = count($p->authority);
-        $p->header->arcount = count($p->additional);
+        $p->header->qdCount = count($p->question);
+        $p->header->anCount = count($p->answer);
+        $p->header->nsCount = count($p->authority);
+        $p->header->arCount = count($p->additional);
 
         return $p;
     }
@@ -196,15 +196,15 @@ class Notifier extends Net_DNS2
         //
         // update the counts
         //
-        $this->packet->header->qdcount = count($this->packet->question);
-        $this->packet->header->ancount = count($this->packet->answer);
-        $this->packet->header->nscount = count($this->packet->authority);
-        $this->packet->header->arcount = count($this->packet->additional);
+        $this->packet->header->qdCount = count($this->packet->question);
+        $this->packet->header->anCount = count($this->packet->answer);
+        $this->packet->header->nsCount = count($this->packet->authority);
+        $this->packet->header->arCount = count($this->packet->additional);
 
         //
         // make sure we have some data to send
         //
-        if ($this->packet->header->qdcount == 0) {
+        if ($this->packet->header->qdCount == 0) {
             throw new Exception(
                 'empty headers- nothing to send!',
                 Lookups::E_PACKET_INVALID

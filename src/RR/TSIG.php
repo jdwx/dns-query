@@ -316,7 +316,7 @@ class TSIG extends RR
             // remove the TSIG object from the additional list
             //
             array_pop($new_packet->additional);
-            $new_packet->header->arcount = count($new_packet->additional);
+            $new_packet->header->arCount = count($new_packet->additional);
 
             //
             // copy out the data

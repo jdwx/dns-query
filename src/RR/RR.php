@@ -122,7 +122,7 @@ abstract class RR
             }
         } else {
 
-            $class = Lookups::$rr_types_class_to_id[get_class($this)];
+            $class = Lookups::$rr_types_class_to_id[ $this::class ];
             if (isset($class)) {
 
                 $this->type = Lookups::$rr_types_by_id[$class];
@@ -235,6 +235,25 @@ abstract class RR
             'rdata' => $this->rrToString()
         ];
     }
+
+
+    /** Get the rdata in the format used by PHP's dns_get_record() function.
+     * @return array The rdata or an empty array if this record type isn't support by dns_get_record().
+     */
+    public function getPHPRData() : array {
+        return [];
+    }
+
+
+    public function getPHPRecord() : array {
+        return array_merge([
+            'host' => $this->name,
+            'class' => 'IN',
+            'ttl' => $this->ttl,
+            'type' => $this->type,
+        ], $this->getPHPRData() );
+    }
+
 
     /**
      * return a formatted string; if a string has spaces in it, then return 

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -53,11 +54,23 @@ class AAAA extends RR
      */
     public string $address;
 
+
+    /** {@inheritdoc}
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
+    #[ArrayShape( [ 'ipv6' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'ipv6' => $this->address,
+        ];
+    }
+
+
     /** {@inheritdoc} */
     protected function rrToString() : string
     {
         return $this->address;
     }
+
 
     /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool
@@ -74,6 +87,7 @@ class AAAA extends RR
             
         return false;
     }
+
 
     /** {@inheritdoc} */
     protected function rrSet( Packet $packet) : bool
@@ -99,10 +113,13 @@ class AAAA extends RR
         return false;
     }
 
+
     /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string
     {
         $packet->offset += 16;
         return inet_pton($this->address);
     }
+
+
 }

@@ -528,10 +528,10 @@ class Updater extends Net_DNS2
         //
         // update the counts
         //
-        $p->header->qdcount = count($p->question);
-        $p->header->ancount = count($p->answer);
-        $p->header->nscount = count($p->authority);
-        $p->header->arcount = count($p->additional);
+        $p->header->qdCount = count($p->question);
+        $p->header->anCount = count($p->answer);
+        $p->header->nsCount = count($p->authority);
+        $p->header->arCount = count($p->additional);
 
         return $p;
     }
@@ -561,16 +561,16 @@ class Updater extends Net_DNS2
         //
         // update the counts
         //
-        $this->_packet->header->qdcount = count($this->_packet->question);
-        $this->_packet->header->ancount = count($this->_packet->answer);
-        $this->_packet->header->nscount = count($this->_packet->authority);
-        $this->_packet->header->arcount = count($this->_packet->additional);
+        $this->_packet->header->qdCount = count($this->_packet->question);
+        $this->_packet->header->anCount = count($this->_packet->answer);
+        $this->_packet->header->nsCount = count($this->_packet->authority);
+        $this->_packet->header->arCount = count($this->_packet->additional);
 
         //
         // make sure we have some data to send
         //
-        if (   ($this->_packet->header->qdcount == 0) 
-            || ($this->_packet->header->nscount == 0) 
+        if (   ($this->_packet->header->qdCount == 0)
+            || ($this->_packet->header->nsCount == 0)
         ) {
             throw new Exception(
                 'empty headers- nothing to send!',

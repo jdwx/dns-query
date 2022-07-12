@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -40,37 +41,32 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class HINFO extends RR
 {
-    /*
-     * computer information
-     */
+
+
+    /** @var string Computer Information */
     public string $cpu;
 
-    /*
-     * operating system
-     */
+    /** @var string Operating System */
     public string $os;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    #[ArrayShape( [ 'cpu' => "string", 'os' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'cpu' => $this->cpu,
+            'os' => $this->os,
+        ];
+    }
+
+
+    /** {@inheritdoc} */
     protected function rrToString() : string
     {
         return $this->formatString( $this->cpu ) . ' ' . $this->formatString($this->os);
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool
     {
         $data = $this->buildString($rdata);
@@ -86,14 +82,7 @@ class HINFO extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
+    /** {@inheritdoc}
      * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
@@ -111,17 +100,8 @@ class HINFO extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string
     {
         if (strlen($this->cpu) > 0) {
@@ -135,4 +115,6 @@ class HINFO extends RR
 
         return null;
     }
+
+
 }

@@ -111,7 +111,7 @@ class ResponsePacket extends Packet
         //
         // parse the questions
         //
-        for ($x = 0; $x < $this->header->qdcount; ++$x) {
+        for ( $x = 0; $x < $this->header->qdCount; ++$x) {
 
             $this->question[$x] = new Question($this);
         }
@@ -119,7 +119,7 @@ class ResponsePacket extends Packet
         //
         // parse the answers
         //
-        for ($x = 0; $x < $this->header->ancount; ++$x) {
+        for ( $x = 0; $x < $this->header->anCount; ++$x) {
 
             $o = RR::parse($this);
             if (!is_null($o)) {
@@ -131,7 +131,7 @@ class ResponsePacket extends Packet
         //
         // parse the authority section
         //
-        for ($x = 0; $x < $this->header->nscount; ++$x) {
+        for ( $x = 0; $x < $this->header->nsCount; ++$x) {
 
             $o = RR::parse($this);
             if (!is_null($o)) {
@@ -143,7 +143,7 @@ class ResponsePacket extends Packet
         //
         // parse the additional section
         //
-        for ($x = 0; $x < $this->header->arcount; ++$x) {
+        for ( $x = 0; $x < $this->header->arCount; ++$x) {
 
             $o = RR::parse($this);
             if (!is_null($o)) {

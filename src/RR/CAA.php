@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -56,28 +57,26 @@ class CAA extends RR
      */
     public string $value;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    #[ArrayShape( [ 'flags' => "int", 'tag' => "string", 'value' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'flags' => $this->flags,
+            'tag'   => $this->tag,
+            'value' => $this->value,
+        ];
+    }
+
+
+    /** {@inheritdoc} */
     protected function rrToString() : string
     {
         return $this->flags . ' ' . $this->tag . ' "' . 
             trim($this->cleanString($this->value), '"') . '"';
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool
     {
         $this->flags    = (int) array_shift($rdata);
@@ -88,15 +87,8 @@ class CAA extends RR
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrSet( Packet $packet) : bool
     {
         if ($this->rdLength > 0) {
@@ -104,6 +96,7 @@ class CAA extends RR
             //
             // unpack the flags and tag length
             //
+            /** @noinspection SpellCheckingInspection */
             $x = unpack('Cflags/Ctag_length', $this->rdata);
 
             $this->flags    = $x['flags'];
@@ -120,17 +113,8 @@ class CAA extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string
     {
         if (strlen($this->value) > 0) {
@@ -145,4 +129,6 @@ class CAA extends RR
 
         return null;
     }
+
+
 }

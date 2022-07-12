@@ -54,13 +54,13 @@ class LegacyParserTest extends TestCase {
         // add an A record to the authority section, like an update request
         //
         $request->authority[] = RR::fromString( 'test.example.com A 10.10.10.10' );
-        $request->header->nscount = 1;
+        $request->header->nsCount = 1;
 
         //
         // add the TSIG as additional
         //
         $request->additional[] = RR::fromString( 'mykey TSIG Zm9vYmFy' );
-        $request->header->arcount = 1;
+        $request->header->arCount = 1;
 
         assert( $request->additional[ 0 ] instanceof TSIG );
         $line = $request->additional[ 0 ]->name . '. ' . $request->additional[ 0 ]->ttl . ' ' .
@@ -193,7 +193,7 @@ class LegacyParserTest extends TestCase {
                 // set it on the packet
                 //
                 $request->answer[] = $a;
-                $request->header->ancount = 1;
+                $request->header->anCount = 1;
 
                 //
                 // get the binary packet data

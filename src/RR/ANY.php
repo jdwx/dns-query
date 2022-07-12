@@ -33,58 +33,33 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class ANY extends RR
 {
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrToString() : string
     {
         return '';
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool
     {
         return true;
     }
 
-    /**
-     * parses the rdata of the Packet object
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrSet( Packet $packet ) : bool
     {
         return true;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Packet to use for compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet(Packet $packet) : ?string
+
+    /** {@inheritdoc} */
+    protected function rrGet( Packet $packet ) : ?string
     {
         return '';
     }
+
+
 }

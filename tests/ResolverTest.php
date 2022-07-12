@@ -52,6 +52,47 @@ class ResolverTest extends TestCase {
     }
 
 
+    /**
+     * @throws Exception
+     */
+    public function testDNSGetRecordDropIn() : void {
+        $rExpected = dns_get_record( 'google.com', DNS_MX );
+        $rActual = Resolver::dns_get_record( 'google.com', DNS_MX );
+        $this->compareRRArrays( $rExpected, $rActual );
+
+        $rExpected = dns_get_record( 'google.com', DNS_A );
+        $rActual = Resolver::dns_get_record( 'google.com', DNS_A );
+        $this->compareRRArrays( $rExpected, $rActual );
+
+        $rExpected = dns_get_record( 'www.amazon.com', DNS_CNAME );
+        $rActual = Resolver::dns_get_record( 'www.amazon.com', DNS_CNAME );
+        $this->compareRRArrays( $rExpected, $rActual );
+
+        $rExpected = dns_get_record( 'org.', DNS_SOA );
+        assert( is_array( $rExpected ) );
+        $rActual = Resolver::dns_get_record( 'org.', DNS_SOA );
+        assert( is_array( $rActual ) );
+
+        # This is not ideal, but serial numbers change frequently and if you are querying a round-robin
+        # set of default resolvers, you may get a different serial number each time.
+        $rExpected[ 0 ][ 'serial' ] = '0';
+        $rActual[ 0 ][ 'serial' ] = '0';
+        $this->compareRRArrays( $rExpected, $rActual );
+
+    }
+
+
+    private function compareRRArrays( array $rExpected, array $rActual ) : void {
+        foreach ( $rActual as & $row ) {
+            $row[ 'ttl' ] = 0;
+        }
+        foreach ( $rExpected as & $row ) {
+            $row[ 'ttl' ] = 0;
+        }
+        static::assertSame( $rExpected, $rActual );
+    }
+
+
     private function googleMXResponseCheck( ResponsePacket $result ) :void {
 
         static::assertInstanceOf( ResponsePacket::class, $result );

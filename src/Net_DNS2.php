@@ -757,13 +757,13 @@ class Net_DNS2
             //
             // make sure the response code in the header is ok
             //
-            if ($response->header->rcode != Lookups::RCODE_NOERROR) {
+            if ($response->header->rCode != Lookups::RCODE_NOERROR) {
             
                 $this->lastException = new Exception(
                 
                     'DNS request failed: ' . 
-                    Lookups::$result_code_messages[$response->header->rcode],
-                    $response->header->rcode,
+                    Lookups::$result_code_messages[$response->header->rCode],
+                    $response->header->rCode,
                     null,
                     $request,
                     $response
@@ -929,7 +929,7 @@ class Net_DNS2
                     // failed, then we don't need to do anything else at this
                     // point, and we should just break out.                 
                     //
-                    if ($response->header->rcode != Lookups::RCODE_NOERROR) {
+                    if ($response->header->rCode != Lookups::RCODE_NOERROR) {
                         break;
                     }
 

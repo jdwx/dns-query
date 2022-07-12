@@ -65,61 +65,57 @@ class Header
     public int $z;          //  1 bit - Reserved
     public int $ad;         //  1 bit - Authentic Data (RFC4035)
     public int $cd;         //  1 bit - Checking Disabled (RFC4035)
-    public int $rcode;      //  4 bit - Response code
-    public int $qdcount;    // 16 bit - entries in the question section
-    public int $ancount;    // 16 bit - resource records in the answer section
-    public int $nscount;    // 16 bit - name server resource records in the authority records section
-    public int $arcount;    // 16 bit - resource records in the additional records section
+    public int $rCode;      //  4 bit - Response code
+    public int $qdCount;    // 16 bit - entries in the question section
+    public int $anCount;    // 16 bit - resource records in the answer section
+    public int $nsCount;    // 16 bit - name server resource records in the authority records section
+    public int $arCount;    // 16 bit - resource records in the additional records section
 
     /**
-     * Constructor - builds a new Net_DNS2_Header object
+     * Constructor - builds a new Header object
      *
-     * @param ?Packet $packet either a Net_DNS2_Packet object or null
+     * @param string|Packet|null $source a Packet object, packed data, or null for a default query packet
      *
      * @throws Exception
      * @access public
      *
      */
-    public function __construct(?Packet $packet = null)
-    {
-        if (!is_null($packet)) {
-
-            $this->set($packet);
-        } else {
-
-            $this->id       = $this->nextPacketId();
-            $this->qr       = Lookups::QR_QUERY;
-            $this->opcode   = Lookups::OPCODE_QUERY;
-            $this->aa       = 0;
-            $this->tc       = 0;
-            $this->rd       = 1;
-            $this->ra       = 0;
-            $this->z        = 0;
-            $this->ad       = 0;
-            $this->cd       = 0;
-            $this->rcode    = Lookups::RCODE_NOERROR;
-            $this->qdcount  = 1;
-            $this->ancount  = 0;
-            $this->nscount  = 0;
-            $this->arcount  = 0;
+    public function __construct( string|Packet|null $source = null) {
+        if ( is_null( $source ) ) {
+            $this->setDefaultQuery();
+            return;
         }
+        if ( is_string( $source ) ) {
+            $this->unpack( $source );
+            return;
+        }
+        $this->set( $source );
     }
 
+
     /**
-     * returns the next available packet id
+     * Initialize header values to useful defaults for making a query.
      *
-     * @return    int
-     * @access    public
-     *
+     * @return void
      */
-    public function nextPacketId() : int
-    {
-        if (++Lookups::$next_packet_id > 65535) {
+    public function setDefaultQuery() : void {
 
-            Lookups::$next_packet_id = 1;
-        }
+        $this->id       = Lookups::nextPacketId();  #  TODO: should be random
+        $this->qr       = Lookups::QR_QUERY;
+        $this->opcode   = Lookups::OPCODE_QUERY;
+        $this->aa       = 0;
+        $this->tc       = 0;
+        $this->rd       = 1;
+        $this->ra       = 0;
+        $this->z        = 0;
+        $this->ad       = 0;
+        $this->cd       = 0;
+        $this->rCode    = Lookups::RCODE_NOERROR;
+        $this->qdCount  = 1;
+        $this->anCount  = 0;
+        $this->nsCount  = 0;
+        $this->arCount  = 0;
 
-        return Lookups::$next_packet_id;
     }
 
     /**
@@ -131,110 +127,152 @@ class Header
      */
     public function __toString()
     {
-        $output = ";;\n;; Header:\n";
-
-        $output .= ";;\t id         = " . $this->id . "\n";
-        $output .= ";;\t qr         = " . $this->qr . "\n";
-        $output .= ";;\t opcode     = " . $this->opcode . "\n";
-        $output .= ";;\t aa         = " . $this->aa . "\n";
-        $output .= ";;\t tc         = " . $this->tc . "\n";
-        $output .= ";;\t rd         = " . $this->rd . "\n";
-        $output .= ";;\t ra         = " . $this->ra . "\n";
-        $output .= ";;\t z          = " . $this->z . "\n";
-        $output .= ";;\t ad         = " . $this->ad . "\n";
-        $output .= ";;\t cd         = " . $this->cd . "\n";
-        $output .= ";;\t rcode      = " . $this->rcode . "\n";
-        $output .= ";;\t qdcount    = " . $this->qdcount . "\n";
-        $output .= ";;\t ancount    = " . $this->ancount . "\n";
-        $output .= ";;\t nscount    = " . $this->nscount . "\n";
-        $output .= ";;\t arcount    = " . $this->arcount . "\n";
+        $output = ";; ->>HEADER<<- opcode: " . Lookups::$opcode_tags[ $this->opcode ]
+            . ", status: " . Lookups::$result_code_tags[ $this->rCode ]
+            . ", id: " . $this->id . "\n";
+        $output .= ";; flags: ";
+        if ( $this->qr ) {
+            $output .= "qr ";
+        }
+        if ( $this->aa ) {
+            $output .= "aa ";
+        }
+        if ( $this->tc ) {
+            $output .= "tc ";
+        }
+        if ( $this->rd ) {
+            $output .= "rd ";
+        }
+        if ( $this->ra ) {
+            $output .= "ra ";
+        }
+        if ( $this->z ) {
+            $output .= "z ";
+        }
+        if ( $this->ad ) {
+            $output .= "ad ";
+        }
+        if ( $this->cd ) {
+            $output .= "cd ";
+        }
+        $output = trim( $output );
+        $output .= "; QUERY: " . $this->qdCount
+            . ", ANSWER: " . $this->anCount
+            . ", AUTHORITY: " . $this->nsCount
+            . ", ADDITIONAL: " . $this->arCount . "\n";
 
         return $output;
     }
 
+
     /**
-     * constructs a Net_DNS2_Header from a Net_DNS2_Packet object
+     * constructs a Header from a Packet object
      *
-     * @param Packet &$packet Object
+     * @param Packet $packet Object
      *
-     * @return bool
+     * @return void
      * @throws Exception
      * @access public
      *
      */
-    public function set( Packet $packet) : bool
+    public function set( Packet $packet ) : void
     {
+
+        $this->unpack( substr( $packet->rdata, 0, Lookups::DNS_HEADER_SIZE ) );
+
+        //
+        // increment the packet's internal offset
+        //
+        $packet->offset += Lookups::DNS_HEADER_SIZE;
+
+    }
+
+
+    /**
+     * returns a binary packed DNS Header, offsetting a Packet accordingly.
+     *
+     * @param Packet $packet Object
+     *
+     * @return    string
+     * @access    public
+     *
+     */
+    public function get( Packet $packet ) : string
+    {
+        $packet->offset += Lookups::DNS_HEADER_SIZE;
+        return $this->pack();
+    }
+
+
+    /**
+     * returns a binary packed DNS Header
+     *
+     * @return    string
+     * @access    public
+     *
+     */
+    public function pack() : string {
+        $flags =
+            $this->qr << 15 |
+            $this->opcode << 11 |
+            $this->aa << 10 |
+            $this->tc << 9 |
+            $this->rd << 8 |
+            $this->ra << 7 |
+            $this->z << 6 |
+            $this->ad << 5 |
+            $this->cd << 4 |
+            $this->rCode;
+
+        return pack( 'n*', $this->id, $flags, $this->qdCount, $this->anCount, $this->nsCount, $this->arCount );
+    }
+
+
+    /**
+     * Populate the header based on raw wire-format data.
+     *
+     * @param string $i_packedData The raw wire-format data to unpack.
+     *
+     * @return void
+     * @access public
+     *
+     * @throws Exception
+     */
+    public function unpack( string $i_packedData ) : void {
+
         //
         // the header must be at least 12 bytes long.
         //
-        if ($packet->rdLength < Lookups::DNS_HEADER_SIZE) {
-
+        if ( strlen( $i_packedData ) < Lookups::DNS_HEADER_SIZE ) {
             throw new Exception(
                 'invalid header data provided; too small',
                 Lookups::E_HEADER_INVALID
             );
         }
 
-        $offset = 0;
 
-        //
-        // parse the values
-        //
-        $this->id       = ord($packet->rdata[$offset]) << 8 | 
-            ord($packet->rdata[++$offset]);
+        /** @noinspection SpellCheckingInspection */
+        $shorts = unpack( "nid/nflags/nqd/nan/nns/nar", $i_packedData );
 
-        ++$offset;
-        $this->qr       = (ord($packet->rdata[$offset]) >> 7) & 0x1;
-        $this->opcode   = (ord($packet->rdata[$offset]) >> 3) & 0xf;
-        $this->aa       = (ord($packet->rdata[$offset]) >> 2) & 0x1;
-        $this->tc       = (ord($packet->rdata[$offset]) >> 1) & 0x1;
-        $this->rd       = ord($packet->rdata[$offset]) & 0x1;
+        $this->id      = $shorts[ 'id' ];
 
-        ++$offset;
-        $this->ra       = (ord($packet->rdata[$offset]) >> 7) & 0x1;
-        $this->z        = (ord($packet->rdata[$offset]) >> 6) & 0x1;
-        $this->ad       = (ord($packet->rdata[$offset]) >> 5) & 0x1;
-        $this->cd       = (ord($packet->rdata[$offset]) >> 4) & 0x1;
-        $this->rcode    = ord($packet->rdata[$offset]) & 0xf;
-            
-        $this->qdcount  = ord($packet->rdata[++$offset]) << 8 | 
-            ord($packet->rdata[++$offset]);
-        $this->ancount  = ord($packet->rdata[++$offset]) << 8 | 
-            ord($packet->rdata[++$offset]);
-        $this->nscount  = ord($packet->rdata[++$offset]) << 8 | 
-            ord($packet->rdata[++$offset]);
-        $this->arcount  = ord($packet->rdata[++$offset]) << 8 | 
-            ord($packet->rdata[++$offset]);
+        $this->qr      = $shorts[ 'flags' ] >> 15 & 0x1;
+        $this->opcode  = $shorts[ 'flags' ] >> 11 & 0xf;
+        $this->aa      = $shorts[ 'flags' ] >> 10 & 0x1;
+        $this->tc      = $shorts[ 'flags' ] >> 9 & 0x1;
+        $this->rd      = $shorts[ 'flags' ] >> 8 & 0x1;
+        $this->ra      = $shorts[ 'flags' ] >> 7 & 0x1;
+        $this->z       = $shorts[ 'flags' ] >> 6 & 0x1;
+        $this->ad      = $shorts[ 'flags' ] >> 5 & 0x1;
+        $this->cd      = $shorts[ 'flags' ] >> 4 & 0x1;
+        $this->rCode   = $shorts[ 'flags' ] & 0xf;
 
-        //
-        // increment the internal offset
-        //
-        $packet->offset += Lookups::DNS_HEADER_SIZE;
+        $this->qdCount = $shorts[ 'qd' ];
+        $this->anCount = $shorts[ 'an' ];
+        $this->nsCount = $shorts[ 'ns' ];
+        $this->arCount = $shorts[ 'ar' ];
 
-        return true;
     }
 
-    /**
-     * returns a binary packed DNS Header
-     *
-     * @param Packet &$packet Object
-     *
-     * @return    string
-     * @access    public
-     *
-     */
-    public function get( Packet $packet) : string
-    {
-        $packet->offset += Lookups::DNS_HEADER_SIZE;
 
-        return pack('n', $this->id) .
-            chr(
-                ($this->qr << 7) | ($this->opcode << 3) |
-                ($this->aa << 2) | ($this->tc << 1) | ($this->rd)
-            ) .
-            chr(
-                ($this->ra << 7) | ($this->ad << 5) | ($this->cd << 4) | $this->rcode
-            ) .
-            pack('n4', $this->qdcount, $this->ancount, $this->nscount, $this->arcount);
-    }
 }

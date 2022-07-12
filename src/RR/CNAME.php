@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -44,27 +45,22 @@ class CNAME extends RR
      */
     public string $cname;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    #[ArrayShape( [ 'target' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'target' => $this->cname,
+        ];
+    }
+
+
+    /** {@inheritdoc} */
     protected function rrToString() : string
     {
         return $this->cleanString($this->cname) . '.';
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool
     {
         $this->cname = $this->cleanString(array_shift($rdata));
@@ -72,14 +68,7 @@ class CNAME extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
+    /** {@inheritdoc}
      * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool
@@ -95,17 +84,7 @@ class CNAME extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string
     {
         if (strlen($this->cname) > 0) {

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -44,6 +45,8 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class SRV extends RR
 {
+
+
     /*
      * The priority of this target host.
      */
@@ -64,27 +67,29 @@ class SRV extends RR
      */
     public string $target;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
+
+    /** {@inheritdoc}
+     * @noinspection PhpMissingParentCallCommonInspection
      */
+    #[ArrayShape( [ 'pri' => "int", 'weight' => "int", 'target' => "string", 'port' => "int" ] )]
+    public function getPHPRData() : array {
+        return [
+            'pri' => $this->priority,
+            'weight' => $this->weight,
+            'target' => $this->target,
+            'port' => $this->port,
+        ];
+    }
+
+
+    /** {@inheritdoc} */
     protected function rrToString() : string {
         return $this->priority . ' ' . $this->weight . ' ' . 
             $this->port . ' ' . $this->cleanString($this->target) . '.';
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param array $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool {
         $this->priority = (int) $rdata[0];
         $this->weight   = (int) $rdata[1];
@@ -96,14 +101,7 @@ class SRV extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
+    /** {@inheritdoc}
      * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
@@ -128,17 +126,8 @@ class SRV extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string {
         if (strlen($this->target) > 0) {
 
@@ -152,4 +141,6 @@ class SRV extends RR
 
         return null;
     }
+
+
 }

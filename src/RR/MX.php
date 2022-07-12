@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -50,6 +51,17 @@ class MX extends RR
      * the hostname of the mail exchanger
      */
     public string $exchange;
+
+    /** {@inheritdoc}
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
+    #[ArrayShape( [ 'pri' => "int", 'target' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'pri' => $this->preference,
+            'target' => $this->exchange,
+        ];
+    }
+
 
     /**
      * method to return the rdata portion of the packet as a string

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Net_DNS2;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -42,6 +43,17 @@ class A extends RR
      * The IPv4 address in quad-dotted notation
      */
     public string $address;
+
+
+    /** {@inheritdoc}
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
+    #[ArrayShape( [ 'ip' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'ip' => $this->address,
+        ];
+    }
+
 
     /** {@inheritdoc} */
     protected function rrToString() : string

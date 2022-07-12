@@ -59,6 +59,53 @@ class Resolver extends Net_DNS2
     public bool $strictQueryMode = false;
 
 
+    /**
+     * @throws Exception
+     * @noinspection PhpMethodNamingConventionInspection
+     */
+    public function compatQuery( string            $i_hostname, int $i_type = DNS_ANY,
+                                 array             & $authoritative_name_servers = null,
+                                 array             & $additional_records = null,
+                                 array|string|null $nameServers = null,
+                                 ?string           $resolvConf = null ) : array|false {
+        if ( $i_type == DNS_A6 ) {
+            trigger_error( 'Per RFC6563, A6 records should not be implemented or deployed.', E_USER_WARNING );
+            return false;
+        }
+        if ( ! array_key_exists( $i_type, Lookups::$rr_class_by_php_id ) ) {
+            trigger_error( 'Invalid record type: $type', E_USER_WARNING );
+            return false;
+        }
+        $class = Lookups::$rr_class_by_php_id[ $i_type ];
+        $id = Lookups::$rr_types_class_to_id[ $class ];
+        $type = Lookups::$rr_types_by_id[ $id ];
+
+        $resolver = new Resolver( $nameServers, $resolvConf );
+        $rsp = $resolver->query( $i_hostname, $type );
+        $rAnswer = [];
+        foreach ( $rsp->answer as $rr ) {
+            $rAnswer[] = $rr->getPHPRecord();
+        }
+
+        if ( $authoritative_name_servers !== null ) {
+            $authoritative_name_servers = [];
+            foreach ( $rsp->authority as $rr ) {
+                $authoritative_name_servers[] = $rr->getPHPRecord();
+            }
+        }
+
+        if ( $additional_records !== null ) {
+            $additional_records = [];
+            foreach ( $rsp->additional as $rr ) {
+                $additional_records[] = $rr->getPHPRecord();
+            }
+        }
+
+        return $rAnswer;
+
+    }
+
+
 
     /**
      * does a basic DNS lookup query
@@ -104,7 +151,7 @@ class Resolver extends Net_DNS2
             || ($this->authSignature instanceof SIG)
         ) {
             $packet->additional[]       = $this->authSignature;
-            $packet->header->arcount    = count($packet->additional);
+            $packet->header->arCount    = count($packet->additional);
         }
 
         //
@@ -130,7 +177,7 @@ class Resolver extends Net_DNS2
             // add the RR to the additional section.
             //
             $packet->additional[] = $opt;
-            $packet->header->arcount = count($packet->additional);
+            $packet->header->arCount = count($packet->additional);
         }
 
         //
@@ -197,7 +244,7 @@ class Resolver extends Net_DNS2
         // some answers; no point doing any else if there were no answers.
         //
         if ( $this->strictQueryMode
-            && ($response->header->ancount > 0) 
+            && ($response->header->anCount > 0)
         ) {
 
             $found = false;
@@ -228,7 +275,7 @@ class Resolver extends Net_DNS2
             if ( ! $found ) {
                 
                 $response->answer = [];
-                $response->header->ancount = 0;
+                $response->header->anCount = 0;
             }
         }
 
@@ -265,7 +312,7 @@ class Resolver extends Net_DNS2
         // unset the question
         //
         $packet->question = [];
-        $packet->header->qdcount = 0;
+        $packet->header->qdCount = 0;
 
         //
         // set the opcode to IQUERY
@@ -276,7 +323,7 @@ class Resolver extends Net_DNS2
         // add the given RR as the answer
         //
         $packet->answer[] = $rr;
-        $packet->header->ancount = 1;
+        $packet->header->anCount = 1;
 
         //
         // check for an authentication method; either TSIG or SIG
@@ -285,7 +332,7 @@ class Resolver extends Net_DNS2
             || ($this->authSignature instanceof SIG)
         ) {
             $packet->additional[]       = $this->authSignature;
-            $packet->header->arcount    = count($packet->additional);
+            $packet->header->arCount    = count($packet->additional);
         }
 
         //
@@ -357,6 +404,20 @@ class Resolver extends Net_DNS2
     public function setStrictQueryMode( bool $i_strictQueryMode = true ) : static {
         $this->strictQueryMode = $i_strictQueryMode;
         return $this;
+    }
+
+
+    /**
+     * @throws Exception
+     * @noinspection PhpMethodNamingConventionInspection
+     */
+    public static function dns_get_record( string            $i_hostname, int $i_type = DNS_ANY,
+                                           array|string|null $nameServers = null,
+                                           ?string           $resolvConf = null ) : array|false {
+        $resolver = new static( $nameServers, $resolvConf );
+        $thing1 = null;
+        $thing2 = null;
+        return $resolver->compatQuery( $i_hostname, $i_type, $thing1, $thing2 );
     }
 
 

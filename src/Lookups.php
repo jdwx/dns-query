@@ -11,6 +11,7 @@ use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\AAAA;
 use JDWX\DNSQuery\RR\AFSDB;
 use JDWX\DNSQuery\RR\ALIAS;
+use JDWX\DNSQuery\RR\ALL;
 use JDWX\DNSQuery\RR\AMTRELAY;
 use JDWX\DNSQuery\RR\ANY;
 use JDWX\DNSQuery\RR\APL;
@@ -538,6 +539,52 @@ class Lookups
     ];
 
     /*
+     * maps response codes to short status tags
+     */
+    public static array $result_code_tags = [
+        self::RCODE_NOERROR    => 'NOERROR',
+        self::RCODE_FORMERR    => 'FORMERR',
+        self::RCODE_SERVFAIL   => 'SERVFAIL',
+        self::RCODE_NXDOMAIN   => 'NXDOMAIN',
+        self::RCODE_NOTIMP     => 'NOTIMP',
+        self::RCODE_REFUSED    => 'REFUSED',
+        self::RCODE_YXDOMAIN   => 'YXDOMAIN',
+        self::RCODE_YXRRSET    => 'YXRRSET',
+        self::RCODE_NXRRSET    => 'NXRRSET',
+        self::RCODE_NOTAUTH    => 'NOTAUTH',
+        self::RCODE_NOTZONE    => 'NOTZONE',
+        self::RCODE_BADSIG     => 'BADSIG',
+        self::RCODE_BADKEY     => 'BADKEY',
+        self::RCODE_BADTIME    => 'BADTIME',
+        self::RCODE_BADMODE    => 'BADMODE',
+        self::RCODE_BADNAME    => 'BADNAME',
+        self::RCODE_BADALG     => 'BADALG',
+        self::RCODE_BADTRUNC   => 'BADTRUNC'
+    ];
+
+
+    /** Map opcodes to short text tags. */
+    public static array $opcode_tags = [
+        self::OPCODE_QUERY     => 'QUERY',
+        self::OPCODE_IQUERY    => 'IQUERY',
+        self::OPCODE_STATUS    => 'STATUS',
+        3                      => 'OPCODE3',
+        self::OPCODE_NOTIFY    => 'NOTIFY',
+        self::OPCODE_UPDATE    => 'UPDATE',
+        6                      => 'OPCODE6',
+        7                      => 'OPCODE7',
+        8                      => 'OPCODE8',
+        9                      => 'OPCODE9',
+        10                     => 'OPCODE10',
+        11                     => 'OPCODE11',
+        12                     => 'OPCODE12',
+        13                     => 'OPCODE13',
+        14                     => 'OPCODE14',
+        15                     => 'OPCODE15'
+    ];
+
+
+    /*
      * maps DNS SEC algorithms to their mnemonics
      */
     public static array $algorithm_name_to_id = [];
@@ -634,4 +681,40 @@ class Lookups
         // 80 - 254     - Unassigned
         // 255          - Reserved
     ];
+
+    /** PHP DNS Constants to RR classes */
+    public static array $rr_class_by_php_id = [
+        DNS_A => A::class,
+        DNS_CNAME => CNAME::class,
+        DNS_HINFO => HINFO::class,
+        DNS_CAA => CAA::class,
+        DNS_MX => MX::class,
+        DNS_NS => NS::class,
+        DNS_PTR => PTR::class,
+        DNS_SOA => SOA::class,
+        DNS_TXT => TXT::class,
+        DNS_AAAA => AAAA::class,
+        DNS_SRV => SRV::class,
+        DNS_NAPTR => NAPTR::class,
+        DNS_ALL => ALL::class,
+        DNS_ANY => ANY::class,
+    ];
+
+    /**
+     * returns the next available packet id
+     *
+     * @return    int
+     * @access    public
+     *
+     */
+    public static function nextPacketId() : int
+    {
+        if (++self::$next_packet_id > 65535) {
+            self::$next_packet_id = 1;
+        }
+
+        return self::$next_packet_id;
+    }
+
+
 }

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -91,13 +92,24 @@ class SOA extends RR
       */
     public int $minimum;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    #[ArrayShape( [ 'mname' => "string", 'rname' => "string", 'serial' => "int", 'refresh' => "int",
+                    'retry' => "int", 'expire' => "int", 'minimum-ttl' => "int" ] )]
+    public function getPHPRData() : array {
+        return [
+            'mname' => $this->mName,
+            'rname'   => $this->rName,
+            'serial' => $this->serial,
+            'refresh' => $this->refresh,
+            'retry' => $this->retry,
+            'expire' => $this->expire,
+            'minimum-ttl' => $this->minimum,
+        ];
+    }
+
+
+    /** {@inheritdoc} */
     protected function rrToString() : string {
         return $this->cleanString($this->mName) . '. ' .
             $this->cleanString($this->rName) . '. ' .
@@ -105,15 +117,8 @@ class SOA extends RR
             $this->expire . ' ' . $this->minimum;
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool {
         $this->mName    = $this->cleanString($rdata[0]);
         $this->rName    = $this->cleanString($rdata[1]);
@@ -128,14 +133,7 @@ class SOA extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
+    /** {@inheritdoc}
      * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
@@ -170,17 +168,8 @@ class SOA extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string {
         if (strlen($this->mName) > 0) {
     

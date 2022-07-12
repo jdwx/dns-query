@@ -50,6 +50,8 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class NAPTR extends RR
 {
+
+
     /*
      * the order in which the NAPTR records MUST be processed
      */
@@ -82,13 +84,8 @@ class NAPTR extends RR
      */
     public string $replacement;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrToString() : string {
         return $this->order . ' ' . $this->preference . ' ' . 
             $this->formatString($this->flags) . ' ' . 
@@ -97,15 +94,8 @@ class NAPTR extends RR
             $this->cleanString($this->replacement) . '.';
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool {
         $this->order        = (int) array_shift($rdata);
         $this->preference   = (int) array_shift($rdata);
@@ -125,14 +115,7 @@ class NAPTR extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
+    /** {@inheritdoc}
      * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
@@ -161,16 +144,8 @@ class NAPTR extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Packet to use for compressed names
-     *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string {
         if ( (isset($this->order)) && (strlen($this->services) > 0) ) {
             
@@ -190,3 +165,4 @@ class NAPTR extends RR
         return null;
     }
 }
+

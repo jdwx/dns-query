@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
@@ -38,16 +39,21 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class TXT extends RR
 {
+
+
     /** @var string[] an array of the text strings */
     public array $text = [];
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    #[ArrayShape( [ 'txt' => "string" ] )] public function getPHPRData() : array {
+        return [
+            'txt' => $this->rrToString(),
+        ];
+    }
+
+
+    /** {@inheritdoc} */
     protected function rrToString() : string
     {
         if (count($this->text) == 0) {
@@ -64,15 +70,8 @@ class TXT extends RR
         return trim($data);
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param array $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrFromString(array $rdata) : bool {
         $data = $this->buildString($rdata);
         if (count($data) > 0) {
@@ -84,14 +83,7 @@ class TXT extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
+    /** {@inheritdoc}
      * @throws Exception
      */
     protected function rrSet( Packet $packet) : bool {
@@ -111,16 +103,8 @@ class TXT extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet    $packet a Packet to use for compressed names
-     *
-     * @return ?string  either returns a binary packed
-     *                  string or null on failure
-     * @access protected
-     *
-     */
+
+    /** {@inheritdoc} */
     protected function rrGet( Packet $packet) : ?string {
         $data = '';
 
