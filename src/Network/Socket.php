@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Network;
 
 
-use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Net_DNS2;
 
 
@@ -49,19 +48,19 @@ class Socket
     /*
      * the local IP and port we'll send the request from
      */
-    private string $local_host = '';
-    private int $local_port = 0;
+    private string $localAddress = '';
+    private int $localPort = 0;
 
     /*
      * the last error message on the object
      */
-    public string $last_error;
+    public string $lastError;
 
     /*
      * date the socket connection was created, and the date it was last used 
      */
-    public float $date_created;
-    public float $date_last_used;
+    public float $dateCreated;
+    public float $dateLastUsed;
 
     /*
      * type of sockets
@@ -86,7 +85,7 @@ class Socket
         $this->host         = $host;
         $this->port         = $port;
         $this->timeout      = $timeout;
-        $this->date_created = microtime(true);
+        $this->dateCreated = microtime(true);
     }
 
     /**
@@ -112,8 +111,8 @@ class Socket
      */
     public function bindAddress( string $address, int $port = 0 ) : bool
     {
-        $this->local_host = $address;
-        $this->local_port = $port;
+        $this->localAddress = $address;
+        $this->localPort = $port;
 
         return true;
     }
@@ -135,19 +134,19 @@ class Socket
         //
         // bind to a local IP/port if it's set
         //
-        if (strlen($this->local_host) > 0) {
-
-            $opts['socket']['bindto'] = $this->local_host;
-            if ($this->local_port > 0) {
-
-                $opts['socket']['bindto'] .= ':' . $this->local_port;
+        if (strlen($this->localAddress) > 0) {
+            /** @noinspection SpellCheckingInspection */
+            $opts['socket']['bindto'] = $this->localAddress;
+            if ($this->localPort > 0) {
+                /** @noinspection SpellCheckingInspection */
+                $opts['socket']['bindto'] .= ':' . $this->localPort;
             }
         }
 
         //
         // create the context
         //
-        $context = @stream_context_create($opts);
+        $context = stream_context_create($opts);
 
         //
         // create socket
@@ -160,6 +159,7 @@ class Socket
 
             if ( Net_DNS2::isIPv4( $this->host ) ) {
 
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 $this->sock = @stream_socket_client(
                     'tcp://' . $this->host . ':' . $this->port, 
                     $errno, $errorString, $this->timeout,
@@ -167,6 +167,7 @@ class Socket
                 );
             } elseif ( Net_DNS2::isIPv6( $this->host ) ) {
 
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 $this->sock = @stream_socket_client(
                     'tcp://[' . $this->host . ']:' . $this->port, 
                     $errno, $errorString, $this->timeout,
@@ -174,7 +175,7 @@ class Socket
                 );
             } else {
 
-                $this->last_error = 'invalid address type: ' . $this->host;
+                $this->lastError = 'invalid address type: ' . $this->host;
                 return false;
             }
 
@@ -184,6 +185,7 @@ class Socket
 
             if ( Net_DNS2::isIPv4( $this->host ) ) {
 
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 $this->sock = @stream_socket_client(
                     'udp://' . $this->host . ':' . $this->port, 
                     $errno, $errorString, $this->timeout,
@@ -191,6 +193,7 @@ class Socket
                 );
             } elseif ( Net_DNS2::isIPv6( $this->host ) ) {
 
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 $this->sock = @stream_socket_client(
                     'udp://[' . $this->host . ']:' . $this->port, 
                     $errno, $errorString, $this->timeout,
@@ -198,28 +201,28 @@ class Socket
                 );
             } else {
 
-                $this->last_error = 'invalid address type: ' . $this->host;
+                $this->lastError = 'invalid address type: ' . $this->host;
                 return false;
             }
 
             break;
             
         default:
-            $this->last_error = 'Invalid socket type: ' . $this->type;
+            $this->lastError = 'Invalid socket type: ' . $this->type;
             return false;
         }
 
         if ($this->sock === false) {
 
-            $this->last_error = $errorString;
+            $this->lastError = $errorString;
             return false;
         }
 
         //
         // set it to non-blocking and set the timeout
         //
-        @stream_set_blocking($this->sock, false);
-        @stream_set_timeout($this->sock, $this->timeout);
+        stream_set_blocking($this->sock, false);
+        stream_set_timeout($this->sock, $this->timeout);
 
         return true;
     }
@@ -234,8 +237,7 @@ class Socket
     public function close() : bool
     {
         if (is_resource($this->sock) === true) {
-
-            @fclose($this->sock);
+            fclose($this->sock);
         }
         return true;
     }
@@ -254,7 +256,7 @@ class Socket
         $length = strlen($data);
         if ($length == 0) {
 
-            $this->last_error = 'empty data on write()';
+            $this->lastError = 'empty data on write()';
             return false;
         }
 
@@ -265,34 +267,35 @@ class Socket
         //
         // increment the date last used timestamp
         //
-        $this->date_last_used = microtime(true);
+        $this->dateLastUsed = microtime(true);
 
         //
         // select on write
         //
+
         $result = stream_select($read, $write, $except, $this->timeout);
         if ($result === false) {
 
-            $this->last_error = 'failed on write select()';
+            $this->lastError = 'failed on write select()';
             return false;
 
         } elseif ($result == 0) {
 
-            $this->last_error = 'timeout on write select()';
+            $this->lastError = 'timeout on write select()';
             return false;
         }
 
         //
-        // if it's a TCP socket, then we need to packet and send the length of the
+        // if it's a TCP socket, then we need to pack and send the length of the
         // data as the first 16bit of data.
         //        
         if ($this->type == Socket::SOCK_STREAM) {
 
-            $s = chr($length >> 8) . chr($length);
+            $s = pack( 'n', $length );
 
+            /** @noinspection PhpUsageOfSilenceOperatorInspection */
             if (@fwrite($this->sock, $s) === false) {
-
-                $this->last_error = 'failed to fwrite() 16bit length';
+                $this->lastError = 'failed to write 16bit length';
                 return false;
             }
         }
@@ -300,15 +303,17 @@ class Socket
         //
         // write the data to the socket
         //
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
         $size = @fwrite($this->sock, $data);
         if ( ($size === false) || ($size != $length) ) {
         
-            $this->last_error = 'failed to fwrite() packet';
+            $this->lastError = 'failed to write packet';
             return false;
         }
 
         return true;
     }
+
 
     /**   
      * reads a response from a DNS server
@@ -328,12 +333,12 @@ class Socket
         //
         // increment the date last used timestamp
         //
-        $this->date_last_used = microtime(true);
+        $this->dateLastUsed = microtime(true);
 
         //
         // make sure our socket is non-blocking
         //
-        @stream_set_blocking($this->sock, false );
+        stream_set_blocking($this->sock, false );
 
         //
         // select on read
@@ -341,12 +346,12 @@ class Socket
         $result = stream_select($read, $write, $except, $this->timeout);
         if ($result === false) {
 
-            $this->last_error = 'error on read select()';
+            $this->lastError = 'error on read select()';
             return false;
 
         } elseif ($result == 0) {
 
-            $this->last_error = 'timeout on read select()';
+            $this->lastError = 'timeout on read select()';
             return false;
         }
 
@@ -361,20 +366,16 @@ class Socket
     
             if (($data = fread($this->sock, 2)) === false) {
                 
-                $this->last_error = 'failed on fread() for data length';
+                $this->lastError = 'failed on read for data length';
                 return false;
             }
             if (strlen($data) == 0)
             {
-                $this->last_error = 'failed on fread() for data length';
+                $this->lastError = 'failed on read for data length';
                 return false;
             }
 
             $length = ord($data[0]) << 8 | ord($data[1]);
-            if ($length < Lookups::DNS_HEADER_SIZE) {
-
-                return false;
-            }
         }
 
         //
@@ -384,7 +385,7 @@ class Socket
         // so the easiest thing to do, is just turn off socket blocking, and
         // wait for the data.
         //
-        @stream_set_blocking($this->sock, true);
+        stream_set_blocking($this->sock, true);
 
         //
         // read the data from the socket
@@ -408,9 +409,9 @@ class Socket
             while (1) {
 
                 $chunk = fread($this->sock, $chunk_size);
-                if ($chunk === false) {
+                if ($chunk === false || strlen($chunk) == 0 ) {
             
-                    $this->last_error = 'failed on fread() for data';
+                    $this->lastError = 'failed on read for data';
                     return false;
                 }
 
@@ -429,9 +430,9 @@ class Socket
             // doesn't seem to have a problem reading it.
             //
             $data = fread($this->sock, $length);
-            if ($data === false) {
+            if ($data === false || strlen($data) == 0 ) {
             
-                $this->last_error = 'failed on fread() for data';
+                $this->lastError = 'failed on read for data';
                 return false;
             }
         }
@@ -440,4 +441,6 @@ class Socket
 
         return $data;
     }
+
+
 }

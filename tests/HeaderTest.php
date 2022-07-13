@@ -46,6 +46,7 @@ class HeaderTest extends TestCase {
     }
 
 
+    /** @suppress PhanNoopNew */
     public function testHeaderShort() {
         $this->expectException( Exception::class );
         new Header( "TooShort" );

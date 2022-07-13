@@ -24,7 +24,7 @@ class ResolverTest extends TestCase {
     public function testQueryNoServersSpecified() {
         $dns = new Resolver();
         $result = $dns->query( 'google.com', 'mx' );
-        $this->googleMXResponseCheck( $result );
+        self::googleMXResponseCheck( $result );
     }
 
 
@@ -36,7 +36,7 @@ class ResolverTest extends TestCase {
         $ns = [ '8.8.8.8', '8.8.4.4' ];
         $dns = new Resolver( $ns );
         $result = $dns->query( 'google.com', 'mx' );
-        $this->googleMXResponseCheck( $result );
+        self::googleMXResponseCheck( $result );
 
     }
 
@@ -48,7 +48,18 @@ class ResolverTest extends TestCase {
         $ns = [ '1.1.1.1', '1.0.0.1' ];
         $dns = ( new Resolver() )->setNameServers( $ns );
         $result = $dns->query( 'google.com', 'mx' );
-        $this->googleMXResponseCheck( $result );
+        self::googleMXResponseCheck( $result );
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function testQueryTCP() : void {
+        $dns = new Resolver( '1.1.1.1' );
+        $dns->setUseTCP( true );
+        $result = $dns->query( 'google.com', 'mx' );
+        self::googleMXResponseCheck( $result );
     }
 
 
@@ -93,19 +104,19 @@ class ResolverTest extends TestCase {
     }
 
 
-    private function googleMXResponseCheck( ResponsePacket $result ) :void {
+    public static function googleMXResponseCheck( ResponsePacket $rsp ) :void {
 
-        static::assertInstanceOf( ResponsePacket::class, $result );
+        static::assertInstanceOf( ResponsePacket::class, $rsp );
 
-        static::assertSame( Lookups::QR_RESPONSE, $result->header->qr );
+        static::assertSame( Lookups::QR_RESPONSE, $rsp->header->qr );
 
-        static::assertIsArray( $result->question );
-        static::assertCount( 1, $result->question );
+        static::assertIsArray( $rsp->question );
+        static::assertCount( 1, $rsp->question );
 
-        static::assertIsArray( $result->answer );
-        static::assertCount( 1, $result->answer );
+        static::assertIsArray( $rsp->answer );
+        static::assertCount( 1, $rsp->answer );
 
-        $mx = $result->answer[0];
+        $mx = $rsp->answer[0];
         assert( $mx instanceof MX );
 
         static::assertInstanceOf( MX::class, $mx );

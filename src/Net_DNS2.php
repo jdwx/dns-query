@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery;
 
 
 use JDWX\DNSQuery\Network\Socket;
+use JDWX\DNSQuery\Network\TCPTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\RR;
@@ -79,11 +80,13 @@ class Net_DNS2 {
     /** @var string[] Not actually used right now */
     protected array $searchList = [];
 
-    /** @var array<int, array> local sockets */
+    /** @var array<int, Socket[]> local sockets */
     protected array $sock = [ Socket::SOCK_DGRAM => [], Socket::SOCK_STREAM => [] ];
 
     /** @var int timeout value for socket connections (in seconds) */
     protected int $timeout = 5;
+
+    protected TransportManager $transportManager;
 
     /** @var bool use options found in the resolv.conf file
      *
@@ -115,6 +118,7 @@ class Net_DNS2 {
         } elseif ( is_array( $nameServers ) ) {
             $this->setNameServers( $nameServers );
         }
+        $this->transportManager = new TransportManager( $this->localHost, $this->localPort, $this->timeout );
     }
 
 
@@ -877,38 +881,6 @@ class Net_DNS2 {
 
 
     /**
-     * cleans up a failed socket and throws the given exception
-     *
-     * @param int    $_proto the protocol of the socket
-     * @param string $_ns the name server to use for the request
-     *
-     * @throws Exception
-     * @access private
-     *
-     */
-    private function generateError( int $_proto, string $_ns ) : void {
-        if ( ! isset( $this->sock[ $_proto ][ $_ns ] ) ) {
-            throw new Exception( 'invalid socket referenced', Lookups::E_NS_INVALID_SOCKET );
-        }
-
-        //
-        // grab the last error message off the socket
-        //
-        $last_error = $this->sock[ $_proto ][ $_ns ]->last_error;
-
-        //
-        // remove it from the socket cache; this will call the destructor, which calls close() on the socket
-        //
-        unset( $this->sock[ $_proto ][ $_ns ] );
-
-        //
-        // throw the error provided
-        //
-        throw new Exception( $last_error, Lookups::E_NS_SOCKET_FAILED );
-    }
-
-
-    /**
      * parses the options line from a resolv.conf file; we don't support all the options
      * yet, and using them is optional.
      *
@@ -969,192 +941,17 @@ class Net_DNS2 {
      *
      */
     private function sendTCPRequest( string $_ns, string $_data, bool $_axfr = false ) : ResponsePacket {
-        //
-        // grab the start time
-        //
-        $start_time = microtime( true );
+        $tcp = $this->transportManager->acquire( Socket::SOCK_STREAM, $_ns, $this->dnsPort );
+        assert( $tcp instanceOf TCPTransport );
+        $tcp->sendData( $_data );
 
-        //
-        // see if we already have an open socket from a previous request; if so, try to use
-        // that instead of opening a new one.
-        //
-        if ( ( ! isset( $this->sock[ Socket::SOCK_STREAM ][ $_ns ] ) )
-            || ( ! ( $this->sock[ Socket::SOCK_STREAM ][ $_ns ] instanceof Socket ) )
-        ) {
-
-            //
-            // create the socket object
-            //
-            $this->sock[ Socket::SOCK_STREAM ][ $_ns ] = new Socket(
-                Socket::SOCK_STREAM, $_ns, $this->dnsPort, $this->timeout
-            );
-
-            //
-            // if a local IP address / port is set, then add it
-            //
-            if ( strlen( $this->localHost ) > 0 ) {
-
-                $this->sock[ Socket::SOCK_STREAM ][ $_ns ]->bindAddress(
-                    $this->localHost, $this->localPort
-                );
-            }
-
-            //
-            // open the socket
-            //
-            if ( $this->sock[ Socket::SOCK_STREAM ][ $_ns ]->open() === false ) {
-
-                $this->generateError( Socket::SOCK_STREAM, $_ns );
-            }
-        }
-
-        //
-        // write the data to the socket; if it fails, continue on
-        // the while loop
-        //
-        if ( $this->sock[ Socket::SOCK_STREAM ][ $_ns ]->write( $_data ) === false ) {
-
-            $this->generateError( Socket::SOCK_STREAM, $_ns );
-        }
-
-        //
-        // read the content, using select to wait for a response
-        //
-        $size = 0;
-        $response = null;
-
-        //
-        // handle zone transfer requests differently than other requests.
-        //
         if ( $_axfr ) {
-
-            $soa_count = 0;
-
-            while ( 1 ) {
-
-                //
-                // read the data off the socket
-                //
-                $result = $this->sock[ Socket::SOCK_STREAM ][ $_ns ]->read( $size,
-                    $this->dnssec ? $this->dnssecPayloadSize : Lookups::DNS_MAX_UDP_SIZE );
-
-                if ( ( $result === false ) || ( $size < Lookups::DNS_HEADER_SIZE ) ) {
-
-                    //
-                    // if we get an error, then keeping this socket around for a future request, could cause
-                    // an error- for example, https://github.com/mikepultz/netdns2/issues/61
-                    //
-                    // in this case, the connection was timing out, which once it did finally respond, left
-                    // data on the socket, which could be captured on a subsequent request.
-                    //
-                    // since there's no way to "reset" a socket, the only thing we can do it close it.
-                    //
-                    $this->generateError( Socket::SOCK_STREAM, $_ns );
-                }
-
-                //
-                // parse the first chunk as a packet
-                //
-                $chunk = new ResponsePacket( $result, $size );
-
-                //
-                // if this is the first packet, then clone it directly, then
-                // go through it to see if there are two SOA records
-                // (indicating that it's the only packet)
-                //
-                if ( is_null( $response ) ) {
-
-                    $response = clone $chunk;
-
-                    //
-                    // look for a failed response; if the zone transfer
-                    // failed, then we don't need to do anything else at this
-                    // point, and we should just break out.
-                    //
-                    if ( $response->header->rCode != Lookups::RCODE_NOERROR ) {
-                        break;
-                    }
-
-                    //
-                    // go through each answer
-                    //
-                    foreach ( $response->answer as $rr ) {
-
-                        //
-                        // count the SOA records
-                        //
-                        if ( $rr->type == 'SOA' ) {
-                            $soa_count++;
-                        }
-                    }
-
-                } else {
-
-                    //
-                    // go through all these answers, and look for SOA records
-                    //
-                    foreach ( $chunk->answer as $rr ) {
-
-                        //
-                        // count the number of SOA records we find
-                        //
-                        if ( $rr->type == 'SOA' ) {
-                            $soa_count++;
-                        }
-
-                        //
-                        // add the records to a single response object
-                        //
-                        $response->answer[] = $rr;
-                    }
-
-                }
-                //
-                // if we have 2 or more SOA records, then we're done;
-                // otherwise continue out so we read the rest of the
-                // packets off the socket
-                //
-                if ( $soa_count >= 2 ) {
-                    break;
-                }
-
-            }
-
-            //
-            // everything other than a AXFR
-            //
+            $rsp = $tcp->receiveAXFR();
         } else {
-
-            $result = $this->sock[ Socket::SOCK_STREAM ][ $_ns ]->read( $size,
-                $this->dnssec ? $this->dnssecPayloadSize : Lookups::DNS_MAX_UDP_SIZE );
-
-            if ( ( $result === false ) || ( $size < Lookups::DNS_HEADER_SIZE ) ) {
-
-                $this->generateError( Socket::SOCK_STREAM, $_ns );
-            }
-
-            //
-            // create the packet object
-            //
-            $response = new ResponsePacket( $result, $size );
+            $rsp = $tcp->receiveResponse();
         }
-
-        //
-        // store the query time
-        //
-        $response->response_time = microtime( true ) - $start_time;
-
-        //
-        // add the name server that the response came from to the response object,
-        // and the socket type that was used.
-        //
-        $response->answer_from = $_ns;
-        $response->answer_socket_type = Socket::SOCK_STREAM;
-
-        //
-        // return the Net_DNS2_Packet_Response object
-        //
-        return $response;
+        $this->transportManager->release( $tcp );
+        return $rsp;
     }
 
 
@@ -1170,87 +967,11 @@ class Net_DNS2 {
      *
      */
     private function sendUDPRequest( string $_ns, string $_data ) : ResponsePacket {
-        //
-        // grab the start time
-        //
-        $start_time = microtime( true );
-
-        //
-        // see if we already have an open socket from a previous request; if so, try to use
-        // that instead of opening a new one.
-        //
-        if ( ( ! isset( $this->sock[ Socket::SOCK_DGRAM ][ $_ns ] ) )
-            || ( ! ( $this->sock[ Socket::SOCK_DGRAM ][ $_ns ] instanceof Socket ) )
-        ) {
-
-            //
-            // create the socket object
-            //
-            $this->sock[ Socket::SOCK_DGRAM ][ $_ns ] = new Socket(
-                Socket::SOCK_DGRAM, $_ns, $this->dnsPort, $this->timeout
-            );
-
-            //
-            // if a local IP address / port is set, then add it
-            //
-            if ( strlen( $this->localHost ) > 0 ) {
-
-                $this->sock[ Socket::SOCK_DGRAM ][ $_ns ]->bindAddress(
-                    $this->localHost, $this->localPort
-                );
-            }
-
-            //
-            // open the socket
-            //
-            if ( $this->sock[ Socket::SOCK_DGRAM ][ $_ns ]->open() === false ) {
-
-                $this->generateError( Socket::SOCK_DGRAM, $_ns );
-            }
-        }
-
-        //
-        // write the data to the socket
-        //
-        if ( $this->sock[ Socket::SOCK_DGRAM ][ $_ns ]->write( $_data ) === false ) {
-
-            $this->generateError( Socket::SOCK_DGRAM, $_ns );
-        }
-
-        //
-        // read the content, using select to wait for a response
-        //
-        $size = 0;
-
-        $result = $this->sock[ Socket::SOCK_DGRAM ][ $_ns ]->read( $size,
-            $this->dnssec ? $this->dnssecPayloadSize : Lookups::DNS_MAX_UDP_SIZE );
-
-        if ( ( $result === false ) || ( $size < Lookups::DNS_HEADER_SIZE ) ) {
-
-            $this->generateError( Socket::SOCK_DGRAM, $_ns );
-        }
-
-        //
-        // create the packet object
-        //
-        $response = new ResponsePacket( $result, $size );
-
-        //
-        // store the query time
-        //
-        $response->response_time = microtime( true ) - $start_time;
-
-        //
-        // add the name server that the response came from to the response object,
-        // and the socket type that was used.
-        //
-        $response->answer_from = $_ns;
-        $response->answer_socket_type = Socket::SOCK_DGRAM;
-
-        //
-        // return the Net_DNS2_Packet_Response object
-        //
-        return $response;
+        $udp = $this->transportManager->acquire( Socket::SOCK_DGRAM, $_ns, $this->dnsPort );
+        $udp->sendData( $_data );
+        $rsp = $udp->receiveResponse();
+        $this->transportManager->release( $udp );
+        return $rsp;
     }
 
 

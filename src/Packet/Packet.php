@@ -271,7 +271,6 @@ class Packet
 
             } elseif (($xlen & 0xc0) == 0xc0) {
                 if ($packet->rdLength < ($offset + 2)) {
-
                     return null;
                 }
 
@@ -280,7 +279,6 @@ class Packet
 
                 $name2 = Packet::expand($packet, $ptr);
                 if (is_null($name2)) {
-
                     return null;
                 }
 
@@ -422,7 +420,7 @@ class Packet
      */
     public function reset() : bool
     {
-        $this->header->id   = $this->header->nextPacketId();
+        $this->header->id   = Lookups::nextPacketId();
         $this->rdata        = '';
         $this->rdLength     = 0;
         $this->offset       = 0;
