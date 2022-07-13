@@ -29,57 +29,44 @@ use JDWX\DNSQuery\RR\TSIG;
  *
  */
 class Net_DNS2 {
-    /*
-     * the current version of this library
-     */
+
+    /** @const The version of the DNS library */
     public const VERSION = '2.0.0';
 
-    /*
-     * the default path to a resolv.conf file
-     */
+    /** @const The default path to a resolv.conf file. */
     public const RESOLV_CONF = '/etc/resolv.conf';
 
-    /*
-     * override options from the resolv.conf file
+    /** @var bool use options found in the resolv.conf file
      *
      * if this is set, then certain values from the resolv.conf file will override
      * local settings. This is disabled by default to remain backwards compatible.
-     *
      */
-    public array $searchList = [];
     protected bool $useResolvOptions = false;
 
-    /*
-     * DNS Port to use (53)
-     */
     /** @var bool use TCP only (true/false) */
     protected bool $useTCP = false;
 
-    /*
-     * the ip/port for use as a local socket
-     */
+    /** @var int DNS port to use (53) */
     protected int $dnsPort = 53;
+
+    /** @var string The IP to use for local sockets */
     protected string $localHost = '';
 
-    /*
-     * timeout value for socket connections
-     */
+    /** @var int The port to use for local sockets (0 = selected by OS) */
     protected int $localPort = 0;
 
-    /*
-     * randomize the name servers list
-     */
+    /** @var int timeout value for socket connections (in seconds) */
     protected int $timeout = 5;
 
-    /*
-     * default domains
-     */
+    /** @var string The default domain for names that aren't fully qualified */
+    protected string $domain = '';
+
+    /** @var bool Randomize the list of name servers. */
     protected bool $nsRandom = false;
 
-    /*
-     * domain search list - not actually used right now
-     */
-    protected string $domain = '';
+    /** @var string[] Not actually used right now */
+    protected array $searchList = [];
+
     /** @var bool If set, set the DO flag to 1 for DNSSEC requests */
     protected bool $dnssec = false;
 
@@ -92,9 +79,7 @@ class Net_DNS2 {
     /** @var int The EDNS(0) UDP payload size to use when making DNSSEC requests */
     protected int $dnssecPayloadSize = 4000;
 
-    /*
-     * the last exception that was generated
-     */
+    /** @var ?Exception the last exception that was generated */
     protected ?Exception $lastException = null;
 
     /**
@@ -107,17 +92,16 @@ class Net_DNS2 {
      * @var array<int, array>
      */
     protected array $sock = [ Socket::SOCK_DGRAM => [], Socket::SOCK_STREAM => [] ];
+
+    /** @var null|TSIG|SIG the TSIG or SIG RR object for authentication */
     protected TSIG|SIG|null $authSignature = null;
 
-    /*
-     * the TSIG or SIG RR object for authentication
-     */
     /** @var string[] name server list specified as IPv4 or IPv6 addresses */
     private array $nameServers = [];
 
 
     /**
-     * Constructor - base constructor for the Resolver and Updater
+     * Constructor - base constructor for the Notifier, Resolver and Updater
      *
      * @access public
      *
@@ -774,7 +758,6 @@ class Net_DNS2 {
             if ( $ns === false ) {
 
                 if ( ! is_null( $this->lastException ) ) {
-
                     throw $this->lastException;
                 } else {
 
@@ -799,7 +782,6 @@ class Net_DNS2 {
 
                 try {
                     $response = $this->sendTCPRequest( $ns, $data, $request->question[ 0 ]->qtype == 'AXFR' );
-
                 } catch ( Exception $e ) {
 
                     $this->lastException = $e;
