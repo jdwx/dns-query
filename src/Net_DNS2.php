@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Network\Socket;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\RR;
@@ -36,36 +37,11 @@ class Net_DNS2 {
     /** @const The default path to a resolv.conf file. */
     public const RESOLV_CONF = '/etc/resolv.conf';
 
-    /** @var bool use options found in the resolv.conf file
-     *
-     * if this is set, then certain values from the resolv.conf file will override
-     * local settings. This is disabled by default to remain backwards compatible.
-     */
-    protected bool $useResolvOptions = false;
-
-    /** @var bool use TCP only (true/false) */
-    protected bool $useTCP = false;
+    /** @var null|TSIG|SIG the TSIG or SIG RR object for authentication */
+    protected TSIG|SIG|null $authSignature = null;
 
     /** @var int DNS port to use (53) */
     protected int $dnsPort = 53;
-
-    /** @var string The IP to use for local sockets */
-    protected string $localHost = '';
-
-    /** @var int The port to use for local sockets (0 = selected by OS) */
-    protected int $localPort = 0;
-
-    /** @var int timeout value for socket connections (in seconds) */
-    protected int $timeout = 5;
-
-    /** @var string The default domain for names that aren't fully qualified */
-    protected string $domain = '';
-
-    /** @var bool Randomize the list of name servers. */
-    protected bool $nsRandom = false;
-
-    /** @var string[] Not actually used right now */
-    protected array $searchList = [];
 
     /** @var bool If set, set the DO flag to 1 for DNSSEC requests */
     protected bool $dnssec = false;
@@ -79,25 +55,45 @@ class Net_DNS2 {
     /** @var int The EDNS(0) UDP payload size to use when making DNSSEC requests */
     protected int $dnssecPayloadSize = 4000;
 
+    /** @var string The default domain for names that aren't fully qualified */
+    protected string $domain = '';
+
     /** @var ?Exception the last exception that was generated */
     protected ?Exception $lastException = null;
 
-    /**
-     * the list of exceptions by name server
-     * @var Exception[]
-     */
+    /** @var Exception[] the list of exceptions by name server */
     protected array $lastExceptionList = [];
-    /**
-     * local sockets
-     * @var array<int, array>
-     */
-    protected array $sock = [ Socket::SOCK_DGRAM => [], Socket::SOCK_STREAM => [] ];
 
-    /** @var null|TSIG|SIG the TSIG or SIG RR object for authentication */
-    protected TSIG|SIG|null $authSignature = null;
+    /** @var string The IP to use for local sockets */
+    protected string $localHost = '';
+
+    /** @var int The port to use for local sockets (0 = selected by OS) */
+    protected int $localPort = 0;
 
     /** @var string[] name server list specified as IPv4 or IPv6 addresses */
     private array $nameServers = [];
+
+    /** @var bool Randomize the list of name servers. */
+    protected bool $nsRandom = false;
+
+    /** @var string[] Not actually used right now */
+    protected array $searchList = [];
+
+    /** @var array<int, array> local sockets */
+    protected array $sock = [ Socket::SOCK_DGRAM => [], Socket::SOCK_STREAM => [] ];
+
+    /** @var int timeout value for socket connections (in seconds) */
+    protected int $timeout = 5;
+
+    /** @var bool use options found in the resolv.conf file
+     *
+     * if this is set, then certain values from the resolv.conf file will override
+     * local settings. This is disabled by default to remain backwards compatible.
+     */
+    protected bool $useResolvOptions = false;
+
+    /** @var bool use TCP only (true/false) */
+    protected bool $useTCP = false;
 
 
     /**
