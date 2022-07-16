@@ -200,7 +200,6 @@ class Packet
         }
 
         if (empty($names)) {
-
             $compname .= pack('C', 0);
             $offset++;
         }

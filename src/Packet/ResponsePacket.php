@@ -52,7 +52,7 @@ class ResponsePacket extends Packet
     public float $response_time = 0.0;
 
     /**
-     * Constructor - builds a new Net_DNS2_Packet_Response object
+     * Constructor - builds a new ResponsePacket object
      *
      * @param string $data binary DNS packet
      * @param int    $size the length of the DNS packet
@@ -92,7 +92,7 @@ class ResponsePacket extends Packet
         // header class does is check the size and throw and exception if it's
         // invalid.
         //
-        $this->header = new Header($this);
+        $this->header = new Header( $this );
 
         //
         // if the truncation bit is set, then just return right here, because the

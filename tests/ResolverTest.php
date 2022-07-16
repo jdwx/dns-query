@@ -23,8 +23,8 @@ class ResolverTest extends TestCase {
      */
     public function testQueryNoServersSpecified() {
         $dns = new Resolver();
-        $result = $dns->query( 'google.com', 'mx' );
-        self::googleMXResponseCheck( $result );
+        $rsp = $dns->query( 'google.com', 'mx' );
+        self::googleMXResponseCheck( $rsp );
     }
 
 
@@ -57,7 +57,7 @@ class ResolverTest extends TestCase {
      */
     public function testQueryTCP() : void {
         $dns = new Resolver( '1.1.1.1' );
-        $dns->setUseTCP( true );
+        $dns->setUseTCP();
         $result = $dns->query( 'google.com', 'mx' );
         self::googleMXResponseCheck( $result );
     }
