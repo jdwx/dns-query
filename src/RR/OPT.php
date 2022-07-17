@@ -105,8 +105,6 @@ class OPT extends RR {
      * value before it builds the rdata value.
      *
      * @return void
-     * @access protected
-     *
      */
     protected function preBuild() : void {
 

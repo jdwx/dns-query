@@ -223,9 +223,6 @@ class APL extends RR {
      * @param string $address IP address
      *
      * @return string The trimmed IP address.
-     *
-     * @access private
-     *
      */
     private function _trimZeros( int $family, string $address ) : string {
 

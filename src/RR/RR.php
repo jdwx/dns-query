@@ -236,8 +236,6 @@ abstract class RR {
      * @return ?RR                   returns a new RR object for
      *                                 the given RR or null if no record was created
      * @throws Exception
-     * @access public
-     *
      */
     public static function parse( Packet $packet ) : ?RR {
         $object = [];
@@ -302,8 +300,6 @@ abstract class RR {
      * magic __toString() method to return the RR object as a string
      *
      * @return string
-     * @access public
-     *
      */
     public function __toString() {
         return $this->name . '. ' . $this->ttl . ' ' . $this->class .
@@ -316,8 +312,6 @@ abstract class RR {
      * used without having to parse the string.
      *
      * @return array
-     * @access public
-     *
      */
     #[ArrayShape(
         [ 'name' => "string", 'ttl' => "int", 'class' => "string",
@@ -517,8 +511,6 @@ abstract class RR {
      * @param string $i_str the string to format
      *
      * @return string
-     * @access protected
-     *
      */
     protected function formatString( string $i_str ) : string {
         return '"' . str_replace( '"', '\"', trim( $i_str, '"' ) ) . '"';
@@ -531,8 +523,6 @@ abstract class RR {
      * @param string[] $i_rData a string split line of values for the rdata
      *
      * @return bool
-     * @access protected
-     *
      */
     abstract protected function rrFromString( array $i_rData ) : bool;
 

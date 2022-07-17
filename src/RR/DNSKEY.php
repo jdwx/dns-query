@@ -63,8 +63,6 @@ class DNSKEY extends RR {
      * (invalid for algorithm 1, but it's not recommended)
      *
      * @return int
-     * @access protected
-     *
      */
     protected function getKeyTag() : int {
         $key = array_values( unpack( "C*", $this->rdata ) );
