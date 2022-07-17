@@ -600,10 +600,8 @@ class BaseQuery {
                     if ( self::isIPv4( $value )
                         || self::isIPv6( $value )
                     ) {
-
                         $ns[] = $value;
                     } else {
-
                         throw new Exception(
                             'invalid nameserver entry: ' . $value,
                             Lookups::E_NS_INVALID_ENTRY
