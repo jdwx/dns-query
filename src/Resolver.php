@@ -65,21 +65,21 @@ class Resolver extends BaseQuery {
      * recursive local resolver.  If you find one, please open an issue on GitHub with
      * the details.
      *
-     * @param string            $i_hostname The hostname to use for the query.
-     * @param int               $i_type    The type of record to look up (using PHP constants like DNS_A)
-     * @param null|array|string $nameServers Optional name server or list of name servers to use.
-     * @param null|string       $resolvConf Optional path to resolv.conf file to use.
+     * @param string            $hostname The hostname to use for the query.
+     * @param int               $type    The type of record to look up (using PHP constants like DNS_A)
+     * @param null|array|string $i_nameServers Optional name server or list of name servers to use.
+     * @param null|string       $i_resolvConf Optional path to resolv.conf file to use.
      * @return array|false
      * @throws Exception
      * @noinspection PhpMethodNamingConventionInspection
      */
-    public static function dns_get_record( string            $i_hostname, int $i_type = DNS_ANY,
-                                           array|string|null $nameServers = null,
-                                           ?string           $resolvConf = null ) : array|false {
-        $resolver = new static( $nameServers, $resolvConf );
+    public static function dns_get_record( string            $hostname, int $type = DNS_ANY,
+                                           array|string|null $i_nameServers = null,
+                                           ?string           $i_resolvConf = null ) : array|false {
+        $resolver = new static( $i_nameServers, $i_resolvConf );
         $thing1 = null;
         $thing2 = null;
-        return $resolver->compatQuery( $i_hostname, $i_type, $thing1, $thing2 );
+        return $resolver->compatQuery( $hostname, $type, $thing1, $thing2 );
     }
 
 
@@ -94,36 +94,31 @@ class Resolver extends BaseQuery {
      * use the native query() method or the compatQuery() method, which also returns results
      * similar to dns_get_record().
      *
-     * @param string                $i_hostname The hostname to look up
-     * @param int                   $i_type     The type of record to look up (using PHP constants)
+     * @param string                $hostname The hostname to look up
+     * @param int                   $type     The type of record to look up (using PHP constants)
      * @param array|null           &$authoritativeNameServers (output) Any authoritative name servers found.
      * @param array|null           &$additionalRecords (output) Any additional records found.
-     * @param null|string[]|string  $nameServers Optional name server or list of name servers to use.
-     * @param null|string           $resolvConf Optional resolv.conf file to use.
      *
      * @return array[]|false      An array of the discovered records on success, otherwise false
      *
      * @throws Exception
      */
-    public function compatQuery( string            $i_hostname, int $i_type = DNS_ANY,
-                                 array             &$authoritativeNameServers = null,
-                                 array             &$additionalRecords = null,
-                                 array|string|null $nameServers = null,
-                                 ?string           $resolvConf = null ) : array|false {
-        if ( $i_type == DNS_A6 ) {
+    public function compatQuery( string $hostname, int $type = DNS_ANY,
+                                 array  &$authoritativeNameServers = null,
+                                 array  &$additionalRecords = null ) : array|false {
+        if ( $type == DNS_A6 ) {
             trigger_error( 'Per RFC6563, A6 records should not be implemented or deployed.', E_USER_WARNING );
             return false;
         }
-        if ( ! array_key_exists( $i_type, Lookups::$rrClassByPHPId ) ) {
+        if ( ! array_key_exists( $type, Lookups::$rrClassByPHPId ) ) {
             trigger_error( 'Invalid record type: $type', E_USER_WARNING );
             return false;
         }
-        $class = Lookups::$rrClassByPHPId[ $i_type ];
+        $class = Lookups::$rrClassByPHPId[ $type ];
         $id = Lookups::$rrTypesClassToId[ $class ];
-        $type = Lookups::$rrTypesById[ $id ];
+        $rrType = Lookups::$rrTypesById[ $id ];
 
-        $resolver = new Resolver( $nameServers, $resolvConf );
-        $rsp = $resolver->query( $i_hostname, $type );
+        $rsp = $this->query( $hostname, $rrType );
         $rAnswer = [];
         foreach ( $rsp->answer as $rr ) {
             $rAnswer[] = $rr->getPHPRecord();
