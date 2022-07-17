@@ -9,15 +9,17 @@ namespace JDWX\DNSQuery\tests;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Network\Socket;
-use JDWX\DNSQuery\TransportManager;
+use JDWX\DNSQuery\Network\TransportManager;
 use PHPUnit\Framework\TestCase;
 
 
+/** Test the TransportManager class. */
 class TransportManagerTest extends TestCase {
 
 
     /**
      * @throws Exception
+     * @suppress PhanUndeclaredProperty
      */
     public function testTransportManager() {
         $mgr = new TransportManager( null, null, 5 );
@@ -37,6 +39,7 @@ class TransportManagerTest extends TestCase {
 
     /**
      * @throws Exception
+     * @suppress PhanUndeclaredProperty
      */
     public function testTransportManagerDoubleUp() {
         $mgr = new TransportManager( null, null, 5 );

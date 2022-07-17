@@ -7,20 +7,17 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -31,8 +28,8 @@ use JDWX\DNSQuery\Packet\Packet;
  *
  * This is the copyright notice from the PERL Net::DNS::SEC module:
  *
- * Copyright (c) 2001 - 2005  RIPE NCC.  Author Olaf M. Kolkman 
- * Copyright (c) 2007 - 2008  NLnet Labs.  Author Olaf M. Kolkman 
+ * Copyright (c) 2001 - 2005  RIPE NCC.  Author Olaf M. Kolkman
+ * Copyright (c) 2007 - 2008  NLnet Labs.  Author Olaf M. Kolkman
  * <olaf@net-dns.org>
  *
  * All Rights Reserved
@@ -53,6 +50,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+
 
 /**
  * RRSIG Resource Record - RFC4034 section 3.1
@@ -77,145 +75,136 @@ use JDWX\DNSQuery\Packet\Packet;
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class RRSIG extends RR
-{
-    /*
-     * the RR type covered by this signature
-     */
+class RRSIG extends RR {
+
+
+    /** @var string RR type covered by this signature */
     public string $typeCovered;
 
-    /*
-     * the algorithm used for the signature
-     */
+    /** @var int Algorithm used for the signature */
     public int $algorithm;
-    
-    /*
-     * the number of labels in the name
-     */
+
+    /** @var int Number of labels in the name */
     public int $labels;
 
-    /*
-     * the original TTL
-     */
+    /** @var int Original TTL */
     public int $origTTL;
 
-    /*
-     * the signature expiration
-     */
+    /** @var string Signature expiration */
     public string $sigExpiration;
 
-    /*
-     * the inception of the signature
-    */
+    /** @var string Inception of the signature */
     public string $sigInception;
 
-    /*
-     * the keytag used
-     */
+    /** @var int Keytag used */
     public int $keytag;
 
-    /*
-     * the signer's name
-     */
+    /** @var string Signer's name */
     public string $signName;
 
-    /*
-     * the signature
-     */
+    /** @var string Signature */
     public string $signature;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string {
-        return $this->typeCovered . ' ' . $this->algorithm . ' ' .
-            $this->labels . ' ' . $this->origTTL . ' ' .
-            $this->sigExpiration . ' ' . $this->sigInception . ' ' .
-            $this->keytag . ' ' . $this->cleanString($this->signName) . '. ' .
-            $this->signature;
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param array $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool {
-        $this->typeCovered   = strtoupper(array_shift($rdata));
-        $this->algorithm     = (int) array_shift($rdata);
-        $this->labels        = (int) array_shift($rdata);
-        $this->origTTL       = (int) array_shift($rdata);
-        $this->sigExpiration = array_shift($rdata);
-        $this->sigInception  = array_shift($rdata);
-        $this->keytag        = (int) array_shift($rdata);
-        $this->signName      = $this->cleanString(array_shift($rdata));
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->typeCovered = strtoupper( array_shift( $i_rData ) );
+        $this->algorithm = (int) array_shift( $i_rData );
+        $this->labels = (int) array_shift( $i_rData );
+        $this->origTTL = (int) array_shift( $i_rData );
+        $this->sigExpiration = array_shift( $i_rData );
+        $this->sigInception = array_shift( $i_rData );
+        $this->keytag = (int) array_shift( $i_rData );
+        $this->signName = $this->cleanString( array_shift( $i_rData ) );
 
         $this->signature = '';
-        foreach ($rdata as $line) {
+        foreach ( $i_rData as $line ) {
             $this->signature .= $line;
         }
 
-        $this->signature = trim($this->signature);
+        $this->signature = trim( $this->signature );
 
         return true;
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->signature ) > 0 ) {
 
-            //
-            // unpack 
-            //
+            # Parse the values out of the dates.
+            preg_match(
+                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigExpiration, $ee
+            );
+            preg_match(
+                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigInception, $ii
+            );
+
+            # Pack the value.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack(
-                'ntc/Calgorithm/Clabels/Norigttl/Nsigexp/Nsigincep/nkeytag', 
+            $data = pack(
+                'nCCNNNn',
+                Lookups::$rrTypesByName[ $this->typeCovered ],
+                $this->algorithm,
+                $this->labels,
+                $this->origTTL,
+                gmmktime( (int) $ee[ 4 ], (int) $ee[ 5 ], (int) $ee[ 6 ], (int) $ee[ 2 ], (int) $ee[ 3 ], (int) $ee[ 1 ] ),
+                gmmktime( (int) $ii[ 4 ], (int) $ii[ 5 ], (int) $ii[ 6 ], (int) $ii[ 2 ], (int) $ii[ 3 ], (int) $ii[ 1 ] ),
+                $this->keytag
+            );
+
+            # The signer name is special; it's not allowed to be compressed
+            # (see section 3.1.7).
+            $names = explode( '.', strtolower( $this->signName ) );
+            foreach ( $names as $name ) {
+
+                $data .= chr( strlen( $name ) );
+                $data .= $name;
+            }
+            $data .= "\0";
+
+            # Add the signature.
+            $data .= base64_decode( $this->signature );
+
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack(
+                'ntc/Calgorithm/Clabels/Norigttl/Nsigexp/Nsigincep/nkeytag',
                 $this->rdata
             );
 
-            $this->typeCovered  = Lookups::$rr_types_by_id[$x['tc']];
-            $this->algorithm    = $x[ 'algorithm' ];
-            $this->labels       = $x[ 'labels' ];
-            $this->origTTL      = $x[ 'origttl' ];
+            $this->typeCovered = Lookups::$rrTypesById[ $parse[ 'tc' ] ];
+            $this->algorithm = $parse[ 'algorithm' ];
+            $this->labels = $parse[ 'labels' ];
+            $this->origTTL = $parse[ 'origttl' ];
 
-            //
-            // the dates are in GM time
-            //
-            $this->sigExpiration       = gmdate('YmdHis', $x['sigexp']);
-            $this->sigInception     = gmdate('YmdHis', $x['sigincep']);
+            # The dates are in GM time.
+            $this->sigExpiration = gmdate( 'YmdHis', $parse[ 'sigexp' ] );
+            $this->sigInception = gmdate( 'YmdHis', $parse[ 'sigincep' ] );
 
-            //
-            // get the keytag
-            //
-            $this->keytag       = $x['keytag'];
+            # Get the keytag.
+            $this->keytag = $parse[ 'keytag' ];
 
-            //
-            // get teh signers name and signature
-            //
-            $offset             = $packet->offset + 18;
-            $sigoffset          = $offset;
+            # Get teh signers name and signature.
+            $offset = $i_packet->offset + 18;
+            $sigOffset = $offset;
 
-            $this->signName     = strtolower( $packet->expandEx( $sigoffset ) );
-            $this->signature    = base64_encode(
-                substr($this->rdata, 18 + ($sigoffset - $offset))
+            $this->signName = strtolower( $i_packet->expandEx( $sigOffset ) );
+            $this->signature = base64_encode(
+                substr( $this->rdata, 18 + ( $sigOffset - $offset ) )
             );
 
             return true;
@@ -224,67 +213,15 @@ class RRSIG extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->signature) > 0) {
 
-            //
-            // parse the values out of the dates
-            //
-            preg_match(
-                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigExpiration, $e
-            );
-            preg_match(
-                '/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $this->sigInception, $i
-            );
-
-            //
-            // pack the value
-            //
-            /** @noinspection SpellCheckingInspection */
-            $data = pack(
-                'nCCNNNn', 
-                Lookups::$rr_types_by_name[$this->typeCovered],
-                $this->algorithm,
-                $this->labels,
-                $this->origTTL,
-                gmmktime( (int) $e[4], (int) $e[5], (int) $e[6], (int) $e[2], (int) $e[3], (int) $e[1]),
-                gmmktime( (int) $i[4], (int) $i[5], (int) $i[6], (int) $i[2], (int) $i[3], (int) $i[1]),
-                $this->keytag
-            );
-
-            //
-            // the signer name is special; it's not allowed to be compressed 
-            // (see section 3.1.7)
-            //
-            $names = explode('.', strtolower($this->signName));
-            foreach ($names as $name) {
-    
-                $data .= chr(strlen($name));
-                $data .= $name;
-            }
-            $data .= "\0";
-
-            //
-            // add the signature
-            //
-            $data .= base64_decode($this->signature);
-
-            $packet->offset += strlen($data);
-
-            return $data;
-        }
-        
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->typeCovered . ' ' . $this->algorithm . ' ' .
+            $this->labels . ' ' . $this->origTTL . ' ' .
+            $this->sigExpiration . ' ' . $this->sigInception . ' ' .
+            $this->keytag . ' ' . $this->cleanString( $this->signName ) . '. ' .
+            $this->signature;
     }
+
+
 }

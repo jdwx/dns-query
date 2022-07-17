@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.0.1
  *
  */
+
 
 /**
  * WKS Resource Record - RFC1035 section 3.4.2
@@ -41,70 +40,96 @@ use JDWX\DNSQuery\Packet\Packet;
  *   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class WKS extends RR
-{
-    /*
-     * The IP address of the service
-     */
+class WKS extends RR {
+
+
+    /** @var string IP address of the service */
     public string $address;
 
-    /*
-     * The protocol of the service
-     */
+    /** @var int Protocol of the service */
     public int $protocol;
 
     /** @var int[] bitmap */
     public array $bitmap = [];
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string {
-        $data = $this->address . ' ' . $this->protocol;
 
-        foreach ($this->bitmap as $port) {
-            $data .= ' ' . $port;
-        }
-
-        return $data;
-    }
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool {
-        $this->address  = strtolower(trim(array_shift($rdata), '.'));
-        $this->protocol = (int) array_shift($rdata);
-        $this->bitmap   = array_map( intval(...), $rdata );
-
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->address = strtolower( trim( array_shift( $i_rData ), '.' ) );
+        $this->protocol = (int) array_shift( $i_rData );
+        $this->bitmap = array_map( intval( ... ), $i_rData );
         return true;
     }
 
-    /** {@inheritdoc} */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
 
-            //
-            // get the address and protocol value
-            //
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->address ) > 0 ) {
+
+            $data = pack( 'NC', ip2long( $this->address ), $this->protocol );
+
+            $ports = [];
+
+            $maxPort = 0;
+            foreach ( $this->bitmap as $port ) {
+                $ports[ $port ] = 1;
+
+                if ( $port > $maxPort ) {
+                    $maxPort = $port;
+                }
+            }
+            for ( $ii = 0 ; $ii < ceil( $maxPort / 8 ) * 8 ; $ii++ ) {
+                if ( ! isset( $ports[ $ii ] ) ) {
+                    $ports[ $ii ] = 0;
+                }
+            }
+
+            ksort( $ports );
+
+            $string = '';
+            $maxPort = 0;
+
+            foreach ( $ports as $port ) {
+
+                $string .= $port;
+                $maxPort++;
+
+                if ( $maxPort == 8 ) {
+
+                    $data .= chr( bindec( $string ) );
+                    $string = '';
+                    $maxPort = 0;
+                }
+            }
+
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Get the address and protocol value.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack('Naddress/Cprotocol', $this->rdata);
+            $parse = unpack( 'Naddress/Cprotocol', $this->rdata );
 
-            $this->address  = long2ip($x['address']);
-            $this->protocol = $x['protocol'];
+            $this->address = long2ip( $parse[ 'address' ] );
+            $this->protocol = $parse[ 'protocol' ];
 
-            //
-            // unpack the port list bitmap
-            //
+            # Unpack the port list bitmap.
             $port = 0;
-            foreach (unpack('@5/C*', $this->rdata) as $set) {
+            foreach ( unpack( '@5/C*', $this->rdata ) as $set ) {
 
-                $s = sprintf('%08b', $set);
+                $bitString = sprintf( '%08b', $set );
 
-                for ($i=0; $i<8; $i++, $port++) {
-                    if ($s[$i] == '1') {
+                for ( $ii = 0 ; $ii < 8 ; $ii++, $port++ ) {
+                    if ( $bitString[ $ii ] == '1' ) {
                         $this->bitmap[] = $port;
                     }
                 }
@@ -116,51 +141,17 @@ class WKS extends RR
         return false;
     }
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->address) > 0) {
 
-            $data = pack('NC', ip2long($this->address), $this->protocol);
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        $data = $this->address . ' ' . $this->protocol;
 
-            $ports = [];
-
-            $n = 0;
-            foreach ($this->bitmap as $port) {
-                $ports[$port] = 1;
-
-                if ($port > $n) {
-                    $n = $port;
-                }
-            }
-            for ($i=0; $i<ceil($n/8)*8; $i++) {
-                if (!isset($ports[$i])) {
-                    $ports[$i] = 0;
-                }
-            }
-
-            ksort($ports);
-
-            $string = '';
-            $n = 0;
-
-            foreach ($ports as $s) {
-
-                $string .= $s;
-                $n++;
-
-                if ($n == 8) {
-
-                    $data .= chr(bindec($string));
-                    $string = '';
-                    $n = 0;
-                }
-            }
-
-            $packet->offset += strlen($data);
-
-            return $data;
+        foreach ( $this->bitmap as $port ) {
+            $data .= ' ' . $port;
         }
 
-        return null;
+        return $data;
     }
+
+
 }

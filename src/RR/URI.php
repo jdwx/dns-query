@@ -17,8 +17,6 @@ use JDWX\DNSQuery\Packet\Packet;
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.2.0
  *
  */
+
 
 /**
  * URI Resource Record - http://tools.ietf.org/html/draft-faltstrom-uri-06
@@ -40,105 +39,68 @@ use JDWX\DNSQuery\Packet\Packet;
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class URI extends RR
-{
-    /*
-     * The priority of this target host.
-     */
+class URI extends RR {
+
+
+    /** @var int Priority of this target host */
     public int $priority;
 
-    /*
-     * a relative weight for entries with the same priority
-     */
+    /** @var int Relative weight for entries with the same priority */
     public int $weight;
 
-    /*
-      * The domain name of the target host
-     */
+    /** @var string FQDN of the target host */
     public string $target;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        //
-        // presentation format has double quotes (") around the target.
-        //
-        return $this->priority . ' ' . $this->weight . ' "' . $this->target . '"';
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->priority = (int) $rdata[ 0 ];
-        $this->weight   = (int) $rdata[ 1 ];
-        $this->target   = trim(strtolower(trim($rdata[2])), '"');
-        
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->priority = (int) $i_rData[ 0 ];
+        $this->weight = (int) $i_rData[ 1 ];
+        $this->target = trim( strtolower( trim( $i_rData[ 2 ] ) ), '"' );
+
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
-            
-            //
-            // unpack the priority and weight
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack('npriority/nweight/a*target', $this->rdata);
 
-            $this->priority = $x['priority'];
-            $this->weight   = $x['weight'];
-            $this->target   = $x['target'];
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->target ) > 0 ) {
 
-            return true;
-        }
-        
-        return false;
-    }
+            $data = pack( 'nna*', $this->priority, $this->weight, $this->target );
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->target) > 0) {
-
-            $data = pack('nna*', $this->priority, $this->weight, $this->target);
-
-            $packet->offset += strlen($data);
+            $i_packet->offset += strlen( $data );
 
             return $data;
         }
 
         return null;
     }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the priority and weight.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'npriority/nweight/a*target', $this->rdata );
+
+            $this->priority = $parse[ 'priority' ];
+            $this->weight = $parse[ 'weight' ];
+            $this->target = $parse[ 'target' ];
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        # Presentation format has double quotes (") around the target.
+        return $this->priority . ' ' . $this->weight . ' "' . $this->target . '"';
+    }
+
+
 }

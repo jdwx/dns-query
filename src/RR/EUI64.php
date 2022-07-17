@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.3.2
  *
  */
+
 
 /**
  * EUI64 Resource Record - RFC7043 section 4.1
@@ -38,83 +37,63 @@ use JDWX\DNSQuery\Packet\Packet;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class EUI64 extends RR
-{
-    /*
-     * The EUI64 address, in hex format
-     */
+class EUI64 extends RR {
+
+
+    /** @var string EUI64 address, in hex format */
     public string $address;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->address;
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $value = array_shift($rdata);
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $value = array_shift( $i_rData );
 
-        //
-        // re: RFC 7043, the field must be represented as 8 two-digit hex numbers
-        // separated by hyphens.
-        //
-        $a = explode('-', $value);
-        if (count($a) != 8) {
+        # Re: RFC 7043, the field must be represented as 8 two-digit hex numbers
+        # separated by hyphens.
+        $eui = explode( '-', $value );
+        if ( count( $eui ) != 8 ) {
 
             return false;
         }
 
-        //
-        // make sure they're all hex values
-        //
-        foreach ($a as $i) {
-            if ( ! ctype_xdigit( $i ) ) {
+        # Make sure they're all hex values.
+        foreach ( $eui as $hex ) {
+            if ( ! ctype_xdigit( $hex ) ) {
                 return false;
             }
         }
 
-        //
-        // store it
-        //
-        $this->address = strtolower($value);
+        # Store it.
+        $this->address = strtolower( $value );
 
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     * 
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
 
-            $x = unpack('C8', $this->rdata);
-            if (count($x) == 8) {
-            
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        $data = '';
+
+        $eui = explode( '-', $this->address );
+        foreach ( $eui as $hex ) {
+
+            $data .= chr( hexdec( $hex ) );
+        }
+
+        $i_packet->offset += 8;
+        return $data;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            $parse = unpack( 'C8', $this->rdata );
+            if ( count( $parse ) == 8 ) {
+
                 $this->address = vsprintf(
-                    '%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x', $x
+                    '%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x', $parse
                 );
                 return true;
             }
@@ -123,29 +102,10 @@ class EUI64 extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     * 
-     * @param Packet &$packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     * 
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        $data = '';
 
-        $a = explode('-', $this->address);
-        foreach ($a as $b) {
-
-            $data .= chr(hexdec($b));
-        }
-
-        $packet->offset += 8;
-        return $data;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->address;
     }
 
 

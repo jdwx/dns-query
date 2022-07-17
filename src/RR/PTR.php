@@ -13,14 +13,12 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * PTR Resource Record - RFC1035 section 3.3.12
@@ -37,15 +36,16 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class PTR extends RR
-{
-    /*
-     * the hostname of the PTR entry
-     */
+class PTR extends RR {
+
+
+    /** @var string Hostname of the PTR entry */
     public string $ptrDName;
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritDoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'target' => "string" ] )] public function getPHPRData() : array {
         return [
             'target' => $this->ptrDName,
@@ -53,28 +53,30 @@ class PTR extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
-        return rtrim($this->ptrDName, '.') . '.';
-    }
-
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool {
-        $this->ptrDName = rtrim(implode(' ', $rdata), '.');
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->ptrDName = rtrim( implode( ' ', $i_rData ), '.' );
         return true;
     }
 
 
-    /** {@inheritdoc}
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->ptrDName ) > 0 ) {
+            return $i_packet->compress( $this->ptrDName, $i_packet->offset );
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc
      * @throws Exception
      */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
-
-            $offset = $packet->offset;
-            $this->ptrDName = $packet->expandEx( $offset );
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+            $offset = $i_packet->offset;
+            $this->ptrDName = $i_packet->expandEx( $offset );
 
             return true;
         }
@@ -83,14 +85,9 @@ class PTR extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->ptrDName) > 0) {
-
-            return $packet->compress($this->ptrDName, $packet->offset);
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return rtrim( $this->ptrDName, '.' ) . '.';
     }
 
 

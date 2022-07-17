@@ -7,19 +7,16 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.3.1
  *
  */
+
 
 /**
  * LP Resource Record - RFC6742 section 2.4
@@ -41,100 +39,64 @@ use JDWX\DNSQuery\Packet\Packet;
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class LP extends RR
-{
-    /*
-     * The preference
-     */
+class LP extends RR {
+
+
+    /** @var int Preference */
     public int $preference;
 
-    /*
-     * The FQDN field
-     */
+    /** @var string FQDN field */
     public string $fqdn;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->preference . ' ' . $this->fqdn . '.';
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->preference = (int) array_shift($rdata);
-        $this->fqdn       = trim(array_shift($rdata), '.');
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->preference = (int) array_shift( $i_rData );
+        $this->fqdn = trim( array_shift( $i_rData ), '.' );
 
         return true;
     }
 
 
-    /**
-     * parses the rdata of the Packet object
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
- 
-            //
-            // parse the preference
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack('npreference', $this->rdata);
-            $this->preference = $x['preference'];
-            $offset = $packet->offset + 2;
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->fqdn ) > 0 ) {
 
-            //
-            // get the hostname
-            //
-            $this->fqdn = $packet->expandEx( $offset );
+            $data = pack( 'n', $this->preference );
+            $i_packet->offset += 2;
 
-            return true;
-        }
-       
-        return false;
-    }
-
-    /**
-     * returns the rdata portion of the DNS packet
-     * 
-     * @param Packet &$packet a Packet to use for compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     * 
-     */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->fqdn) > 0) {
-     
-            $data = pack('n', $this->preference);
-            $packet->offset += 2;
-
-            $data .= $packet->compress($this->fqdn, $packet->offset);
+            $data .= $i_packet->compress( $this->fqdn, $i_packet->offset );
             return $data;
         }
 
         return null;
     }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Parse the preference.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'npreference', $this->rdata );
+            $this->preference = $parse[ 'preference' ];
+            $offset = $i_packet->offset + 2;
+
+            # Get the hostname.
+            $this->fqdn = $i_packet->expandEx( $offset );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->preference . ' ' . $this->fqdn . '.';
+    }
+
+
 }

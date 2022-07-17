@@ -13,14 +13,12 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * HINFO Resource Record - RFC1035 section 3.3.2
@@ -39,8 +38,7 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class HINFO extends RR
-{
+class HINFO extends RR {
 
 
     /** @var string Computer Information */
@@ -50,7 +48,9 @@ class HINFO extends RR
     public string $os;
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritDoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'cpu' => "string", 'os' => "string" ] )] public function getPHPRData() : array {
         return [
             'cpu' => $this->cpu,
@@ -59,21 +59,13 @@ class HINFO extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
-        return $this->formatString( $this->cpu ) . ' ' . $this->formatString($this->os);
-    }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $data = $this->buildString( $i_rData );
+        if ( count( $data ) == 2 ) {
 
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $data = $this->buildString($rdata);
-        if (count($data) == 2) {
-
-            $this->cpu  = trim($data[0], '"');
-            $this->os   = trim($data[1], '"');
+            $this->cpu = trim( $data[ 0 ], '"' );
+            $this->os = trim( $data[ 1 ], '"' );
 
             return true;
         }
@@ -82,38 +74,42 @@ class HINFO extends RR
     }
 
 
-    /** {@inheritdoc}
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->cpu ) > 0 ) {
 
-            $offset = $packet->offset;
-    
-            $this->cpu  = $packet->labelEx( $offset );
-            $this->os   = $packet->labelEx( $offset );
+            $data = pack( 'Ca*Ca*', strlen( $this->cpu ), $this->cpu, strlen( $this->os ), $this->os );
 
-            return true;
-        }
-
-        return false;
-    }
-
-
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->cpu) > 0) {
-
-            $data = pack('Ca*Ca*', strlen($this->cpu), $this->cpu, strlen($this->os), $this->os);
-
-            $packet->offset += strlen($data);
+            $i_packet->offset += strlen( $data );
 
             return $data;
         }
 
         return null;
+    }
+
+
+    /** @inheritDoc
+     * @throws Exception
+     */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            $offset = $i_packet->offset;
+
+            $this->cpu = $i_packet->labelEx( $offset );
+            $this->os = $i_packet->labelEx( $offset );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->formatString( $this->cpu ) . ' ' . $this->formatString( $this->os );
     }
 
 

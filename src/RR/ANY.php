@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,37 +25,33 @@ use JDWX\DNSQuery\Packet\Packet;
  *
  */
 
+
 /**
  * This is only used for generating an empty ANY RR.
  *
  */
-class ANY extends RR
-{
+class ANY extends RR {
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        return true;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
         return '';
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool
-    {
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
         return true;
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrSet( Packet $packet ) : bool
-    {
-        return true;
-    }
-
-
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet ) : ?string
-    {
+    /** @inheritDoc */
+    protected function rrToString() : string {
         return '';
     }
 

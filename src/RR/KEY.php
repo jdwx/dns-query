@@ -8,14 +8,12 @@ namespace JDWX\DNSQuery\RR;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -23,6 +21,7 @@ namespace JDWX\DNSQuery\RR;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * the KEY RR is implemented the same as the DNSKEY RR, the only difference
@@ -39,6 +38,5 @@ namespace JDWX\DNSQuery\RR;
  * class like this is fine.
  *
  */
-class KEY extends DNSKEY
-{
+class KEY extends DNSKEY {
 }

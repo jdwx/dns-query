@@ -15,14 +15,12 @@ use JDWX\DNSQuery\RR\TSIG;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -31,71 +29,46 @@ use JDWX\DNSQuery\RR\TSIG;
  *
  */
 
+
 /**
  * The main dynamic DNS notifier class.
  *
  * This class provides functions to handle DNS notify requests as defined by RFC 1996.
  *
- * This is separate from the Net_DNS2_Resolver class, as while the underlying
+ * This is separate from the Resolver class, as while the underlying
  * protocol is the same, the functionality is completely different.
  *
  * Generally, query (recursive) lookups are done against caching server, while
  * notify requests are done against authoritative servers.
  *
  */
-class Notifier extends Net_DNS2
-{
+class Notifier extends BaseQuery {
+
+
     /** @var RequestPacket object used for the notify request */
     private RequestPacket $packet;
 
+
     /**
-     * Constructor - builds a new Net_DNS2_Notifier objected used for doing 
+     * Constructor - builds a new Notifier objected used for doing
      * DNS notification for a changed zone
      *
-     * @param string $zone    the domain name to use for DNS updates
+     * @param string $i_zone the domain name to use for DNS updates
      *
      * @throws Exception
-     * @access public
-     *
      */
-    public function __construct( string $zone, array|string|null $nameServers = null, ?string $resolvConf = null )
-    {
-        parent::__construct( $nameServers, $resolvConf );
+    public function __construct( string $i_zone, array|string|null $i_nameServers = null, ?string $i_resolvConf = null ) {
+        parent::__construct( $i_nameServers, $i_resolvConf );
 
-        //
-        // create the packet
-        //
+        # Create the packet.
         $this->packet = new RequestPacket(
-            strtolower(trim($zone, " \n\r\t.")), 'SOA', 'IN'
+            strtolower( trim( $i_zone, " \n\r\t." ) ), 'SOA', 'IN'
         );
 
-        //
-        // make sure the opcode on the packet is set to NOTIFY
-        //
+        # Make sure the opcode on the packet is set to NOTIFY.
         $this->packet->header->opcode = Lookups::OPCODE_NOTIFY;
     }
 
-    /**
-     * checks that the given name matches the name for the zone we're notifying
-     *
-     * @param string $name The name to be checked.
-     *
-     * @return void
-     * @throws Exception
-     * @access private
-     *
-     */
-    private function _checkName( string $name ) : void
-    {
-        if (!preg_match('/' . $this->packet->question[0]->qname . '$/', $name)) {
-            
-            throw new Exception(
-                'name provided (' . $name . ') does not match zone name (' .
-                $this->packet->question[0]->qname . ')',
-                Lookups::E_PACKET_INVALID
-            );
-        }
-    }
 
     /**
      *   3.7 - Add RR to notify
@@ -104,73 +77,17 @@ class Notifier extends Net_DNS2
      *
      * @return bool
      * @throws Exception
-     * @access public
-     *
      */
-    public function add(RR $rr) : bool
-    {
-        $this->_checkName($rr->name);
-        //
-        // add the RR to the "notify" section
-        //
-        if (!in_array($rr, $this->packet->answer)) {
+    public function add( RR $rr ) : bool {
+        $this->_checkName( $rr->name );
+
+        # Add the RR to the "notify" section
+        if ( ! in_array( $rr, $this->packet->answer ) ) {
             $this->packet->answer[] = $rr;
         }
         return true;
     }
 
-
-    /**
-     * add a signature to the request for authentication
-     *
-     * @param string $key_name the key name to use for the TSIG RR
-     * @param string $signature the key to sign the request.
-     * @param string $algorithm
-     * @return     bool
-     * @throws Exception
-     * @access     public
-     * @deprecated function deprecated in 1.1.0
-     *
-     * @see        Net_DNS2::signTSIG()
-     */
-    public function signature( string $key_name, string $signature, string $algorithm = TSIG::HMAC_MD5 ) : bool
-    {
-        return $this->signTSIG($key_name, $signature, $algorithm);
-    }
-
-    /**
-     * returns the current internal packet object.
-     *
-     * @return RequestPacket
-     * @access public
-     #
-     */
-    public function packet() : RequestPacket
-    {
-        //
-        // take a copy
-        //
-        $p = $this->packet;
-
-        //
-        // check for an authentication method; either TSIG or SIG
-        //
-        if (   ($this->authSignature instanceof TSIG)
-            || ($this->authSignature instanceof SIG)
-        ) {
-            $p->additional[] = $this->authSignature;
-        }
-
-        //
-        // update the counts
-        //
-        $p->header->qdCount = count($p->question);
-        $p->header->anCount = count($p->answer);
-        $p->header->nsCount = count($p->authority);
-        $p->header->arCount = count($p->additional);
-
-        return $p;
-    }
 
     /**
      * executes the notify request
@@ -179,53 +96,84 @@ class Notifier extends Net_DNS2
      *
      * @return bool
      * @throws Exception
-     * @access public
-     *
      */
-    public function notify( ?ResponsePacket & $response = null ) : bool
-    {
-        //
-        // check for an authentication method; either TSIG or SIG
-        //
-        if (   ($this->authSignature instanceof TSIG)
-            || ($this->authSignature instanceof SIG)
+    public function notify( ?ResponsePacket &$response = null ) : bool {
+        # Check for an authentication method (either TSIG or SIG).
+        if ( ( $this->authSignature instanceof TSIG )
+            || ( $this->authSignature instanceof SIG )
         ) {
             $this->packet->additional[] = $this->authSignature;
         }
 
-        //
-        // update the counts
-        //
-        $this->packet->header->qdCount = count($this->packet->question);
-        $this->packet->header->anCount = count($this->packet->answer);
-        $this->packet->header->nsCount = count($this->packet->authority);
-        $this->packet->header->arCount = count($this->packet->additional);
+        # Update the counts.
+        $this->packet->header->qdCount = count( $this->packet->question );
+        $this->packet->header->anCount = count( $this->packet->answer );
+        $this->packet->header->nsCount = count( $this->packet->authority );
+        $this->packet->header->arCount = count( $this->packet->additional );
 
-        //
-        // make sure we have some data to send
-        //
-        if ($this->packet->header->qdCount == 0) {
+        # Make sure we have some data to send.
+        if ( $this->packet->header->qdCount == 0 ) {
             throw new Exception(
                 'empty headers- nothing to send!',
                 Lookups::E_PACKET_INVALID
             );
         }
 
-        //
-        // send the packet and get back the response
-        //
-        $response = $this->sendPacket($this->packet, $this->useTCP);
+        # Send the packet and get back the response.
+        $response = $this->sendPacket( $this->packet, $this->useTCP );
 
-        //
-        // clear the internal packet so if we make another request, we don't have
-        // old data being sent.
-        //
+        # Clear the internal packet so we don't have
+        # old data being sent if we make another request.
         $this->packet->reset();
 
-        //
-        // for notifies, we just need to know it worked. we don't actually need to
-        // return the response object
-        //
+        # For notifies, we just need to know it worked. we don't actually need to
+        # return the response object.
         return true;
+    }
+
+
+    /**
+     * returns the current internal packet object.
+     *
+     * @return RequestPacket The current internal packet object.
+     */
+    public function packet() : RequestPacket {
+        # Take a copy
+        $packet = clone $this->packet;
+
+        # Check for an authentication method: either TSIG or SIG.
+        if ( ( $this->authSignature instanceof TSIG )
+            || ( $this->authSignature instanceof SIG )
+        ) {
+            $packet->additional[] = $this->authSignature;
+        }
+
+        # Update the counts.
+        $packet->header->qdCount = count( $packet->question );
+        $packet->header->anCount = count( $packet->answer );
+        $packet->header->nsCount = count( $packet->authority );
+        $packet->header->arCount = count( $packet->additional );
+
+        return $packet;
+    }
+
+
+    /**
+     * checks that the given name matches the name for the zone we're notifying
+     *
+     * @param string $name The name to be checked.
+     *
+     * @return void
+     * @throws Exception
+     */
+    private function _checkName( string $name ) : void {
+        if ( ! preg_match( '/' . $this->packet->question[ 0 ]->qName . '$/', $name ) ) {
+
+            throw new Exception(
+                'name provided (' . $name . ') does not match zone name (' .
+                $this->packet->question[ 0 ]->qName . ')',
+                Lookups::E_PACKET_INVALID
+            );
+        }
     }
 }

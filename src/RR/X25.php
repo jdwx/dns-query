@@ -7,19 +7,16 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * X25 Resource Record - RFC1183 section 3.1
@@ -36,39 +34,19 @@ use JDWX\DNSQuery\Packet\Packet;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class X25 extends RR
-{
-    /*
-     * The PSDN address
-      */
+class X25 extends RR {
+
+
+    /** @var string PSDN address */
     public string $psdnAddress;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->formatString($this->psdnAddress);
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param array $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool {
-        $data = $this->buildString($rdata);
-        if (count($data) == 1) {
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $data = $this->buildString( $i_rData );
+        if ( count( $data ) == 1 ) {
 
-            $this->psdnAddress = $data[0];
+            $this->psdnAddress = $data[ 0 ];
             return true;
         }
 
@@ -76,47 +54,37 @@ class X25 extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->psdnAddress ) > 0 ) {
 
-            $this->psdnAddress = $packet->labelEx( $packet->offset );
-            return true;
-        }
+            $data = chr( strlen( $this->psdnAddress ) ) . $this->psdnAddress;
 
-        return false;
-    }
-
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->psdnAddress) > 0) {
-
-            $data = chr(strlen($this->psdnAddress)) . $this->psdnAddress;
-            
-            $packet->offset += strlen($data);
+            $i_packet->offset += strlen( $data );
 
             return $data;
         }
-        
-        return null; 
+
+        return null;
     }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            $this->psdnAddress = $i_packet->labelEx( $i_packet->offset );
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->formatString( $this->psdnAddress );
+    }
+
+
 }

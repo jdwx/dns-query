@@ -1,5 +1,8 @@
 .idea
+.phpdoc
+.phpunit.result.cache
 composer.lock
+docs
 phan.sh
 phan.txt
 vendor

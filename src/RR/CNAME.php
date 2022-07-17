@@ -13,14 +13,12 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * CNAME Resource Record - RFC1035 section 3.3.1
@@ -38,15 +37,16 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class CNAME extends RR
-{
-    /*
-     * The canonical name 
-     */
+class CNAME extends RR {
+
+
+    /** @var string Canonical name */
     public string $cname;
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritDoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'target' => "string" ] )] public function getPHPRData() : array {
         return [
             'target' => $this->cname,
@@ -54,29 +54,31 @@ class CNAME extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
-        return $this->cleanString($this->cname) . '.';
-    }
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->cname = $this->cleanString(array_shift($rdata));
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->cname = $this->cleanString( array_shift( $i_rData ) );
         return true;
     }
 
 
-    /** {@inheritdoc}
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->cname ) > 0 ) {
+            return $i_packet->compress( $this->cname, $i_packet->offset );
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc
      * @throws Exception
      */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
 
-            $offset = $packet->offset;
-            $this->cname = $packet->expandEx( $offset );
+            $offset = $i_packet->offset;
+            $this->cname = $i_packet->expandEx( $offset );
 
             return true;
         }
@@ -84,14 +86,11 @@ class CNAME extends RR
         return false;
     }
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->cname) > 0) {
 
-            return $packet->compress($this->cname, $packet->offset);
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->cleanString( $this->cname ) . '.';
     }
+
+
 }

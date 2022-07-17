@@ -13,14 +13,12 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * NS Resource Record - RFC1035 section 3.3.11
@@ -38,15 +37,16 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class NS extends RR
-{
-    /*
-     * the hostname of the DNS server
-     */
+class NS extends RR {
+
+
+    /** @var string Hostname of the DNS server */
     public string $nsdName;
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritDoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'target' => "string" ] )] public function getPHPRData() : array {
         return [
             'target' => $this->nsdName,
@@ -54,26 +54,32 @@ class NS extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string {
-        return $this->cleanString($this->nsdName) . '.';
-    }
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool {
-        $this->nsdName = $this->cleanString(array_shift($rdata));
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->nsdName = $this->cleanString( array_shift( $i_rData ) );
         return true;
     }
 
 
-    /** {@inheritdoc}
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->nsdName ) > 0 ) {
+
+            return $i_packet->compress( $this->nsdName, $i_packet->offset );
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc
      * @throws Exception
      */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
 
-            $offset = $packet->offset;
-            $this->nsdName = $packet->expandEx( $offset );
+            $offset = $i_packet->offset;
+            $this->nsdName = $i_packet->expandEx( $offset );
 
             return true;
         }
@@ -81,13 +87,11 @@ class NS extends RR
         return false;
     }
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->nsdName) > 0) {
 
-            return $packet->compress($this->nsdName, $packet->offset);
-        }
-        
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->cleanString( $this->nsdName ) . '.';
     }
+
+
 }

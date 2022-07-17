@@ -1,6 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
+
 /**
  * DNS Library for handling lookups and updates.
  *
@@ -8,8 +9,6 @@ declare( strict_types = 1 );
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -45,42 +44,32 @@ class LegacyParserTest extends TestCase {
      * @throws Exception
      */
     public function testTSIG() : void {
-        //
-        // create a new packet
-        //
+
+        # Create a new packet.
         $request = new RequestPacket( 'example.com', 'SOA', 'IN' );
 
-        //
-        // add an A record to the authority section, like an update request
-        //
+        # Add an A record to the authority section, like an update request.
         $request->authority[] = RR::fromString( 'test.example.com A 10.10.10.10' );
         $request->header->nsCount = 1;
 
-        //
-        // add the TSIG as additional
-        //
+        # Add the TSIG as additional.
+        /** @noinspection SpellCheckingInspection */
         $request->additional[] = RR::fromString( 'mykey TSIG Zm9vYmFy' );
         $request->header->arCount = 1;
 
         assert( $request->additional[ 0 ] instanceof TSIG );
         $line = $request->additional[ 0 ]->name . '. ' . $request->additional[ 0 ]->ttl . ' ' .
             $request->additional[ 0 ]->class . ' ' . $request->additional[ 0 ]->type . ' ' .
-            $request->additional[ 0 ]->algorithm . '. ' . $request->additional[ 0 ]->time_signed . ' ' .
+            $request->additional[ 0 ]->algorithm . '. ' . $request->additional[ 0 ]->timeSigned . ' ' .
             $request->additional[ 0 ]->fudge;
 
-        //
-        // get the binary packet data
-        //
+        # Get the binary packet data.
         $data = $request->get();
 
-        //
-        // parse the binary
-        //
+        # Parse the binary.
         $response = new ResponsePacket( $data, strlen( $data ) );
 
-        //
-        // the answer data in the response, should match our initial line exactly
-        //
+        # The answer data in the response, should match our initial line exactly.
         static::assertSame( $line, substr( $response->additional[ 0 ]->__toString(), 0, 58 ) );
     }
 
@@ -94,8 +83,8 @@ class LegacyParserTest extends TestCase {
      * @throws Exception
      */
     public function testParser() : void {
+        /** @noinspection SpellCheckingInspection */
         $rrs = [
-
             'A' => 'example.com. 300 IN A 172.168.0.50',
             'NS' => 'example.com. 300 IN NS ns1.mrdns.com.',
             'CNAME' => 'example.com. 300 IN CNAME www.example.com.',
@@ -160,7 +149,7 @@ class LegacyParserTest extends TestCase {
             'DLV' => 'example.com. 300 IN DLV 21366 7 2 96eeb2ffd9b00cd4694e78278b5efdab0a80446567b69f634da078f0d90f01ba',
         ];
 
-        foreach ( $rrs as $rr => $lines ) {
+        foreach ( $rrs as $rrType => $lines ) {
 
             if ( ! is_array( $lines ) ) {
                 $lines = [ $lines ];
@@ -168,46 +157,32 @@ class LegacyParserTest extends TestCase {
 
             foreach ( $lines as $line ) {
 
-                $class_name = '\\JDWX\\DNSQuery\\RR\\' . $rr;
+                $className = '\\JDWX\\DNSQuery\\RR\\' . $rrType;
 
-                //
-                // create a new packet
-                //
-                if ( $rr == 'PTR' ) {
-                    $request = new RequestPacket( '1.0.0.127.in-addr.arpa', $rr, 'IN' );
+                # Create a new packet.
+                if ( $rrType == 'PTR' ) {
+                    $request = new RequestPacket( '1.0.0.127.in-addr.arpa', $rrType, 'IN' );
                 } else {
-                    $request = new RequestPacket( 'example.com', $rr, 'IN' );
+                    $request = new RequestPacket( 'example.com', $rrType, 'IN' );
                 }
 
-                //
-                // parse the line
-                //
-                $a = RR::fromString( $line );
+                # Parse the line.
+                $rr = RR::fromString( $line );
 
-                //
-                // check that the object is right
-                //
-                static::assertInstanceOf( $class_name, $a );
+                # Check that the object is right.
+                static::assertInstanceOf( $className, $rr );
 
-                //
-                // set it on the packet
-                //
-                $request->answer[] = $a;
+                # Set it on the packet.
+                $request->answer[] = $rr;
                 $request->header->anCount = 1;
 
-                //
-                // get the binary packet data
-                //
+                # Get the binary packet data.
                 $data = $request->get();
 
-                //
-                // parse the binary
-                //
+                # Parse the binary data.
                 $response = new ResponsePacket( $data, strlen( $data ) );
 
-                //
-                // the answer data in the response, should match our initial line exactly
-                //
+                # The answer data in the response, should match our initial line exactly.
                 static::assertSame( $line, $response->answer[ 0 ]->__toString() );
             }
         }
@@ -223,11 +198,9 @@ class LegacyParserTest extends TestCase {
      * @throws Exception
      */
     public function testCompression() : void {
-        //
-        // this list of RR's uses name compression
-        //
+        # This list of RRs uses name compression.
+        /** @noinspection SpellCheckingInspection */
         $rrs = [
-
             'NS' => 'example.com. 300 IN NS ns1.mrdns.com.',
             'CNAME' => 'example.com. 300 IN CNAME www.example.com.',
             'SOA' => 'example.com. 300 IN SOA ns1.mrdns.com. help\.desk.mrhost.ca. 1278700841 900 1800 86400 21400',
@@ -242,75 +215,54 @@ class LegacyParserTest extends TestCase {
             'HIP' => 'example.com. 300 IN HIP 2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com. another.example.com. test.domain.org.',
         ];
 
-        //
-        // create a new updater object
-        //
-        $u = new Updater( "example.com" );
-        $u->setNameServer( '10.10.0.1' );
+        # Create a new updater object.
+        $updater = new Updater( "example.com" );
+        $updater->setNameServer( '10.10.0.1' );
 
-        //
-        // add each RR to the same object, so we can build a build compressed name list
-        //
-        foreach ( $rrs as $rr => $line ) {
+        # Add each RR to the same object, so we can build a build compressed name list.
+        foreach ( $rrs as $rrType => $line ) {
 
-            $class_name = '\\JDWX\\DNSQuery\\RR\\' . $rr;
+            $className = '\\JDWX\\DNSQuery\\RR\\' . $rrType;
 
-            //
-            // parse the line
-            //
-            $a = RR::fromString( $line );
+            # Parse the line.
+            $rr = RR::fromString( $line );
 
-            //
-            // check that the object is right
-            //
-            static::assertInstanceOf( $class_name, $a );
+            # Check that the object is right.
+            static::assertInstanceOf( $className, $rr );
 
-            //
-            // set it on the packet
-            //
-            $u->add( $a );
+            # Set it on the packet.
+            $updater->add( $rr );
         }
 
-        //
-        // get the request packet
-        //
-        $request = $u->packet();
+        # Get the request packet.
+        $request = $updater->packet();
 
-        //
-        // get the authority section of the request
-        //
-        $request_authority = $request->authority;
+        # Get the authority section of the request.
+        $requestAuthority = $request->authority;
 
-        //
-        // parse the binary
-        //
+        # Parse the binary.
         $data = $request->get();
         $response = new ResponsePacket( $data, strlen( $data ) );
 
-        //
-        // get the authority section of the response, and clean up the
-        // rdata so everything will match.
-        //
-        // the request packet doesn't have the rdLength and rdata fields
-        // built yet, so it will throw off the hash
-        //
-        $response_authority = $response->authority;
+        # Get the authority section of the response, and clean up the
+        # rdata so everything will match.
+        #
+        # The request packet doesn't have the rdLength and rdata fields
+        # built yet, so it will throw off the hash.
+        $responseAuthority = $response->authority;
 
-        foreach ( $response_authority as $object ) {
-
+        foreach ( $responseAuthority as $object ) {
             $object->rdLength = 0;
             $object->rdata = '';
         }
 
-        //
-        // build the hashes
-        //
-        $a = md5( print_r( $request_authority, true ) );
-        $b = md5( print_r( $response_authority, true ) );
+        # Build the hashes.
+        $rr = md5( print_r( $requestAuthority, true ) );
+        $otherRR = md5( print_r( $responseAuthority, true ) );
 
-        //
-        // the new hashes should match.
-        //
-        static::assertSame( $a, $b );
+        # The new hashes should match.
+        static::assertSame( $rr, $otherRR );
     }
+
+
 }

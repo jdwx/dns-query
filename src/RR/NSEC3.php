@@ -12,14 +12,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +25,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * NSEC3 Resource Record - RFC5155 section 3.2
@@ -43,225 +42,161 @@ use JDWX\DNSQuery\Packet\Packet;
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class NSEC3 extends RR
-{
-    /*
-     * Algorithm to use
-     */
+class NSEC3 extends RR {
+
+
+    /** @var int ID of algorithm to use */
     public int $algorithm;
- 
-    /*
-     * flags
-     */
+
+    /** @var int Flags */
     public int $flags;
- 
-    /*
-     *  defines the number of additional times the hash is performed.
-     */
+
+    /** @var int Defines the number of additional times the hash is performed */
     public int $iterations;
- 
-    /*
-     * the length of the salt (not displayed)
-     */
-    public int $salt_length;
- 
-    /*
-     * the salt
-     */
+
+    /** @var int Length of the salt (not displayed) */
+    public int $saltLength;
+
+    /** @var string The salt */
     public string $salt;
 
-    /*
-     * the length of the hash value
-     */
-    public int $hash_length;
+    /** @var int Length of the hash value */
+    public int $hashLength;
 
-    /*
-     * the hashed value of the owner name
-     */
-    public string $hashed_owner_name;
+    /** @var string Hashed value of the owner name */
+    public string $hashedOwnerName;
 
     /** @var string[] array of RR type names */
-    public array $type_bit_maps = [];
+    public array $typeBitMaps = [];
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
+
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->algorithm = (int) array_shift( $i_rData );
+        $this->flags = (int) array_shift( $i_rData );
+        $this->iterations = (int) array_shift( $i_rData );
+
+        # An empty salt is represented as '-' per RFC5155 section 3.3
+        $salt = array_shift( $i_rData );
+        if ( $salt == '-' ) {
+
+            $this->saltLength = 0;
+            $this->salt = '';
+        } else {
+
+            $this->saltLength = strlen( pack( 'H*', $salt ) );
+            $this->salt = strtoupper( $salt );
+        }
+
+        $this->hashedOwnerName = array_shift( $i_rData );
+        $this->hashLength = strlen( base64_decode( $this->hashedOwnerName ) );
+
+        $this->typeBitMaps = $i_rData;
+
+        return true;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : string {
+
+        # Pull the salt and build the length.
+        $salt = pack( 'H*', $this->salt );
+        $this->saltLength = strlen( $salt );
+
+        # Pack the algorithm, flags, iterations and salt length.
+        $data = pack(
+            'CCnC',
+            $this->algorithm, $this->flags, $this->iterations, $this->saltLength
+        );
+        $data .= $salt;
+
+        # Append the hash length and hash.
+        $data .= chr( $this->hashLength );
+        if ( $this->hashLength > 0 ) {
+            $data .= base64_decode( $this->hashedOwnerName );
+        }
+
+        # Convert the array of RR names to a type bitmap.
+        $data .= BitMap::arrayToBitMap( $this->typeBitMaps );
+
+        $i_packet->offset += strlen( $data );
+
+        return $data;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the first values.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'Calgorithm/Cflags/niterations/CsaltLength', $this->rdata );
+
+            $this->algorithm = $parse[ 'algorithm' ];
+            $this->flags = $parse[ 'flags' ];
+            $this->iterations = $parse[ 'iterations' ];
+            $this->saltLength = $parse[ 'saltLength' ];
+
+            $offset = 5;
+
+            if ( $this->saltLength > 0 ) {
+
+                $parse = unpack( 'H*', substr( $this->rdata, $offset, $this->saltLength ) );
+                $this->salt = strtoupper( $parse[ 1 ] );
+                $offset += $this->saltLength;
+            }
+
+            # Unpack the hash length.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( '@' . $offset . '/ChashLength', $this->rdata );
+            $offset++;
+
+            # Copy out the hash.
+            $this->hashLength = $parse[ 'hashLength' ];
+            if ( $this->hashLength > 0 ) {
+
+                $this->hashedOwnerName = base64_encode(
+                    substr( $this->rdata, $offset, $this->hashLength )
+                );
+                $offset += $this->hashLength;
+            }
+
+            # Parse out the RR bitmap.
+            $this->typeBitMaps = BitMap::bitMapToArray(
+                substr( $this->rdata, $offset )
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
     protected function rrToString() : string {
         $out = $this->algorithm . ' ' . $this->flags . ' ' . $this->iterations . ' ';
- 
-        //
-        // per RFC5155, the salt_length value isn't displayed, and if the salt
-        // is empty, the salt is displayed as '-'
-        //
-        if ($this->salt_length > 0) {
-  
+
+        # Per RFC5155, the salt_length value isn't displayed, and if the salt
+        # is empty, the salt is displayed as a hyphen.
+        if ( $this->saltLength > 0 ) {
             $out .= $this->salt;
-        } else {     
- 
+        } else {
             $out .= '-';
         }
 
-        //
-        // per RFC5255 the hash length isn't shown
-        //
-        $out .= ' ' . $this->hashed_owner_name;
- 
-        //
-        // show the RRs
-        //
-        foreach ($this->type_bit_maps as $rr) {
-    
-            $out .= ' ' . strtoupper($rr);
+        # Per RFC5255 the hash length isn't shown.
+        $out .= ' ' . $this->hashedOwnerName;
+
+        # Show the RRs.
+        foreach ( $this->typeBitMaps as $rr ) {
+            $out .= ' ' . strtoupper( $rr );
         }
 
         return $out;
     }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool {
-        $this->algorithm    = (int) array_shift($rdata);
-        $this->flags        = (int) array_shift($rdata);
-        $this->iterations   = (int) array_shift($rdata);
-     
-        //
-        // an empty salt is represented as '-' per RFC5155 section 3.3
-        //
-        $salt = array_shift($rdata);
-        if ($salt == '-') {
 
-            $this->salt_length = 0;
-            $this->salt = '';
-        } else {
-    
-            $this->salt_length = strlen(pack('H*', $salt));
-            $this->salt = strtoupper($salt);
-        }
-
-        $this->hashed_owner_name = array_shift($rdata);
-        $this->hash_length = strlen(base64_decode($this->hashed_owner_name));
-
-        $this->type_bit_maps = $rdata;
-
-        return true;
-    }
-
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
-        
-            //
-            // unpack the first values
-            //
-            $x = unpack('Calgorithm/Cflags/niterations/Csalt_length', $this->rdata);
-        
-            $this->algorithm    = $x['algorithm'];
-            $this->flags        = $x['flags'];
-            $this->iterations   = $x['iterations'];
-            $this->salt_length  = $x['salt_length'];
-
-            $offset = 5;
-
-            if ($this->salt_length > 0) {
- 
-                $x = unpack('H*', substr($this->rdata, $offset, $this->salt_length));
-                $this->salt = strtoupper($x[1]);
-                $offset += $this->salt_length;
-            }
-
-            //
-            // unpack the hash length
-            //
-            $x = unpack('@' . $offset . '/Chash_length', $this->rdata);
-            $offset++;
-
-            //
-            // copy out the hash
-            //
-            $this->hash_length  = $x['hash_length'];
-            if ($this->hash_length > 0) {
-
-                $this->hashed_owner_name = base64_encode(
-                    substr($this->rdata, $offset, $this->hash_length)
-                );
-                $offset += $this->hash_length;
-            }
-
-            //
-            // parse out the RR bitmap
-            //
-            $this->type_bit_maps = BitMap::bitMapToArray(
-                substr($this->rdata, $offset)
-            );
-
-            return true;
-        }
-     
-        return false;
-    }
-
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : string {
-        //
-        // pull the salt and build the length
-        //
-        $salt = pack('H*', $this->salt);
-        $this->salt_length = strlen($salt);
-            
-        //
-        // pack the algorithm, flags, iterations and salt length
-        //
-        $data = pack(
-            'CCnC',
-            $this->algorithm, $this->flags, $this->iterations, $this->salt_length
-        );
-        $data .= $salt;
-
-        //
-        // add the hash length and hash
-        //
-        $data .= chr($this->hash_length);
-        if ($this->hash_length > 0) {
-
-            $data .= base64_decode($this->hashed_owner_name);
-        }
-
-        //
-        // conver the array of RR names to a type bitmap
-        //
-        $data .= BitMap::arrayToBitMap($this->type_bit_maps);
-
-        $packet->offset += strlen($data);
-     
-        return $data;
-    }
 }

@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\InvalidArgumentException;
 
 
+/** Test the Cache class. */
 class CacheTest extends TestCase {
 
 
@@ -56,6 +57,7 @@ class CacheTest extends TestCase {
     }
 
 
+    /** Coverage test for Cache::isTypeCacheable(). */
     public function testCacheIsTypeCacheable() {
         static::assertTrue( Cache::isTypeCacheable( 'A' ) );
         static::assertTrue( Cache::isTypeCacheable( 'MX' ) );
@@ -77,6 +79,7 @@ class CacheTest extends TestCase {
     }
 
 
+    /** Coverage test for Cache::getEx() throwing an exception. */
     public function testCacheGetExException() {
         $cache = new Cache();
         static::expectException( Exception::class );
@@ -117,6 +120,7 @@ class CacheTest extends TestCase {
     }
 
 
+    /** Coverage test for Cache::hashRequest(). */
     public function testCacheHashRequest() {
         $req = new RequestPacket( "foo", "A" );
         $xx = Cache::hashRequest( $req );

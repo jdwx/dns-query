@@ -12,6 +12,7 @@ use JDWX\DNSQuery\Packet\Header;
 use PHPUnit\Framework\TestCase;
 
 
+/** Test the Header class. */
 class HeaderTest extends TestCase {
 
 
@@ -28,6 +29,7 @@ class HeaderTest extends TestCase {
     }
 
 
+    /** Coverage test for Header::__toString(). */
     public function testHeaderToString() {
         $hdr = $this->makeTestHeader();
         $str = (string) $hdr;
@@ -37,6 +39,7 @@ class HeaderTest extends TestCase {
     }
 
 
+    /** Coverage test for Header::__toString() with additional flags. */
     public function testHeaderToString2() {
         $hdr = $this->makeTestHeader( aa: true, rd: true, z: true, cd: true );
         $str = (string) $hdr;
@@ -53,6 +56,15 @@ class HeaderTest extends TestCase {
     }
 
 
+    /** Generate a header to use for testing.
+     *
+     * @param bool $aa Set the AA flag.
+     * @param bool $rd Set the RD flag.
+     * @param bool $z Set the Z flag.
+     * @param bool $cd Set the CD flag.
+     *
+     * @return Header Header structure to use for testing.
+     */
     public function makeTestHeader( bool $aa = false, bool $rd = false, bool $z = false, bool $cd = false ) : Header {
         $hdr = new Header();
         $hdr->id = 12345;
@@ -66,7 +78,7 @@ class HeaderTest extends TestCase {
         $hdr->tc = 1;
         $hdr->rd = $rd ? 1 : 0;
         $hdr->ra = 1;
-        $hdr->z = $z ? 1 : 0;
+        $hdr->zero = $z ? 1 : 0;
         $hdr->ad = 1;
         $hdr->cd = $cd ? 1 : 0;
         $hdr->rCode = 10;

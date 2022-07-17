@@ -18,8 +18,6 @@ use JetBrains\PhpStorm\ArrayShape;
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +25,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 1.2.0
  *
  */
+
 
 /**
  * CAA Resource Record - http://tools.ietf.org/html/draft-ietf-pkix-caa-03
@@ -40,72 +39,73 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class CAA extends RR
-{
-    /*
-     * The critical flag
-     */
+class CAA extends RR {
+
+
+    /** @var int Critical flag */
     public int $flags;
 
-    /*
-     * The property identifier
-     */
+    /** @var string Property identifier */
     public string $tag;
 
-    /*
-      * The property value
-     */
+    /** @var string Property value */
     public string $value;
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritDoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'flags' => "int", 'tag' => "string", 'value' => "string" ] )] public function getPHPRData() : array {
         return [
             'flags' => $this->flags,
-            'tag'   => $this->tag,
+            'tag' => $this->tag,
             'value' => $this->value,
         ];
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
-        return $this->flags . ' ' . $this->tag . ' "' . 
-            trim($this->cleanString($this->value), '"') . '"';
-    }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->flags = (int) array_shift( $i_rData );
+        $this->tag = array_shift( $i_rData );
 
+        $this->value = trim( $this->cleanString( implode( ' ', $i_rData ) ), '"' );
 
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->flags    = (int) array_shift($rdata);
-        $this->tag      = array_shift($rdata);
-
-        $this->value    = trim($this->cleanString(implode(' ', $rdata)), '"');
-        
         return true;
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
-            
-            //
-            // unpack the flags and tag length
-            //
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->value ) > 0 ) {
+
+            $data = chr( $this->flags );
+            $data .= chr( strlen( $this->tag ) ) . $this->tag . $this->value;
+
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the flags and tag length.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack('Cflags/Ctag_length', $this->rdata);
+            $parse = unpack( 'Cflags/Ctag_length', $this->rdata );
 
-            $this->flags    = $x['flags'];
-            $offset         = 2;
+            $this->flags = $parse[ 'flags' ];
+            $offset = 2;
 
-            $this->tag      = substr($this->rdata, $offset, $x['tag_length']);
-            $offset         += $x['tag_length'];
+            $this->tag = substr( $this->rdata, $offset, $parse[ 'tag_length' ] );
+            $offset += $parse[ 'tag_length' ];
 
-            $this->value    = substr($this->rdata, $offset);
+            $this->value = substr( $this->rdata, $offset );
 
             return true;
         }
@@ -114,20 +114,10 @@ class CAA extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->value) > 0) {
-
-            $data  = chr($this->flags);
-            $data .= chr(strlen($this->tag)) . $this->tag . $this->value;
-
-            $packet->offset += strlen($data);
-
-            return $data;
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->flags . ' ' . $this->tag . ' "' .
+            trim( $this->cleanString( $this->value ), '"' ) . '"';
     }
 
 

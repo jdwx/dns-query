@@ -8,19 +8,16 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\BitMap;
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +25,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * NSEC Resource Record - RFC3845 section 2.1
@@ -40,80 +38,52 @@ use JDWX\DNSQuery\Packet\Packet;
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class NSEC extends RR
-{
-    /*
-     * The next owner name
-     */
-    public string $next_domain_name;
+class NSEC extends RR {
 
-    /*
-     * identifies the RR set types that exist at the NSEC RR's owner name.
-     */
-    public array $type_bit_maps = [];
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        $data = $this->cleanString($this->next_domain_name) . '.';
+    /** @var string The next owner name */
+    public string $nextDomainName;
 
-        foreach ($this->type_bit_maps as $rr) {
+    /** @var string[] Identifies the RR set types that exist at the NSEC RR owner name */
+    public array $typeBitMaps = [];
 
-            $data .= ' ' . $rr;
-        }
 
-        return $data;
-    }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->nextDomainName = $this->cleanString( array_shift( $i_rData ) );
+        $this->typeBitMaps = $i_rData;
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param array $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->next_domain_name = $this->cleanString(array_shift($rdata));
-        $this->type_bit_maps = $rdata;
-        
         return true;
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->nextDomainName ) > 0 ) {
 
-            //
-            // expand the next domain name
-            //
-            $offset = $packet->offset;
-            $this->next_domain_name = $packet->expandEx( $offset );
+            $data = $i_packet->compress( $this->nextDomainName, $i_packet->offset );
+            $bitmap = BitMap::arrayToBitMap( $this->typeBitMaps );
 
-            //
-            // parse out the RRs from the bitmap
-            //
-            $this->type_bit_maps = BitMap::bitMapToArray(
-                substr($this->rdata, $offset - $packet->offset)
+            $i_packet->offset += strlen( $bitmap );
+
+            return $data . $bitmap;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Expand the next domain name.
+            $offset = $i_packet->offset;
+            $this->nextDomainName = $i_packet->expandEx( $offset );
+
+            # Parse out the RRs from the bitmap.
+            $this->typeBitMaps = BitMap::bitMapToArray(
+                substr( $this->rdata, $offset - $i_packet->offset )
             );
 
             return true;
@@ -122,29 +92,17 @@ class NSEC extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->next_domain_name) > 0) {
 
-            $data = $packet->compress($this->next_domain_name, $packet->offset);
-            $bitmap = BitMap::arrayToBitMap($this->type_bit_maps);
-    
-            $packet->offset += strlen($bitmap);
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        $data = $this->cleanString( $this->nextDomainName ) . '.';
 
-            return $data . $bitmap;
+        foreach ( $this->typeBitMaps as $rr ) {
+            $data .= ' ' . $rr;
         }
 
-        return null;
+        return $data;
     }
+
+
 }

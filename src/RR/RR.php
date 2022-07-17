@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 
 declare( strict_types = 1 );
@@ -8,14 +8,12 @@ namespace JDWX\DNSQuery\RR;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -64,372 +62,168 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-abstract class RR
-{
-    /*
-     * The name of the resource record
-     */
+abstract class RR {
+
+
+    /** @var string The name portion of the resource record */
     public string $name;
 
-    /*
-     * The resource record type
-     */
+    /** @var string The resource record type */
     public string $type;
 
-    /*
-     * The resource record class
-     */
+    /** @var string The resource record class */
     public string $class;
 
-    /*
-     * The time to live for this resource record
-     */
+    /** @var int The time to live for this resource record */
     public int $ttl;
 
-    /*
-     * The length of the rdata field
-     */
+    /** @var int The length of the rdata field */
     public int $rdLength = 0;
 
-    /*
-     * The resource record specific data as a packed binary string
-     */
+    /** @var string The resource record specific data as a packed binary string */
     public string $rdata = '';
 
 
     /**
      * Constructor - builds a new RR object
      *
-     * @param ?Packet $packet a Packet or null to create an empty object
+     * @param ?Packet $i_packet a Packet or null to create an empty object
      *
-     * @param ?array           $rr      an array with RR parse values or null to
+     * @param ?array  $i_rr an array with RR parse values or null to
      *                                 create an empty object
      *
      * @throws Exception
-     * @access public
-     *
      */
-    public function __construct(Packet $packet = null, array $rr = null)
-    {
-        if ( (!is_null($packet)) && (!is_null($rr)) ) {
-
-            if ( ! $this->set( $packet, $rr ) ) {
-
+    public function __construct( Packet $i_packet = null, array $i_rr = null ) {
+        if ( ( ! is_null( $i_packet ) ) && ( ! is_null( $i_rr ) ) ) {
+            if ( ! $this->set( $i_packet, $i_rr ) ) {
                 throw new Exception(
                     'failed to generate resource record',
                     Lookups::E_RR_INVALID
                 );
             }
         } else {
-
-            $class = Lookups::$rr_types_class_to_id[ $this::class ];
-            if (isset($class)) {
-
-                $this->type = Lookups::$rr_types_by_id[$class];
+            $class = Lookups::$rrTypesClassToId[ $this::class ];
+            if ( isset( $class ) ) {
+                $this->type = Lookups::$rrTypesById[ $class ];
             }
 
-            $this->class    = 'IN';
-            $this->ttl      = 86400;
+            $this->class = 'IN';
+            $this->ttl = 86400;
         }
     }
 
-    /**
-     * magic __toString() method to return the RR object as a string
-     *
-     * @return string
-     * @access public
-     *
-     */
-    public function __toString()
-    {
-        return $this->name . '. ' . $this->ttl . ' ' . $this->class .
-            ' ' . $this->type . ' ' . $this->rrToString();
-    }
-
 
     /**
-     * Return the rdata portion of the packet as a string.
+     * parses a standard RR format lines, as defined by rfc1035 (kinda)
      *
-     * This is *not* the same as the __toString() magic method, which
-     * returns the whole RR.
+     * In our implementation, the domain *must* be specified- format must be
      *
-     * @return  string
-     * @access  protected
+     *        <name> [<ttl>] [<class>] <type> <rdata>
+     * or
+     *        <name> [<class>] [<ttl>] <type> <rdata>
      *
-     */
-    abstract protected function rrToString() : string;
-
-    /**
-     * Parse the rdata portion from a standard DNS config line
+     * name, title, class and type are parsed by this function, rdata is passed
+     * to the RR specific classes for parsing.
      *
-     * @param string[] $rdata a string split line of values for the rdata
+     * @param string $line a standard DNS config line
      *
-     * @return bool
-     * @access protected
-     *
-     */
-    abstract protected function rrFromString( array $rdata ) : bool;
-
-    /**
-     * Parse the rdata from the current position of the provided
-     * Packet object, advancing the packet's internal offset accordingly.
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    abstract protected function rrSet( Packet $packet) : bool;
-
-    /**
-     * Returns the rdata portion of the RR, advancing the referenced
-     * packet offset by the correct size.
-     *
-     * @param Packet $packet   a Packet to use for compressed names
-     *
-     * @return ?string         returns a binary packed string or null on failure
-     * @access protected
-     *
-     */
-    abstract protected function rrGet( Packet $packet ) : ?string;
-
-
-    /**
-     * returns a binary packet DNS RR object and throws an
-     * exception if it fails
-     *
-     * @param Packet $packet a Packet to use for compressed names
-     *
-     *
-     * @return string                   either returns a binary packed string
-     * @access protected
-     *
+     * @return static       returns a new RR object for the given RR
      * @throws Exception
      */
-    protected function rrGetEx( Packet $packet ) : string {
-        $x = $this->rrGet( $packet );
-        if ( is_string( $x ) ) {
-            return $x;
-        }
-        throw new Exception( "getting type-specific RDATA failed" );
-    }
+    public static function fromString( string $line ) : static {
 
-
-    /**
-     * return the same data as __toString(), but as an array, so each value can be 
-     * used without having to parse the string.
-     *
-     * @return array
-     * @access public
-     *
-     */
-    #[ArrayShape( [ 'name' => "string", 'ttl' => "int", 'class' => "string", 'type' => "mixed|string", 'rdata' => "string" ] )]
-    public function asArray() : array
-    {
-        return [
-            'name'  => $this->name,
-            'ttl'   => $this->ttl,
-            'class' => $this->class,
-            'type'  => $this->type,
-            'rdata' => $this->rrToString()
-        ];
-    }
-
-
-    /** Get the rdata in the format used by PHP's dns_get_record() function.
-     * @return array The rdata or an empty array if this record type isn't support by dns_get_record().
-     */
-    public function getPHPRData() : array {
-        return [];
-    }
-
-
-    public function getPHPRecord() : array {
-        return array_merge([
-            'host' => $this->name,
-            'class' => 'IN',
-            'ttl' => $this->ttl,
-            'type' => $this->type,
-        ], $this->getPHPRData() );
-    }
-
-
-    /**
-     * return a formatted string; if a string has spaces in it, then return 
-     * it with double quotes around it, otherwise, return it as it was passed in.
-     *
-     * @param string $string the string to format
-     *
-     * @return string
-     * @access protected
-     *
-     */
-    protected function formatString( string $string ) : string
-    {
-        return '"' . str_replace('"', '\"', trim($string, '"')) . '"';
-    }
-    
-    /**
-     * builds an array of strings from an array of chunks of text split by spaces
-     *
-     * @param array $chunks an array of chunks of text split by spaces
-     *
-     * @return array
-     * @access protected
-     *
-     */
-    protected function buildString(array $chunks) : array
-    {
-        $data = [];
-        $c = 0;
-        $in = false;
-
-        foreach ($chunks as $r) {
-
-            $r = trim($r);
-            if (strlen($r) == 0) {
-                continue;
-            }
-
-            if ( ($r[0] == '"')
-                && ($r[strlen($r) - 1] == '"')
-                && ($r[strlen($r) - 2] != '\\')
-            ) {
-
-                $data[$c] = $r;
-                ++$c;
-                $in = false;
-
-            } elseif ($r[0] == '"') {
-
-                $data[$c] = $r;
-                $in = true;
-
-            } elseif ( ($r[strlen($r) - 1] == '"')
-                && ($r[strlen($r) - 2] != '\\')
-            ) {
-            
-                $data[$c] .= ' ' . $r;
-                ++$c;  
-                $in = false;
-
-            } elseif ( $in ) {
-                    $data[$c] .= ' ' . $r;
-            } else {
-                    $data[$c++] = $r;
-            }
-        }
-
-        foreach ($data as $index => $string) {
-            
-            $data[$index] = str_replace('\"', '"', trim($string, '"'));
-        }
-
-        return $data;
-    }
-
-    /**
-     * builds a new RR object
-     *
-     * @param Packet $packet (output) a Packet or null to create an empty object
-     * @param array           $rr      an array with RR parse values or null to
-     *                                 create an empty object
-     *
-     * @return bool
-     * @access public
-     *
-     */
-    public function set(Packet $packet, array $rr) : bool
-    {
-        $this->name     = $rr['name'];
-        $this->type     = Lookups::$rr_types_by_id[$rr['type']];
-
-        //
-        // for RR OPT (41), the class value includes the requestor's UDP payload size,
-        // and not a class value
-        //
-        if ($this->type == 'OPT') {
-            $this->class = (string) $rr['class'];
-        } else {
-            $this->class = Lookups::$classes_by_id[$rr['class']];
-        }
-
-        $this->ttl      = $rr['ttl'];
-        $this->rdLength = $rr['rdlength'];
-        $this->rdata    = substr($packet->rdata, $packet->offset, $rr['rdlength']);
-
-        return $this->rrSet($packet);
-    }
-
-
-    /**
-     * returns a binary packed DNS RR object
-     *
-     * @param Packet $packet a Packet used for compressing names
-     *
-     * @return string
-     * @access public
-     *
-     * @throws Exception
-     */
-    public function get(Packet $packet) : string
-    {
-        $rdata = '';
-
-        //
-        // pack the name
-        //
-        $data = $packet->compress($this->name, $packet->offset);
-
-        //
-        // pack the main values
-        //
-        if ($this->type == 'OPT') {
-
-            //
-            // pre-build the TTL value
-            //
-            assert( $this instanceof OPT );
-            $this->preBuild();
-
-            //
-            // the class value is different for OPT types
-            //
-            $data .= pack(
-                'nnN', 
-                Lookups::$rr_types_by_name[$this->type],
-                $this->class,
-                $this->ttl
-            );
-        } else {
-
-            $data .= pack(
-                'nnN', 
-                Lookups::$rr_types_by_name[$this->type],
-                Lookups::$classes_by_name[$this->class],
-                $this->ttl
+        if ( strlen( $line ) == 0 ) {
+            throw new Exception(
+                'empty config line provided.',
+                Lookups::E_PARSE_ERROR
             );
         }
 
-        //
-        // increase the offset, and allow for the rdlength
-        //
-        $packet->offset += 10;
+        $type = '';
+        $class = 'IN';
+        $ttl = 86400;
 
-        //
-        // get the RR specific details
-        //
-        if ($this->rdLength != -1) {
-             $rdata = $this->rrGetEx( $packet );
+        # Split the line by spaces.
+        $values = preg_split( '/\s+/', $line );
+        if ( count( $values ) < 3 ) {
+
+            throw new Exception(
+                'failed to parse config: minimum of name, type and rdata required.',
+                Lookups::E_PARSE_ERROR
+            );
         }
 
-        //
-        // add the RR
-        //
-        $data .= pack('n', strlen($rdata)) . $rdata;
+        # Assume the first value is the name.
+        $name = trim( strtolower( array_shift( $values ) ), '.' );
 
-        return $data;
+        # The next value is either a TTL, Class or Type.
+        foreach ( $values as $value ) {
+
+            switch ( true ) {
+                case is_numeric( $value ):
+                    # This is here because of a bug in is_numeric() in certain versions of
+                    # PHP on Windows.
+                    # Unable to verify. - JDWX 2022-07-09
+                case ( $value === 0 ):
+
+                    $ttl = (int) array_shift( $values );
+                    break;
+
+                case isset( Lookups::$classesByName[ strtoupper( $value ) ] ):
+
+                    $class = strtoupper( array_shift( $values ) );
+                    break;
+
+                case isset( Lookups::$rrTypesByName[ strtoupper( $value ) ] ):
+
+                    $type = strtoupper( array_shift( $values ) );
+                    break 2;
+
+                default:
+
+                    throw new Exception(
+                        'invalid config line provided: unknown file: ' . $value,
+                        Lookups::E_PARSE_ERROR
+                    );
+            }
+        }
+
+        # Look up the class to use.
+        $className = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $type ] ];
+
+        if ( ! isset( $className ) ) {
+
+            throw new Exception(
+                'un-implemented resource record type: ' . $type,
+                Lookups::E_RR_INVALID
+            );
+        }
+
+        $obj = new $className();
+        if ( is_null( $obj ) ) {
+
+            throw new Exception(
+                'failed to create new RR record for type: ' . $type,
+                Lookups::E_RR_INVALID
+            );
+        }
+
+        # Set the parsed values.
+        $obj->name = $name;
+        $obj->class = $class;
+        $obj->ttl = $ttl;
+
+        # Parse the rdata.
+        if ( $obj->rrFromString( $values ) === false ) {
+
+            throw new Exception(
+                'failed to parse rdata for config: ' . $line,
+                Lookups::E_PARSE_ERROR
+            );
+        }
+
+        return $obj;
     }
 
 
@@ -445,22 +239,19 @@ abstract class RR
      * @access public
      *
      */
-    public static function parse(Packet $packet) : ?RR
-    {
+    public static function parse( Packet $packet ) : ?RR {
         $object = [];
 
-        //
-        // expand the name
-        //
-        $object['name'] = $packet::expand($packet, $packet->offset);
-        if (is_null($object['name'])) {
+        # Expand the name.
+        $object[ 'name' ] = $packet->expand( $packet->offset );
+        if ( is_null( $object[ 'name' ] ) ) {
 
             throw new Exception(
                 'failed to parse resource record: failed to expand name.',
                 Lookups::E_PARSE_ERROR
             );
         }
-        if ($packet->rdLength < ($packet->offset + 10)) {
+        if ( $packet->rdLength < ( $packet->offset + 10 ) ) {
 
             throw new Exception(
                 'failed to parse resource record: packet too small.',
@@ -468,30 +259,26 @@ abstract class RR
             );
         }
 
-        //
-        // unpack the RR details
-        //
-        $object['type']     = ord($packet->rdata[$packet->offset++]) << 8 | 
-                                ord($packet->rdata[$packet->offset++]);
-        $object['class']    = ord($packet->rdata[$packet->offset++]) << 8 | 
-                                ord($packet->rdata[$packet->offset++]);
+        # Unpack the RR details.
+        $object[ 'type' ] = ord( $packet->rdata[ $packet->offset++ ] ) << 8 |
+            ord( $packet->rdata[ $packet->offset++ ] );
+        $object[ 'class' ] = ord( $packet->rdata[ $packet->offset++ ] ) << 8 |
+            ord( $packet->rdata[ $packet->offset++ ] );
 
-        $object['ttl']      = ord($packet->rdata[$packet->offset++]) << 24 | 
-                                ord($packet->rdata[$packet->offset++]) << 16 | 
-                                ord($packet->rdata[$packet->offset++]) << 8 | 
-                                ord($packet->rdata[$packet->offset++]);
+        $object[ 'ttl' ] = ord( $packet->rdata[ $packet->offset++ ] ) << 24 |
+            ord( $packet->rdata[ $packet->offset++ ] ) << 16 |
+            ord( $packet->rdata[ $packet->offset++ ] ) << 8 |
+            ord( $packet->rdata[ $packet->offset++ ] );
 
-        $object['rdlength'] = ord($packet->rdata[$packet->offset++]) << 8 | 
-                                ord($packet->rdata[$packet->offset++]);
+        $object[ 'rdlength' ] = ord( $packet->rdata[ $packet->offset++ ] ) << 8 |
+            ord( $packet->rdata[ $packet->offset++ ] );
 
-        if ($packet->rdLength < ($packet->offset + $object['rdlength'])) {
+        if ( $packet->rdLength < ( $packet->offset + $object[ 'rdlength' ] ) ) {
             return null;
         }
 
-        //
-        // lookup the class to use
-        //
-        $class  = Lookups::$rr_types_id_to_class[$object['type']];
+        # Lookup the class to use.
+        $class = Lookups::$rrTypesIdToClass[ $object[ 'type' ] ];
 
         if ( ! isset( $class ) ) {
 
@@ -501,157 +288,306 @@ abstract class RR
             );
         }
 
-        $o = new $class( $packet, $object );
-        if ( $o ) {
+        $obj = new $class( $packet, $object );
+        if ( $obj ) {
 
             $packet->offset += $object[ 'rdlength' ];
         }
-        return $o;
+        return $obj;
 
     }
+
+
+    /**
+     * magic __toString() method to return the RR object as a string
+     *
+     * @return string
+     * @access public
+     *
+     */
+    public function __toString() {
+        return $this->name . '. ' . $this->ttl . ' ' . $this->class .
+            ' ' . $this->type . ' ' . $this->rrToString();
+    }
+
+
+    /**
+     * return the same data as __toString(), but as an array, so each value can be
+     * used without having to parse the string.
+     *
+     * @return array
+     * @access public
+     *
+     */
+    #[ArrayShape(
+        [ 'name' => "string", 'ttl' => "int", 'class' => "string",
+        'type' => "mixed|string", 'rdata' => "string" ]
+    )]
+    public function asArray() : array {
+        return [
+            'name' => $this->name,
+            'ttl' => $this->ttl,
+            'class' => $this->class,
+            'type' => $this->type,
+            'rdata' => $this->rrToString(),
+        ];
+    }
+
 
     /**
      * cleans up some RR data
-     * 
-     * @param string $data the text string to clean
+     *
+     * @param string $i_data the text string to clean
      *
      * @return string returns the cleaned string
-     *
-     * @access public
-     *
      */
-    public function cleanString( string $data ) : string
-    {
-        return strtolower(rtrim($data, '.'));
+    public function cleanString( string $i_data ) : string {
+        return strtolower( rtrim( $i_data, '.' ) );
     }
 
+
     /**
-     * parses a standard RR format lines, as defined by rfc1035 (kinda)
+     * returns a binary packed DNS RR object
      *
-     * In our implementation, the domain *must* be specified- format must be
+     * @param Packet $i_packet a Packet used for compressing names
      *
-     *        <name> [<ttl>] [<class>] <type> <rdata>
-     * or
-     *        <name> [<class>] [<ttl>] <type> <rdata>
+     * @return string
      *
-     * name, title, class and type are parsed by this function, rdata is passed
-     * to the RR specific classes for parsing.
-     *
-     * @param string $line a standard DNS config line 
-     *
-     * @return static       returns a new RR object for the given RR
      * @throws Exception
-     * @access public
-     *
      */
-    public static function fromString( string $line ) : static
-    {
-        if (strlen($line) == 0) {
-            throw new Exception(
-                'empty config line provided.',
-                Lookups::E_PARSE_ERROR
+    public function get( Packet $i_packet ) : string {
+        $rdata = '';
+
+        # Pack the name.
+        $data = $i_packet->compress( $this->name, $i_packet->offset );
+
+        # Pack the main values.
+        if ( $this->type == 'OPT' ) {
+
+            # Pre-build the TTL value.
+            assert( $this instanceof OPT );
+            $this->preBuild();
+
+            # The class value is different for OPT types.
+            $data .= pack(
+                'nnN',
+                Lookups::$rrTypesByName[ $this->type ],
+                $this->class,
+                $this->ttl
+            );
+        } else {
+
+            $data .= pack(
+                'nnN',
+                Lookups::$rrTypesByName[ $this->type ],
+                Lookups::$classesByName[ $this->class ],
+                $this->ttl
             );
         }
 
-        $type   = '';
-        $class  = 'IN';
-        $ttl    = 86400;
+        # Increase the offset, and allow for the rdLength.
+        $i_packet->offset += 10;
 
-        //
-        // split the line by spaces
-        //
-        $values = preg_split('/\s+/', $line);
-        if (count($values) < 3) {
-
-            throw new Exception(
-                'failed to parse config: minimum of name, type and rdata required.',
-                Lookups::E_PARSE_ERROR
-            );
+        # Get the RR specific details.
+        if ( $this->rdLength != -1 ) {
+            $rdata = $this->rrGetEx( $i_packet );
         }
 
-        //
-        // assume the first value is the name
-        //
-        $name = trim(strtolower(array_shift($values)), '.');
+        # Add the RR.
+        $data .= pack( 'n', strlen( $rdata ) ) . $rdata;
 
-        //
-        // The next value is either a TTL, Class or Type
-        //
-        foreach ($values as $value) {
+        return $data;
+    }
 
-            switch(true) {
-            case is_numeric($value):
-                //
-                // this is here because of a bug in is_numeric() in certain versions of
-                // PHP on Windows.
-                // Unable to verify. - JDWX 2022-07-09
-                //
-            case ($value === 0):
 
-                $ttl = (int) array_shift( $values );
-                break;
+    /** Get the rdata in the format used by PHP's dns_get_record() function.
+     * @return array The rdata or an empty array if this record type isn't support by dns_get_record().
+     */
+    public function getPHPRData() : array {
+        return [];
+    }
 
-            case isset(Lookups::$classes_by_name[strtoupper($value)]):
 
-                $class = strtoupper(array_shift($values));
-                break;
+    /** Get the whole record in the format used by PHP's dns_get_record() function.
+     *
+     * See the caveats in getPHPRData() about RR-specific data.
+     *
+     * @return array The record as an array.
+     */
+    public function getPHPRecord() : array {
+        return array_merge( [
+            'host' => $this->name,
+            'class' => 'IN',
+            'ttl' => $this->ttl,
+            'type' => $this->type,
+        ], $this->getPHPRData() );
+    }
 
-            case isset(Lookups::$rr_types_by_name[strtoupper($value)]):
 
-                $type = strtoupper(array_shift($values));
-                break 2;
+    /**
+     * builds a new RR object
+     *
+     * @param Packet $i_packet (output) a Packet or null to create an empty object
+     * @param array  $i_rr an array with RR parse values or null to
+     *                                 create an empty object
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function set( Packet $i_packet, array $i_rr ) : bool {
+        $this->name = $i_rr[ 'name' ];
+        $this->type = Lookups::$rrTypesById[ $i_rr[ 'type' ] ];
 
-            default:
+        # For RR OPT (41), the class value includes the requestor's UDP payload size,
+        # and not a class value
+        if ( $this->type == 'OPT' ) {
+            $this->class = (string) $i_rr[ 'class' ];
+        } else {
+            $this->class = Lookups::$classesById[ $i_rr[ 'class' ] ];
+        }
 
-                throw new Exception(
-                    'invalid config line provided: unknown file: ' . $value,
-                    Lookups::E_PARSE_ERROR
-                );
+        $this->ttl = $i_rr[ 'ttl' ];
+        $this->rdLength = $i_rr[ 'rdlength' ];
+        $this->rdata = substr( $i_packet->rdata, $i_packet->offset, $i_rr[ 'rdlength' ] );
+
+        return $this->rrSet( $i_packet );
+    }
+
+
+    /**
+     * Build an array of strings from an array of chunks of text split by spaces.
+     *
+     * @param string[] $i_chunks an array of chunks of text split by spaces
+     *
+     * @return string[]
+     */
+    protected function buildString( array $i_chunks ) : array {
+        $data = [];
+        $count = 0;
+        $in = false;
+
+        foreach ( $i_chunks as $chunk ) {
+
+            $chunk = trim( $chunk );
+            if ( strlen( $chunk ) == 0 ) {
+                continue;
+            }
+
+            if ( ( $chunk[ 0 ] == '"' )
+                && ( $chunk[ strlen( $chunk ) - 1 ] == '"' )
+                && ( $chunk[ strlen( $chunk ) - 2 ] != '\\' )
+            ) {
+
+                $data[ $count ] = $chunk;
+                ++$count;
+                $in = false;
+
+            } elseif ( $chunk[ 0 ] == '"' ) {
+
+                $data[ $count ] = $chunk;
+                $in = true;
+
+            } elseif ( ( $chunk[ strlen( $chunk ) - 1 ] == '"' )
+                && ( $chunk[ strlen( $chunk ) - 2 ] != '\\' )
+            ) {
+
+                $data[ $count ] .= ' ' . $chunk;
+                ++$count;
+                $in = false;
+
+            } elseif ( $in ) {
+                $data[ $count ] .= ' ' . $chunk;
+            } else {
+                $data[ $count++ ] = $chunk;
             }
         }
 
-        //
-        // lookup the class to use
-        //
-        $class_name = Lookups::$rr_types_id_to_class[
-            Lookups::$rr_types_by_name[$type]
-        ];
-
-        if ( ! isset( $class_name ) ) {
-
-            throw new Exception(
-                'un-implemented resource record type: ' . $type,
-                Lookups::E_RR_INVALID
-            );
+        foreach ( $data as $index => $string ) {
+            $data[ $index ] = str_replace( '\"', '"', trim( $string, '"' ) );
         }
 
-        $o = new $class_name();
-        if ( is_null( $o ) ) {
-
-            throw new Exception(
-                'failed to create new RR record for type: ' . $type,
-                Lookups::E_RR_INVALID
-            );
-        }
-
-        //
-        // set the parsed values
-        //
-        $o->name = $name;
-        $o->class = $class;
-        $o->ttl = $ttl;
-
-        //
-        // parse the rdata
-        //
-        if ( $o->rrFromString( $values ) === false ) {
-
-            throw new Exception(
-                'failed to parse rdata for config: ' . $line,
-                Lookups::E_PARSE_ERROR
-            );
-        }
-
-        return $o;
+        return $data;
     }
+
+
+    /**
+     * return a formatted string; if a string has spaces in it, then return
+     * it with double quotes around it, otherwise, return it as it was passed in.
+     *
+     * @param string $i_str the string to format
+     *
+     * @return string
+     * @access protected
+     *
+     */
+    protected function formatString( string $i_str ) : string {
+        return '"' . str_replace( '"', '\"', trim( $i_str, '"' ) ) . '"';
+    }
+
+
+    /**
+     * Parse the rdata portion from a standard DNS config line
+     *
+     * @param string[] $i_rData a string split line of values for the rdata
+     *
+     * @return bool
+     * @access protected
+     *
+     */
+    abstract protected function rrFromString( array $i_rData ) : bool;
+
+
+    /**
+     * Returns the rdata portion of the RR, advancing the referenced
+     * packet offset by the correct size.
+     *
+     * @param Packet $i_packet Packet to use for compressed names
+     *
+     * @return ?string A binary packed string, or null on failure
+     * @throws Exception
+     */
+    abstract protected function rrGet( Packet $i_packet ) : ?string;
+
+
+    /**
+     * returns a binary packet DNS RR object and throws an
+     * exception if it fails
+     *
+     * @param Packet $i_packet Packet to use for compressed names
+     *
+     *
+     * @return string       A binary packed string
+     *
+     * @throws Exception
+     */
+    protected function rrGetEx( Packet $i_packet ) : string {
+        $str = $this->rrGet( $i_packet );
+        if ( is_string( $str ) ) {
+            return $str;
+        }
+        throw new Exception( "getting type-specific RDATA failed" );
+    }
+
+
+    /**
+     * Parse the rdata from the current position of the provided
+     * Packet object, advancing the packet's internal offset accordingly.
+     *
+     * @param Packet $i_packet a Packet to parse the RR from
+     *
+     * @return bool
+     * @throws Exception
+     */
+    abstract protected function rrSet( Packet $i_packet ) : bool;
+
+
+    /**
+     * Return the rdata portion of the packet as a string.
+     *
+     * This is *not* the same as the __toString() magic method, which
+     * returns the whole RR.
+     *
+     * @return  string The rdata portion of the packet as a string.
+     */
+    abstract protected function rrToString() : string;
 }

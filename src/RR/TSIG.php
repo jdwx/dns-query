@@ -14,14 +14,12 @@ use JDWX\DNSQuery\Packet\RequestPacket;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -29,6 +27,7 @@ use JDWX\DNSQuery\Packet\RequestPacket;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * TSIG Resource Record - RFC 2845
@@ -54,229 +53,234 @@ use JDWX\DNSQuery\Packet\RequestPacket;
  *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class TSIG extends RR
-{
-    /*
-     * TSIG Algorithm Identifiers
-     */
-    public const HMAC_MD5 = 'hmac-md5.sig-alg.reg.int';   // RFC 2845, required
-    public const GSS_TSIG = 'gss-tsig';                   // unsupported, optional
-    public const HMAC_SHA1 = 'hmac-sha1';                  // RFC 4635, required
-    public const HMAC_SHA224 = 'hmac-sha224';                // RFC 4635, optional
-    public const HMAC_SHA256 = 'hmac-sha256';                // RFC 4635, required
-    public const HMAC_SHA384 = 'hmac-sha384';                // RFC 4635, optional
-    public const HMAC_SHA512 = 'hmac-sha512';                // RFC 4635, optional
+class TSIG extends RR {
 
-    /*
-     * the map of hash values to names
-     */
-    public static array $hash_algorithms = [
+    # TSIG Algorithm Identifiers
+    public const HMAC_MD5 = 'hmac-md5.sig-alg.reg.int';      # RFC 2845, required
+    public const GSS_TSIG = 'gss-tsig';                      # unsupported, optional
+    public const HMAC_SHA1 = 'hmac-sha1';                    # RFC 4635, required
+    public const HMAC_SHA224 = 'hmac-sha224';                # RFC 4635, optional
+    public const HMAC_SHA256 = 'hmac-sha256';                # RFC 4635, required
+    public const HMAC_SHA384 = 'hmac-sha384';                # RFC 4635, optional
+    public const HMAC_SHA512 = 'hmac-sha512';                # RFC 4635, optional
 
-        self::HMAC_MD5      => 'md5',
-        self::HMAC_SHA1     => 'sha1',
-        self::HMAC_SHA224   => 'sha224',
-        self::HMAC_SHA256   => 'sha256',
-        self::HMAC_SHA384   => 'sha384',
-        self::HMAC_SHA512   => 'sha512'
+    /** @var array<string, string> Map of hash values to names */
+    public static array $hashAlgorithms = [
+        self::HMAC_MD5 => 'md5',
+        self::HMAC_SHA1 => 'sha1',
+        self::HMAC_SHA224 => 'sha224',
+        self::HMAC_SHA256 => 'sha256',
+        self::HMAC_SHA384 => 'sha384',
+        self::HMAC_SHA512 => 'sha512',
     ];
 
-    /*
-     * algorithm used; only supports HMAC-MD5
-     */
+    /** @var string Algorithm used; only supports HMAC-MD5 */
     public string $algorithm;
 
-    /*
-     * The time it was signed
-     */
-    public int $time_signed;
+    /** @var int Time it was signed */
+    public int $timeSigned;
 
-    /*
-     * allowed offset from the time signed
-     */
+    /** @var int Allowed offset from the time signed */
     public int $fudge;
 
-    /*
-     * size of the digest
-     */
-    public int $mac_size;
+    /** @var int Size of the digest */
+    public int $macSize;
 
-    /*
-     * the digest data
-     */
+    /** @var string Digest data */
     public string $mac;
 
-    /*
-     * the original id of the request
-     */
-    public int $original_id;
+    /** @var int Original id of the request */
+    public int $originalId;
 
-    /*
-     * additional error code
-     */
+    /** @var int Additional error code */
     public int $error;
 
-    /*
-     * length of the "other" data, should only ever be 0 when there is
+    /** @var int Length of the "other" data, should only ever be 0 when there is
      * no error, or 6 when there is the error RCODE_BADTIME
      */
-    public int $other_length;
+    public int $otherLength;
 
-    /*
-     * the other data; should only ever be a timestamp when there is the
-     * error RCODE_BADTIME
+    /** @var string Other data; should only ever be a timestamp when there is
+     * the error RCODE_BADTIME
      */
-    public string $other_data;
+    public string $otherData;
 
-    /*
-     * the key to use for signing - passed in, not included in the rdata
-     */
+    /** @var string Key to use for signing - passed in, not included in the rdata */
     public string $key;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        $out = $this->cleanString($this->algorithm) . '. ' . 
-            $this->time_signed . ' ' . 
-            $this->fudge . ' ' . $this->mac_size . ' ' .
-            base64_encode($this->mac) . ' ' . $this->original_id . ' ' . 
-            $this->error . ' '. $this->other_length;
 
-        if ($this->other_length > 0) {
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
 
-            $out .= ' ' . $this->other_data;
-        }
+        # The only value passed in is the key
+        #
+        # This assumes it's passed in base64 encoded.
+        $this->key = preg_replace( '/\s+/', '', array_shift( $i_rData ) );
 
-        return $out;
-    }
+        # The rest of the data is set to default.
+        $this->algorithm = self::HMAC_MD5;
+        $this->timeSigned = time();
+        $this->fudge = 300;
+        $this->macSize = 0;
+        $this->mac = '';
+        $this->originalId = 0;
+        $this->error = 0;
+        $this->otherLength = 0;
+        $this->otherData = '';
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        //
-        // the only value passed in is the key
-        //
-        // this assumes it's passed in base64 encoded.
-        //
-        $this->key = preg_replace('/\s+/', '', array_shift($rdata));
-
-        //
-        // the rest of the data is set to default
-        //
-        $this->algorithm    = self::HMAC_MD5;
-        $this->time_signed  = time();
-        $this->fudge        = 300;
-        $this->mac_size     = 0;
-        $this->mac          = '';
-        $this->original_id  = 0;
-        $this->error        = 0;
-        $this->other_length = 0;
-        $this->other_data   = '';
-
-        //
-        // per RFC 2845 section 2.3
-        //
-        $this->class        = 'ANY';
-        $this->ttl          = 0;
+        # Per RFC 2845 section 2.3.
+        $this->class = 'ANY';
+        $this->ttl = 0;
 
         return true;
     }
 
 
-    /**
-     * parses the rdata of the Packet object
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet(Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->key ) > 0 ) {
 
-            //
-            // expand the algorithm
-            //
-            $newOffset          = $packet->offset;
-            $this->algorithm    = $packet->expandEx( $newOffset );
-            $offset             = $newOffset - $packet->offset;
+            # Create a new packet for the signature.
+            $newPacket = new RequestPacket( 'example.com', 'SOA', 'IN' );
 
-            //
-            // unpack time, fudge and mac_size
-            //
+            # Copy the packet data over.
+            $newPacket->copy( $i_packet );
+
+            # Remove the TSIG object from the additional list.
+            array_pop( $newPacket->additional );
+            $newPacket->header->arCount = count( $newPacket->additional );
+
+            # Copy out the data.
+            $sigData = $newPacket->get();
+
+            # Add the name without compressing.
+            $sigData .= Packet::pack( $this->name );
+
+            # Add the class and TTL.
+            $sigData .= pack(
+                'nN', Lookups::$classesByName[ $this->class ], $this->ttl
+            );
+
+            # Add the algorithm name without compression.
+            $sigData .= Packet::pack( strtolower( $this->algorithm ) );
+
+            #  Add the rest of the values.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack(
-                '@' . $offset . '/ntime_high/Ntime_low/nfudge/nmac_size', 
+            $sigData .= pack(
+                'nNnnn', 0, $this->timeSigned, $this->fudge,
+                $this->error, $this->otherLength
+            );
+            if ( $this->otherLength > 0 ) {
+
+                $sigData .= pack( 'nN', 0, $this->otherData );
+            }
+
+            # Sign the data.
+            $this->mac = $this->_signHMAC(
+                $sigData, base64_decode( $this->key ), $this->algorithm
+            );
+            $this->macSize = strlen( $this->mac );
+
+            # Compress the algorithm.
+            $data = Packet::pack( strtolower( $this->algorithm ) );
+
+            # Pack the time, fudge and mac size.
+            $data .= pack(
+                'nNnn', 0, $this->timeSigned, $this->fudge, $this->macSize
+            );
+            $data .= $this->mac;
+
+            # Check the error and other_length.
+            if ( $this->error == Lookups::RCODE_BADTIME ) {
+
+                $this->otherLength = strlen( $this->otherData );
+                if ( $this->otherLength != 6 ) {
+
+                    return null;
+                }
+            } else {
+
+                $this->otherLength = 0;
+                $this->otherData = '';
+            }
+
+            # Pack the id, error and other_length.
+            $data .= pack(
+                'nnn', $i_packet->header->id, $this->error, $this->otherLength
+            );
+            if ( $this->otherLength > 0 ) {
+
+                $data .= pack( 'nN', 0, $this->otherData );
+            }
+
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Expand the algorithm.
+            $newOffset = $i_packet->offset;
+            $this->algorithm = $i_packet->expandEx( $newOffset );
+            $offset = $newOffset - $i_packet->offset;
+
+            # Unpack time, fudge and mac_size.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack(
+                '@' . $offset . '/ntime_high/Ntime_low/nfudge/nmac_size',
                 $this->rdata
             );
 
-            $this->time_signed  = $x['time_low'];
-            $this->fudge        = $x['fudge'];
-            $this->mac_size     = $x['mac_size'];
+            $this->timeSigned = $parse[ 'time_low' ];
+            $this->fudge = $parse[ 'fudge' ];
+            $this->macSize = $parse[ 'mac_size' ];
 
             $offset += 10;
 
-            //
-            // copy out the mac
-            //
-            if ($this->mac_size > 0) {
-            
-                $this->mac = substr($this->rdata, $offset, $this->mac_size);
-                $offset += $this->mac_size;
+            # Copy out the mac.
+            if ( $this->macSize > 0 ) {
+
+                $this->mac = substr( $this->rdata, $offset, $this->macSize );
+                $offset += $this->macSize;
             }
 
-            //
-            // unpack the original id, error, and other_length values
-            //
+            # Unpack the original id, error, and other_length values.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack(
-                '@' . $offset . '/noriginal_id/nerror/nother_length', 
+            $parse = unpack(
+                '@' . $offset . '/noriginal_id/nerror/nother_length',
                 $this->rdata
             );
-        
-            $this->original_id  = $x['original_id'];
-            $this->error        = $x['error'];
-            $this->other_length = $x['other_length'];
 
-            //
-            // the only time there is actually any "other data", is when there's
-            // a BADTIME error code.
-            //
-            // The other length should be 6, and the other data field includes the
-            // servers current time - per RFC 2845 section 4.5.2
-            //
-            if ($this->error == Lookups::RCODE_BADTIME) {
+            $this->originalId = $parse[ 'original_id' ];
+            $this->error = $parse[ 'error' ];
+            $this->otherLength = $parse[ 'other_length' ];
 
-                if ($this->other_length != 6) {
+            # The only time there is actually any "other data", is when there's
+            # a BADTIME error code.
+            #
+            # The other length should be 6, and the other data field includes the
+            # servers current time - per RFC 2845 section 4.5.2
+            if ( $this->error == Lookups::RCODE_BADTIME ) {
+
+                if ( $this->otherLength != 6 ) {
 
                     return false;
                 }
 
-                //
-                // other data is a 48bit timestamp
-                //
+                # Other data is a 48bit timestamp.
                 /** @noinspection SpellCheckingInspection */
-                $x = unpack(
-                    'nhigh/nlow', 
-                    substr($this->rdata, $offset + 6, $this->other_length)
+                $parse = unpack(
+                    'nhigh/nlow',
+                    substr( $this->rdata, $offset + 6, $this->otherLength )
                 );
-                $this->other_data = $x['low'];
+                $this->otherData = $parse[ 'low' ];
             }
 
             return true;
@@ -286,134 +290,28 @@ class TSIG extends RR
     }
 
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrGet(Packet $packet) : ?string
-    {
-        if (strlen($this->key) > 0) {
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        $out = $this->cleanString( $this->algorithm ) . '. ' .
+            $this->timeSigned . ' ' .
+            $this->fudge . ' ' . $this->macSize . ' ' .
+            base64_encode( $this->mac ) . ' ' . $this->originalId . ' ' .
+            $this->error . ' ' . $this->otherLength;
 
-            //
-            // create a new packet for the signature-
-            //
-            $new_packet = new RequestPacket('example.com', 'SOA', 'IN');
+        if ( $this->otherLength > 0 ) {
 
-            //
-            // copy the packet data over
-            //
-            $new_packet->copy($packet);
-
-            //
-            // remove the TSIG object from the additional list
-            //
-            array_pop($new_packet->additional);
-            $new_packet->header->arCount = count($new_packet->additional);
-
-            //
-            // copy out the data
-            //
-            $sig_data = $new_packet->get();
-
-            //
-            // add the name without compressing
-            //
-            $sig_data .= Packet::pack($this->name);
-
-            //
-            // add the class and TTL
-            //
-            $sig_data .= pack(
-                'nN', Lookups::$classes_by_name[$this->class], $this->ttl
-            );
-
-            //
-            // add the algorithm name without compression
-            //
-            $sig_data .= Packet::pack(strtolower($this->algorithm));
-
-            //
-            // add the rest of the values
-            //
-            /** @noinspection SpellCheckingInspection */
-            $sig_data .= pack(
-                'nNnnn', 0, $this->time_signed, $this->fudge, 
-                $this->error, $this->other_length
-            );
-            if ($this->other_length > 0) {
-
-                $sig_data .= pack('nN', 0, $this->other_data);
-            }
-
-            //
-            // sign the data
-            //
-            $this->mac = $this->_signHMAC(
-                $sig_data, base64_decode($this->key), $this->algorithm
-            );
-            $this->mac_size = strlen($this->mac);
-
-            //
-            // compress the algorithm
-            //
-            $data = Packet::pack(strtolower($this->algorithm));
-
-            //
-            // pack the time, fudge and mac size
-            //
-            $data .= pack(
-                'nNnn', 0, $this->time_signed, $this->fudge, $this->mac_size
-            );
-            $data .= $this->mac;
-
-            //
-            // check the error and other_length
-            //
-            if ($this->error == Lookups::RCODE_BADTIME) {
-
-                $this->other_length = strlen($this->other_data);
-                if ($this->other_length != 6) {
-
-                    return null;
-                }
-            } else {
-
-                $this->other_length = 0;
-                $this->other_data = '';
-            }
-
-            //
-            // pack the id, error and other_length
-            //
-            $data .= pack(
-                'nnn', $packet->header->id, $this->error, $this->other_length
-            );
-            if ($this->other_length > 0) {
-
-                $data .= pack('nN', 0, $this->other_data);
-            }
-
-            $packet->offset += strlen($data);
-
-            return $data;
+            $out .= ' ' . $this->otherData;
         }
 
-        return null;
+        return $out;
     }
+
 
     /**
      * signs the given data with the given key, and returns the result
      *
-     * @param string $data      the data to sign
-     * @param string $key       key to use for signing
+     * @param string $data the data to sign
+     * @param string $key key to use for signing
      * @param string $algorithm the algorithm to use; defaults to MD5
      *
      * @return string the signed digest
@@ -421,9 +319,8 @@ class TSIG extends RR
      * @access private
      *
      */
-    private function _signHMAC( string $data, string $key, string $algorithm = self::HMAC_MD5) : string
-    {
-        if (!isset(self::$hash_algorithms[$algorithm])) {
+    private function _signHMAC( string $data, string $key, string $algorithm = self::HMAC_MD5 ) : string {
+        if ( ! isset( self::$hashAlgorithms[ $algorithm ] ) ) {
 
             throw new Exception(
                 'invalid or unsupported algorithm',
@@ -431,7 +328,7 @@ class TSIG extends RR
             );
         }
 
-        return hash_hmac(self::$hash_algorithms[$algorithm], $data, $key, true);
+        return hash_hmac( self::$hashAlgorithms[ $algorithm ], $data, $key, true );
     }
 
 

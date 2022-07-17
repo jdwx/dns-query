@@ -12,14 +12,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +25,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.0.0
  *
  */
+
 
 /**
  * OPT Resource Record - RFC2929 section 3.1
@@ -42,217 +41,164 @@ use JDWX\DNSQuery\Packet\Packet;
  *    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  */
-class OPT extends RR
-{
-    /*
-     * option code - assigned by IANA
-     */
-    public int $option_code;
+class OPT extends RR {
 
-    /*
-     * the length of the option data
-     */
-    public int $option_length;
 
-    /*
-     * the option data
-     */
-    public string $option_data;
+    /** @var int Option code - assigned by IANA */
+    public int $optionCode;
 
-    /*
-     * the extended response code stored in the TTL
-     */
-    public int $extended_response_code;
+    /** @var int Length of the option data */
+    public int $optionLength;
 
-    /*
-     * the implementation level
-     */
+    /** @var string The option data */
+    public string $optionData;
+
+    /** @var int Extended response code stored in the TTL */
+    public int $extendedResponseCode;
+
+    /** @var int Implementation level */
     public int $version;
 
-    /*
-     * the "DO" bit used for DNSSEC - RFC3225
-     */
+    /** @var int "DO" bit used for DNSSEC - RFC3225 */
     public int $do;
 
-    /*
-     * the extended flags
-     */
-    public int $z;
+    /** @var int Extended flags */
+    public int $extFlags;
+
 
     /**
-     * Constructor - builds a new Net_DNS2_RR_OPT object; normally you wouldn't call
+     * Constructor - builds a new OPT object; normally you wouldn't call
      * this directly, but OPT RRs are a little different
      *
-     * @param ?Packet   &$packet a Packet or null to create an empty object
-     * @param ?array    $rr      an array with RR parse values or null to
+     * @param ?Packet    $i_packet a Packet or null to create an empty object
+     * @param ?array     $i_rr an array with RR parse values or null to
      *                           create an empty object
      *
      * @throws Exception
-     * @access public
-     *
      */
-    public function __construct(Packet $packet = null, array $rr = null)
-    {
-        //
-        // this is for when we're manually building an OPT RR object; we aren't
-        // passing in binary data to parse, we just want a clean/empty object.
-        //
-        $this->name             = '';
-        $this->type             = 'OPT';
-        $this->rdLength         = 0;
+    public function __construct( Packet $i_packet = null, array $i_rr = null ) {
 
-        $this->option_code      = 0;
-        $this->option_length    = 0;
-        $this->extended_response_code   = 0;
-        $this->version          = 0;
-        $this->do               = 0;
-        $this->z                = 0;
+        # This is for when we're manually building an OPT RR object; we aren't
+        # passing in binary data to parse, we just want a clean/empty object.
+        $this->name = '';
+        $this->type = 'OPT';
+        $this->rdLength = 0;
 
-        //
-        // everything else gets passed through to the parent.
-        //
-        if ( (!is_null($packet)) && (!is_null($rr)) ) {
+        $this->optionCode = 0;
+        $this->optionLength = 0;
+        $this->extendedResponseCode = 0;
+        $this->version = 0;
+        $this->do = 0;
+        $this->extFlags = 0;
 
-            parent::__construct($packet, $rr);
+        # Everything else gets passed through to the parent.
+        if ( ( ! is_null( $i_packet ) ) && ( ! is_null( $i_rr ) ) ) {
+
+            parent::__construct( $i_packet, $i_rr );
         }
     }
 
-    /**
-     * method to return the rdata portion of the packet as a string. There is no
-     * definition for returning an OPT RR by string. This is just here to validate
-     * the binary parsing / building routines.
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->option_code . ' ' . $this->option_data;
-    }
-
-    /**
-     * Parses the rdata portion from a standard DNS config line. There is no
-     * definition for parsing an OPT RR by string. This is just here to validate
-     * the binary parsing / building routines.
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->option_code      = (int) array_shift($rdata);
-        $this->option_data      = array_shift($rdata);
-        $this->option_length    = strlen($this->option_data);
-
-        /** @noinspection SpellCheckingInspection */
-        $x = unpack('Cextended/Cversion/Cdo/Cz', pack('N', $this->ttl));
-
-        $this->extended_response_code   = $x['extended'];
-        $this->version          = $x['version'];
-        $this->do               = ($x['do'] >> 7);
-        $this->z                = $x['z'];
-
-        return true;
-    }
-
-    /**
-     * parses the rdata of the Packet object
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrSet(Packet $packet) : bool
-    {
-        //
-        // parse out the TTL value
-        //
-        /** @noinspection SpellCheckingInspection */
-        $x = unpack('Cextended/Cversion/Cdo/Cz', pack('N', $this->ttl));
-
-        $this->extended_response_code   = $x['extended'];
-        $this->version          = $x['version'];
-        $this->do               = ($x['do'] >> 7);
-        $this->z                = $x['z'];
-
-        //
-        // parse the data, if there is any
-        //
-        if ($this->rdLength > 0) {
-
-            //
-            // unpack the code and length
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack('noption_code/noption_length', $this->rdata);
-
-            $this->option_code      = $x['option_code'];
-            $this->option_length    = $x['option_length'];
-
-            //
-            // copy out the data based on the length
-            //
-            $this->option_data      = substr($this->rdata, 4);
-        }
-
-        return true;
-    }
 
     /**
      * pre-builds the TTL value for this record; we needed to separate this out
-     * from the rrGet() function, as the logic in the Net_DNS2_RR packs the TTL
+     * from the rrGet() function, as the logic in the RR class packs the TTL
      * value before it builds the rdata value.
      *
      * @return void
      * @access protected
      *
      */
-    protected function preBuild() : void
-    {
-        //
-        // build the TTL value based on the local values
-        //
+    protected function preBuild() : void {
+
+        # Build the TTL value based on the local values
         /** @noinspection SpellCheckingInspection */
         $ttl = unpack(
-            'N', 
-            pack('CCCC', $this->extended_response_code, $this->version, ($this->do << 7), 0)
+            'N',
+            pack( 'CCCC', $this->extendedResponseCode, $this->version, ( $this->do << 7 ), 0 )
         );
 
-        $this->ttl = $ttl[1];
+        $this->ttl = $ttl[ 1 ];
 
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Packet to use for compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
+
+    /** {@inheritdoc} There is no
+     * definition for parsing an OPT RR by string. This is just here to validate
+     * the binary parsing / building routines.
      */
-    protected function rrGet(Packet $packet) : ?string
-    {
-        //
-        // if there is an option code, then pack that data too
-        //
-        if ($this->option_code) {
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->optionCode = (int) array_shift( $i_rData );
+        $this->optionData = array_shift( $i_rData );
+        $this->optionLength = strlen( $this->optionData );
 
-            $data = pack('nn', $this->option_code, $this->option_length) .
-                $this->option_data;
+        /** @noinspection SpellCheckingInspection */
+        $parse = unpack( 'Cextended/Cversion/Cdo/Cz', pack( 'N', $this->ttl ) );
 
-            $packet->offset += strlen($data);
+        $this->extendedResponseCode = $parse[ 'extended' ];
+        $this->version = $parse[ 'version' ];
+        $this->do = ( $parse[ 'do' ] >> 7 );
+        $this->extFlags = $parse[ 'z' ];
+
+        return true;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+
+        # If there is an option code, then pack that data too.
+        if ( $this->optionCode ) {
+
+            $data = pack( 'nn', $this->optionCode, $this->optionLength ) .
+                $this->optionData;
+
+            $i_packet->offset += strlen( $data );
 
             return $data;
         }
 
         return '';
     }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+
+        # Parse out the TTL value
+        /** @noinspection SpellCheckingInspection */
+        $parse = unpack( 'Cextended/Cversion/Cdo/Cz', pack( 'N', $this->ttl ) );
+
+        $this->extendedResponseCode = $parse[ 'extended' ];
+        $this->version = $parse[ 'version' ];
+        $this->do = ( $parse[ 'do' ] >> 7 );
+        $this->extFlags = $parse[ 'z' ];
+
+        # Parse the data, if there is any
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the code and length
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'noption_code/noption_length', $this->rdata );
+
+            $this->optionCode = $parse[ 'option_code' ];
+            $this->optionLength = $parse[ 'option_length' ];
+
+            # Copy out the data based on the length.
+            $this->optionData = substr( $this->rdata, 4 );
+        }
+
+        return true;
+    }
+
+
+    /** {@inheritdoc} There is no
+     * definition for returning an OPT RR by string. This is just here to validate
+     * the binary parsing / building routines.
+     */
+    protected function rrToString() : string {
+        return $this->optionCode . ' ' . $this->optionData;
+    }
+
+
 }
+

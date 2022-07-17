@@ -12,16 +12,16 @@ use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\RequestPacket;
 
 
+/** Provides basic transport functionality for IP sockets (both TCP and UDP).
+ *
+ * Built on top of the Socket class.
+ *
+ * TODO: The distinction between the Socket class and this class is a bit muddled.
+ * It could stand some additional refactoring to provide a cleaner, more flexible
+ * implementation.
+ */
 abstract class IPTransport implements ITransport {
 
-
-    /** @const The default local host to use
-     * This needs to be blank because you can't set 0.0.0.0 and then use an IPv6 nameserver.
-     */
-    public const DEFAULT_LOCAL_HOST = '';
-
-    /** @const The default local port to use (0 = assigned by OS) */
-    public const DEFAULT_LOCAL_PORT = 0;
 
     /** @var int The maximum size of an incoming packet. */
     protected int $maxSize;
@@ -42,16 +42,16 @@ abstract class IPTransport implements ITransport {
     /**
      * Create an IP transport for DNS packets.
      *
-     * @param int         $i_type       The type of socket to use (Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
+     * @param int         $i_type The type of socket to use (Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
      * @param string      $i_nameserver The nameserver to use as an IPv4 or IPv6 address.
-     * @param int         $i_port       The port to use (53 is default).
-     * @param null|string $i_localHost  The local host to use (or null for default).
-     * @param null|int    $i_localPort  The local port to use (or null for default).
-     * @param int         $i_timeout    The timeout in seconds to use for the socket.
-     * @param int         $i_maxSize    The maximum size of an incoming packet.
+     * @param int         $i_port The port to use (53 is default).
+     * @param null|string $i_localAddress The local address to use (or null for default).
+     * @param null|int    $i_localPort The local port to use (or null for default).
+     * @param int         $i_timeout The timeout in seconds to use for the socket.
+     * @param int         $i_maxSize The maximum size of an incoming packet.
      * @throws Exception
      */
-    public function __construct( int  $i_type, string $i_nameserver, int $i_port = 53, ?string $i_localHost = null,
+    public function __construct( int  $i_type, string $i_nameserver, int $i_port = 53, ?string $i_localAddress = null,
                                  ?int $i_localPort = null, int $i_timeout = 5,
                                  int  $i_maxSize = Lookups::DNS_MAX_UDP_SIZE ) {
         $this->nameServer = $i_nameserver;
@@ -59,24 +59,12 @@ abstract class IPTransport implements ITransport {
         $this->type = $i_type;
         $this->maxSize = $i_maxSize;
         $this->socket = new Socket( $this->type, $i_nameserver, $i_port, $i_timeout );
-        if ( is_string( $i_localHost ) || is_int( $i_localPort ) ) {
-            $this->socket->bindAddress( $i_localHost ?? self::DEFAULT_LOCAL_HOST, $i_localPort ?? self::DEFAULT_LOCAL_PORT );
+        if ( is_string( $i_localAddress ) || is_int( $i_localPort ) ) {
+            $this->socket->bindAddress( $i_localAddress, $i_localPort );
         }
         if ( false === $this->socket->open() ) {
             $this->generateError();
         }
-    }
-
-
-    /**
-     * cleans up a failed socket and throws the given exception
-     *
-     * @throws Exception
-     * @access private
-     *
-     */
-    private function generateError() : void {
-        throw new Exception( $this->socket->lastError, Lookups::E_NS_SOCKET_FAILED );
     }
 
 
@@ -110,12 +98,10 @@ abstract class IPTransport implements ITransport {
     /**
      * reads a response from a DNS server
      *
-     * @param int       &$o_size the size of the DNS packet read is passed back
-     * @param ?int      $i_maxSize the max data size to be read (if null, use max size from construction).
+     * @param int       &$o_size (output) Size of the DNS packet read
+     * @param ?int       $i_maxSize Max data size to be read (if null, use max size from construction).
      *
-     * @return string   returns the data on success and false on error
-     * @access public
-     *
+     * @return string    binary data from read
      * @throws Exception
      */
     public function read( int & $o_size, ?int $i_maxSize = null ) : string {
@@ -137,11 +123,24 @@ abstract class IPTransport implements ITransport {
     }
 
 
-    /**
+    /**  Send a request packet over the transport.
+     *
+     * @param RequestPacket $i_request The request packet to send
+     *
      * @throws Exception
      */
     public function sendRequest( RequestPacket $i_request ) : void {
         $this->sendData( $i_request->get() );
+    }
+
+
+    /**
+     * Clean up a failed socket and throw the given exception.
+     *
+     * @throws Exception
+     */
+    private function generateError() : void {
+        throw new Exception( $this->socket->lastError, Lookups::E_NS_SOCKET_FAILED );
     }
 
 

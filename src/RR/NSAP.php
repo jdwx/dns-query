@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * NSAP Resource Record - RFC1706
@@ -39,10 +38,10 @@ use JDWX\DNSQuery\Packet\Packet;
  *             |-----|--------|-----|----|-----|----|-----|----|----|
  *      octets |  1  |   2    |  1  | 3  |  2  | 2  |  2  | 6  | 1  |
  *             |-----|--------|-----|----|-----|----|-----|----|----|
- * 
+ *
  */
-class NSAP extends RR
-{
+class NSAP extends RR {
+
     public string $afi;
     public string $idi;
     public string $dfi;
@@ -53,64 +52,32 @@ class NSAP extends RR
     public string $id;
     public string $sel;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string {
-        return $this->cleanString($this->afi) . '.' . 
-            $this->cleanString($this->idi) . '.' . 
-            $this->cleanString($this->dfi) . '.' . 
-            $this->cleanString($this->aa) . '.' . 
-            $this->cleanString($this->rsvd) . '.' . 
-            $this->cleanString($this->rd) . '.' . 
-            $this->cleanString($this->area) . '.' . 
-            $this->cleanString($this->id) . '.' . 
-            $this->sel;
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $data = strtolower(trim(array_shift($rdata)));
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $data = strtolower( trim( array_shift( $i_rData ) ) );
 
-        //
-        // there is no real standard for format, so we can't rely on the fact that
-        // the value will come in with periods separating the values so strip
-        // them out if they're included, and parse without them.
-        //    
-        $data = str_replace([ '.', '0x' ], '', $data);
+        # There is no real standard for format, so we can't rely on the fact that
+        # the value will come in with periods separating the values so strip
+        # them out if they're included, and parse without them.
+        $data = str_replace( [ '.', '0x' ], '', $data );
 
-        //
-        // unpack it as ascii characters
-        //
-        $x = unpack('A2afi/A4idi/A2dfi/A6aa/A4rsvd/A4rd/A4area/A12id/A2sel', $data);
-        
-        //
-        // make sure the afi value is 47
-        //
-        if ($x['afi'] == '47') {
+        # Unpack it as ascii characters.
+        /** @noinspection SpellCheckingInspection */
+        $parse = unpack( 'A2afi/A4idi/A2dfi/A6aa/A4rsvd/A4rd/A4area/A12id/A2sel', $data );
 
-            $this->afi  = '0x' . $x['afi'];
-            $this->idi  = $x['idi'];
-            $this->dfi  = $x['dfi'];
-            $this->aa   = $x['aa'];
-            $this->rsvd = $x['rsvd'];
-            $this->rd   = $x['rd'];
-            $this->area = $x['area'];
-            $this->id   = $x['id'];
-            $this->sel  = $x['sel'];
+        # Make sure the afi value is 47
+        if ( $parse[ 'afi' ] == '47' ) {
+
+            $this->afi = '0x' . $parse[ 'afi' ];
+            $this->idi = $parse[ 'idi' ];
+            $this->dfi = $parse[ 'dfi' ];
+            $this->aa = $parse[ 'aa' ];
+            $this->rsvd = $parse[ 'rsvd' ];
+            $this->rd = $parse[ 'rd' ];
+            $this->area = $parse[ 'area' ];
+            $this->id = $parse[ 'id' ];
+            $this->sel = $parse[ 'sel' ];
 
             return true;
         }
@@ -118,49 +85,74 @@ class NSAP extends RR
         return false;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength == 20) {
 
-            //
-            // get the AFI value
-            //
-            $this->afi = dechex(ord($this->rdata[0]));
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( $this->afi == '0x47' ) {
 
-            //
-            // we only support AFI 47- there aren't any others defined.
-            //
-            if ($this->afi == '47') {
+            # Build the aa field.
+            $aa = unpack( 'A2x/A2y/A2z', $this->aa );
 
-                //
-                // unpack the rest of the values
-                //
-                $x = unpack(
-                    'Cafi/nidi/Cdfi/C3aa/nrsvd/nrd/narea/Nidh/nidl/Csel', 
+            # Build the id field.
+            $id = unpack( 'A8a/A4b', $this->id );
+
+            /** @noinspection SpellCheckingInspection */
+            $data = pack(
+                'CnCCCCnnnNnC',
+                hexdec( $this->afi ),
+                hexdec( $this->idi ),
+                hexdec( $this->dfi ),
+                hexdec( $aa[ 'x' ] ),
+                hexdec( $aa[ 'y' ] ),
+                hexdec( $aa[ 'z' ] ),
+                hexdec( $this->rsvd ),
+                hexdec( $this->rd ),
+                hexdec( $this->area ),
+                hexdec( $id[ 'a' ] ),
+                hexdec( $id[ 'b' ] ),
+                hexdec( $this->sel )
+            );
+
+            if ( strlen( $data ) == 20 ) {
+
+                $i_packet->offset += 20;
+                return $data;
+            }
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength == 20 ) {
+
+            # Get the AFI value.
+            $this->afi = dechex( ord( $this->rdata[ 0 ] ) );
+
+            # We only support AFI 47- there aren't any others defined.
+            if ( $this->afi == '47' ) {
+
+                # Unpack the rest of the values.
+                /** @noinspection SpellCheckingInspection */
+                $parse = unpack(
+                    'Cafi/nidi/Cdfi/C3aa/nrsvd/nrd/narea/Nidh/nidl/Csel',
                     $this->rdata
                 );
 
-                $this->afi  = sprintf('0x%02x', $x['afi']);
-                $this->idi  = sprintf('%04x', $x['idi']);
-                $this->dfi  = sprintf('%02x', $x['dfi']);
-                $this->aa   = sprintf(
-                    '%06x', $x['aa1'] << 16 | $x['aa2'] << 8 | $x['aa3']
+                $this->afi = sprintf( '0x%02x', $parse[ 'afi' ] );
+                $this->idi = sprintf( '%04x', $parse[ 'idi' ] );
+                $this->dfi = sprintf( '%02x', $parse[ 'dfi' ] );
+                $this->aa = sprintf(
+                    '%06x', $parse[ 'aa1' ] << 16 | $parse[ 'aa2' ] << 8 | $parse[ 'aa3' ]
                 );
-                $this->rsvd = sprintf('%04x', $x['rsvd']);
-                $this->rd   = sprintf('%04x', $x['rd']);
-                $this->area = sprintf('%04x', $x['area']);
-                $this->id   = sprintf('%08x', $x['idh']) .
-                    sprintf('%04x', $x['idl']);
-                $this->sel  = sprintf('%02x', $x['sel']);
+                $this->rsvd = sprintf( '%04x', $parse[ 'rsvd' ] );
+                $this->rd = sprintf( '%04x', $parse[ 'rd' ] );
+                $this->area = sprintf( '%04x', $parse[ 'area' ] );
+                $this->id = sprintf( '%08x', $parse[ 'idh' ] ) .
+                    sprintf( '%04x', $parse[ 'idl' ] );
+                $this->sel = sprintf( '%02x', $parse[ 'sel' ] );
 
                 return true;
             }
@@ -169,55 +161,19 @@ class NSAP extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if ($this->afi == '0x47') {
 
-            //
-            // build the aa field
-            //
-            $aa = unpack('A2x/A2y/A2z', $this->aa);
-
-            //
-            // build the id field
-            //
-            $id = unpack('A8a/A4b', $this->id);
-
-            //
-            $data = pack(
-                'CnCCCCnnnNnC', 
-                hexdec($this->afi), 
-                hexdec($this->idi),
-                hexdec($this->dfi),
-                hexdec($aa['x']),
-                hexdec($aa['y']),
-                hexdec($aa['z']),
-                hexdec($this->rsvd),
-                hexdec($this->rd),
-                hexdec($this->area),
-                hexdec($id['a']),
-                hexdec($id['b']),
-                hexdec($this->sel)
-            );
-
-            if (strlen($data) == 20) {
-                
-                $packet->offset += 20;
-                return $data;
-            }
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->cleanString( $this->afi ) . '.' .
+            $this->cleanString( $this->idi ) . '.' .
+            $this->cleanString( $this->dfi ) . '.' .
+            $this->cleanString( $this->aa ) . '.' .
+            $this->cleanString( $this->rsvd ) . '.' .
+            $this->cleanString( $this->rd ) . '.' .
+            $this->cleanString( $this->area ) . '.' .
+            $this->cleanString( $this->id ) . '.' .
+            $this->sel;
     }
+
+
 }

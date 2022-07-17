@@ -13,14 +13,12 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * SOA Resource Record - RFC1035 section 3.3.13
@@ -55,51 +54,40 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class SOA extends RR
-{
-    /*
-     * The master DNS server
-     */
+class SOA extends RR {
+
+
+    /** @var string Master DNS server */
     public string $mName;
 
-    /*
-     * mailbox of the responsible person
-     */
+    /** @var string Mailbox of the responsible person */
     public string $rName;
 
-    /*
-     * serial number
-      */
+    /** @var int Serial number */
     public int $serial;
 
-    /*
-      * refresh time
-      */
+    /** @var int Refresh time */
     public int $refresh;
 
-    /*
-      * retry interval
-     */
+    /** @var int Retry interval */
     public int $retry;
 
-    /*
-     * expire time
-      */
+    /** @var int Expire time */
     public int $expire;
 
-    /*
-     * minimum TTL for any RR in this zone
-      */
+    /** @var int Minimum TTL for any RR in this zone */
     public int $minimum;
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritDoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'mname' => "string", 'rname' => "string", 'serial' => "int", 'refresh' => "int",
-                    'retry' => "int", 'expire' => "int", 'minimum-ttl' => "int" ] )]
+        'retry' => "int", 'expire' => "int", 'minimum-ttl' => "int" ] )]
     public function getPHPRData() : array {
         return [
             'mname' => $this->mName,
-            'rname'   => $this->rName,
+            'rname' => $this->rName,
             'serial' => $this->serial,
             'refresh' => $this->refresh,
             'retry' => $this->retry,
@@ -109,58 +97,66 @@ class SOA extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string {
-        return $this->cleanString($this->mName) . '. ' .
-            $this->cleanString($this->rName) . '. ' .
-            $this->serial . ' ' . $this->refresh . ' ' . $this->retry . ' ' . 
-            $this->expire . ' ' . $this->minimum;
-    }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->mName = $this->cleanString( $i_rData[ 0 ] );
+        $this->rName = $this->cleanString( $i_rData[ 1 ] );
 
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool {
-        $this->mName    = $this->cleanString($rdata[0]);
-        $this->rName    = $this->cleanString($rdata[1]);
-
-        $this->serial   = (int) $rdata[2];
-        $this->refresh  = (int) $rdata[3];
-        $this->retry    = (int) $rdata[4];
-        $this->expire   = (int) $rdata[5];
-        $this->minimum  = (int) $rdata[6];
+        $this->serial = (int) $i_rData[ 2 ];
+        $this->refresh = (int) $i_rData[ 3 ];
+        $this->retry = (int) $i_rData[ 4 ];
+        $this->expire = (int) $i_rData[ 5 ];
+        $this->minimum = (int) $i_rData[ 6 ];
 
         return true;
     }
 
 
-    /** {@inheritdoc}
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->mName ) > 0 ) {
 
-            //
-            // parse the 
-            //
-            $offset = $packet->offset;
+            $data = $i_packet->compress( $this->mName, $i_packet->offset );
+            $data .= $i_packet->compress( $this->rName, $i_packet->offset );
 
-            $this->mName = $packet->expandEx( $offset );
-            $this->rName = $packet->expandEx( $offset, true);
-
-            //
-            // get the SOA values
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack(
-                '@' . $offset . '/Nserial/Nrefresh/Nretry/Nexpire/Nminimum/', 
-                $packet->rdata
+            $data .= pack(
+                'N5', $this->serial, $this->refresh, $this->retry,
+                $this->expire, $this->minimum
             );
 
-            $this->serial   = $x[ 'serial' ];
-            $this->refresh  = $x[ 'refresh' ];
-            $this->retry    = $x[ 'retry' ];
-            $this->expire   = $x[ 'expire' ];
-            $this->minimum  = $x[ 'minimum' ];
+            $i_packet->offset += 20;
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc
+     * @throws Exception
+     */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Parse the names.
+            $offset = $i_packet->offset;
+
+            $this->mName = $i_packet->expandEx( $offset );
+            $this->rName = $i_packet->expandEx( $offset, true );
+
+            # Get the SOA values.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack(
+                '@' . $offset . '/Nserial/Nrefresh/Nretry/Nexpire/Nminimum/',
+                $i_packet->rdata
+            );
+
+            $this->serial = $parse[ 'serial' ];
+            $this->refresh = $parse[ 'refresh' ];
+            $this->retry = $parse[ 'retry' ];
+            $this->expire = $parse[ 'expire' ];
+            $this->minimum = $parse[ 'minimum' ];
 
             return true;
         }
@@ -169,23 +165,11 @@ class SOA extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->mName) > 0) {
-    
-            $data = $packet->compress($this->mName, $packet->offset);
-            $data .= $packet->compress($this->rName, $packet->offset);
-
-            $data .= pack(
-                'N5', $this->serial, $this->refresh, $this->retry, 
-                $this->expire, $this->minimum
-            );
-
-            $packet->offset += 20;
-
-            return $data;
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->cleanString( $this->mName ) . '. ' .
+            $this->cleanString( $this->rName ) . '. ' .
+            $this->serial . ' ' . $this->refresh . ' ' . $this->retry . ' ' .
+            $this->expire . ' ' . $this->minimum;
     }
 }

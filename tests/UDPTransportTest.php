@@ -16,6 +16,7 @@ use ReflectionException;
 use ReflectionObject;
 
 
+/** Test the UDPTransport class. */
 class UDPTransportTest extends TestCase {
 
 
@@ -75,6 +76,7 @@ class UDPTransportTest extends TestCase {
 
     /**
      * @throws Exception
+     * @suppress PhanTypeMismatchArgument Because of mock object
      */
     public function testUDPTransportSocketWriteError() {
         $req = $this->getMockBuilder( RequestPacket::class )

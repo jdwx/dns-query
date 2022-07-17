@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * DS Resource Record - RFC4034 section 5.1
@@ -40,82 +39,60 @@ use JDWX\DNSQuery\Packet\Packet;
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class DS extends RR
-{
-    /*
-     * key tag
-     */
+class DS extends RR {
+
+
+    /** @var int Key Tag */
     public int $keytag;
 
-    /*
-     * algorithm number
-     */
+    /** @var int Algorithm number */
     public int $algorithm;
 
-    /*
-     * algorithm used to construct the digest
-     */
+    /** @var int Algorithm used to construct the digest */
     public int $digestType;
 
-    /*
-     * the digest data
-     */
+    /** @var string Digest data */
     public string $digest;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->keytag . ' ' . $this->algorithm . ' ' . $this->digestType . ' ' . $this->digest;
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->keytag       = (int) array_shift( $rdata );
-        $this->algorithm    = (int) array_shift( $rdata );
-        $this->digestType   = (int) array_shift( $rdata );
-        $this->digest       = implode('', $rdata );
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->keytag = (int) array_shift( $i_rData );
+        $this->algorithm = (int) array_shift( $i_rData );
+        $this->digestType = (int) array_shift( $i_rData );
+        $this->digest = implode( '', $i_rData );
 
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
 
-            //
-            // unpack the keytag, algorithm and digest type
-            //
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->digest ) > 0 ) {
+
+            $data = pack( 'nCCH*', $this->keytag, $this->algorithm, $this->digestType, $this->digest );
+
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the keytag, algorithm and digest type.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack('nkeytag/Calgorithm/Cdigesttype/H*digest', $this->rdata);
+            $parse = unpack( 'nkeytag/Calgorithm/CdigestType/H*digest', $this->rdata );
 
-            $this->keytag       = $x['keytag'];
-            $this->algorithm    = $x['algorithm'];
-            $this->digestType   = $x['digesttype'];
-            $this->digest       = $x['digest'];
+            $this->keytag = $parse[ 'keytag' ];
+            $this->algorithm = $parse[ 'algorithm' ];
+            $this->digestType = $parse[ 'digestType' ];
+            $this->digest = $parse[ 'digest' ];
 
             return true;
         }
@@ -123,27 +100,11 @@ class DS extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Packet to use for compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->digest) > 0) {
 
-            $data = pack('nCCH*', $this->keytag, $this->algorithm, $this->digestType, $this->digest);
-
-            $packet->offset += strlen($data);
-
-            return $data;
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->keytag . ' ' . $this->algorithm . ' ' . $this->digestType . ' ' . $this->digest;
     }
+
+
 }

@@ -7,19 +7,16 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * RT Resource Record - RFC1183 section 3.3
@@ -39,70 +37,52 @@ use JDWX\DNSQuery\Packet\Packet;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class RT extends RR
-{
-    /*
-     * the preference of this route
-     */
+class RT extends RR {
+
+
+    /** @var int Preference of this route */
     public int $preference;
 
-    /*
-      * host which will serve as an intermediate in reaching the owner host
-     */
+    /** @var string Host which will serve as an intermediate in reaching the owner host */
     public string $intermediateHost;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string {
-        return $this->preference . ' ' . 
-            $this->cleanString($this->intermediateHost) . '.';
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param array $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool {
-        $this->preference       = (int) $rdata[ 0 ];
-        $this->intermediateHost = $this->cleanString( $rdata[ 1 ] );
-
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->preference = (int) $i_rData[ 0 ];
+        $this->intermediateHost = $this->cleanString( $i_rData[ 1 ] );
         return true;
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->intermediateHost ) > 0 ) {
 
-            //
-            // unpack the preference
-            //
+            $data = pack( 'n', $this->preference );
+            $i_packet->offset += 2;
+
+            $data .= $i_packet->compress( $this->intermediateHost, $i_packet->offset );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the preference.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack('npreference', $this->rdata);
+            $parse = unpack( 'npreference', $this->rdata );
 
-            $this->preference       = $x['preference'];
-            $offset                 = $packet->offset + 2;
+            $this->preference = $parse[ 'preference' ];
+            $offset = $i_packet->offset + 2;
 
-            $this->intermediateHost =  $packet->expandEx( $offset );
+            $this->intermediateHost = $i_packet->expandEx( $offset );
 
             return true;
         }
@@ -110,28 +90,12 @@ class RT extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet &$packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return null|string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->intermediateHost) > 0) {
 
-            $data = pack('n', $this->preference);
-            $packet->offset += 2;
-
-            $data .= $packet->compress($this->intermediateHost, $packet->offset);
-
-            return $data;
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->preference . ' ' .
+            $this->cleanString( $this->intermediateHost ) . '.';
     }
+
+
 }

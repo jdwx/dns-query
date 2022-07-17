@@ -12,6 +12,7 @@ use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 
 
+/** UDP transport for DNS packets */
 class UDPTransport extends IPTransport {
 
 
@@ -35,37 +36,28 @@ class UDPTransport extends IPTransport {
      * @throws Exception
      */
     public function receiveResponse() : ResponsePacket {
-        //
-        // grab the start time
-        //
-        $start_time = microtime( true );
+
+        # Grab the start time
+        $startTime = microtime( true );
 
         $size = 0;
 
-        //
-        // read the content, using select to wait for a response
-        //
+        # Read the content, using select to wait for a response.
         $result = $this->read( $size, Lookups::DNS_MAX_UDP_SIZE );
         if ( $size < Lookups::DNS_HEADER_SIZE ) {
             throw new Exception("received packet is too small to be a valid DNS packet", Lookups::E_NS_SOCKET_FAILED );
         }
 
-        //
-        // create the packet object
-        //
+        # Create the packet object.
         $response = new ResponsePacket( $result, $size );
 
-        //
-        // store the query time
-        //
-        $response->response_time = microtime( true ) - $start_time;
+        # Store the query time.
+        $response->responseTime = microtime( true ) - $startTime;
 
-        //
-        // add the name server that the response came from to the response object,
-        // and the socket type that was used.
-        //
-        $response->answer_from = $this->nameServer;
-        $response->answer_socket_type = Socket::SOCK_DGRAM;
+        # Add the name server that the response came from to the response object
+        # and the socket type that was used.
+        $response->answerFrom = $this->nameServer;
+        $response->answerSocketType = Socket::SOCK_DGRAM;
         return $response;
 
     }

@@ -7,19 +7,16 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * KX Resource Record - RFC2230 section 3.1
@@ -42,104 +40,65 @@ use JDWX\DNSQuery\Packet\Packet;
  *   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class KX extends RR
-{
-    /*
-     * the preference for this mail exchanger
-     */    
+class KX extends RR {
+
+
+    /** @var int Preference for this mail exchanger */
     public int $preference;
- 
-    /*
-     * the hostname of the mail exchanger
-     */
+
+    /** @var string Hostname of the mail exchanger */
     public string $exchange;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->preference . ' ' . $this->cleanString($this->exchange) . '.';
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->preference   = (int) array_shift($rdata);
-        $this->exchange     = $this->cleanString(array_shift($rdata));
- 
-        return true;        
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->preference = (int) array_shift( $i_rData );
+        $this->exchange = $this->cleanString( array_shift( $i_rData ) );
+
+        return true;
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
-   
-            //
-            // parse the preference
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack('npreference', $this->rdata);
-            $this->preference = $x['preference'];
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->exchange ) > 0 ) {
 
-            //
-            // get the exchange entry server)
-            //
-            $offset = $packet->offset + 2;
-            $this->exchange = $packet->labelEx( $offset );
-
-            return true;
-        }
-      
-        return false;
-    }
-
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->exchange) > 0) {
-
-            $data = pack('nC', $this->preference, strlen($this->exchange)) .
+            $data = pack( 'nC', $this->preference, strlen( $this->exchange ) ) .
                 $this->exchange;
 
-            $packet->offset += strlen($data);
+            $i_packet->offset += strlen( $data );
 
             return $data;
         }
-    
+
         return null;
     }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Parse the preference
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'npreference', $this->rdata );
+            $this->preference = $parse[ 'preference' ];
+
+            # Get the exchange entry server.
+            $offset = $i_packet->offset + 2;
+            $this->exchange = $i_packet->labelEx( $offset );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->preference . ' ' . $this->cleanString( $this->exchange ) . '.';
+    }
+
+
 }

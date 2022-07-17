@@ -15,6 +15,7 @@ use JDWX\DNSQuery\RR\MX;
 use PHPUnit\Framework\TestCase;
 
 
+/** Test the Resolver class. */
 class ResolverTest extends TestCase {
 
 
@@ -93,6 +94,11 @@ class ResolverTest extends TestCase {
     }
 
 
+    /** Helper to compare two sets of RRs.
+     *
+     * It zeros out the TTLs as they can vary between successive queries if you are querying a name
+     * server (like 1.1.1.1) that is actually a cluster of servers.
+     */
     private function compareRRArrays( array $rExpected, array $rActual ) : void {
         foreach ( $rActual as & $row ) {
             $row[ 'ttl' ] = 0;
@@ -104,6 +110,7 @@ class ResolverTest extends TestCase {
     }
 
 
+    /** Check the results of a query for Google's MX server. */
     public static function googleMXResponseCheck( ResponsePacket $rsp ) :void {
 
         static::assertInstanceOf( ResponsePacket::class, $rsp );

@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * This class handles parsing and constructing the question section of DNS
@@ -41,166 +40,146 @@ use JDWX\DNSQuery\Packet\Packet;
  *    /                     QNAME                     /
  *    /                                               /
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    |                     QTYPE                     |
+ *    |                     qType                     |
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *    |                     QCLASS                    |
+ *    |                     qClass                    |
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class Question
-{
-    /*
-     * The name of the question
-     *
-     * referred to as "zname" for updates per RFC2136
-     *
-     */
-    public string $qname;
+class Question {
 
-    /*
-     * The RR type for the question
+
+    /** @var string The name portion of the question
      *
-     * referred to as "ztype" for updates per RFC2136
-     *
+     * referred to as "zName" for updates per RFC2136
      */
-    public string $qtype;
-    
-    /*
-     * The RR class for the question
+    public string $qName;
+
+    /** @var string The RR type for the question
      *
-     * referred to as "zclass" for updates per RFC2136
-     *
+     * referred to as "zType" for updates per RFC2136
      */
-    public string $qclass;
+    public string $qType;
+
+    /** @var string The RR class for the question
+     *
+     * referred to as "zClass" for updates per RFC2136
+     */
+    public string $qClass;
+
 
     /**
-     * Constructor - builds a new Net_DNS2_Question object
+     * Constructor - builds a new Question object
      *
-     * @param ?Packet $packet either a Net_DNS2_Packet object, or null to
+     * @param ?Packet $i_packet either a Packet object, or null to
      *                       build an empty object
      *
      * @throws Exception
-     * @access public
-     *
      */
-    public function __construct( ?Packet $packet = null )
-    {
-        if (!is_null($packet)) {
+    public function __construct( ?Packet $i_packet = null ) {
+        if ( ! is_null( $i_packet ) ) {
 
-            $this->set($packet);
+            $this->set( $i_packet );
         } else {
 
-            $this->qname    = '';
-            $this->qtype    = 'A';
-            $this->qclass   = 'IN';
+            $this->qName = '';
+            $this->qType = 'A';
+            $this->qClass = 'IN';
         }
     }
 
+
     /**
-     * magic __toString() function to return the Net_DNS2_Question object as a string
+     * magic __toString() function to return the Question object as a string
      *
      * @return string
-     * @access public
-     *
      */
-    public function __toString()
-    {
-        return ";;\n;; Question:\n;;\t " . $this->qname . '. ' . 
-            $this->qtype . ' ' . $this->qclass . "\n";
+    public function __toString() : string {
+        return ";;\n;; Question:\n;;\t " . $this->qName . '. ' .
+            $this->qType . ' ' . $this->qClass . "\n";
     }
 
-    /**
-     * builds a new Net_DNS2_Header object from a Net_DNS2_Packet object
-     *
-     * @param Packet &$packet a Net_DNS2_Packet object
-     *
-     * @return bool
-     * @throws Exception
-     * @access public
-     *
-     */
-    public function set( Packet $packet) : bool
-    {
-        //
-        // expand the name
-        //
-        $this->qname = $packet->expandEx( $packet->offset );
 
-        if ($packet->rdLength < ($packet->offset + 4)) {
+    /**
+     * Populate this Question object from a Packet object
+     *
+     * @param Packet $i_packet Packet object
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function set( Packet $i_packet ) : void {
+
+        # Expand the name.
+        $this->qName = $i_packet->expandEx( $i_packet->offset );
+
+        if ( $i_packet->rdLength < ( $i_packet->offset + 4 ) ) {
             throw new Exception(
                 'invalid question section: to small',
                 Lookups::E_QUESTION_INVALID
             );
         }
 
-        //
-        // unpack the type and class
-        //
-        $type   = ord($packet->rdata[$packet->offset++]) << 8 | 
-            ord($packet->rdata[$packet->offset++]);
-        $class  = ord($packet->rdata[$packet->offset++]) << 8 | 
-            ord($packet->rdata[$packet->offset++]);
+        # Unpack the type and class.
+        $type = ord( $i_packet->rdata[ $i_packet->offset++ ] ) << 8 |
+            ord( $i_packet->rdata[ $i_packet->offset++ ] );
+        $class = ord( $i_packet->rdata[ $i_packet->offset++ ] ) << 8 |
+            ord( $i_packet->rdata[ $i_packet->offset++ ] );
 
-        //
-        // validate it
-        //
-        $type_name  = Lookups::$rr_types_by_id[$type];
-        $class_name = Lookups::$classes_by_id[$class];
+        # Validate it.
+        $typeName = Lookups::$rrTypesById[ $type ];
+        $className = Lookups::$classesById[ $class ];
 
-        if ( (!isset($type_name)) || (!isset($class_name)) ) {
+        if ( ( ! isset( $typeName ) ) || ( ! isset( $className ) ) ) {
 
             throw new Exception(
-                'invalid question section: invalid type (' . $type . 
+                'invalid question section: invalid type (' . $type .
                 ') or class (' . $class . ') specified.',
                 Lookups::E_QUESTION_INVALID
             );
         }
 
-        //
-        // store it
-        //
-        $this->qtype     = $type_name;
-        $this->qclass    = $class_name;
+        # Store it.
+        $this->qType = $typeName;
+        $this->qClass = $className;
 
-        return true;
     }
 
+
     /**
-     * returns a binary packed Net_DNS2_Question object
+     * returns a binary packed Question object
      *
-     * @param Packet &$packet the Net_DNS2_Packet object this question is
-     *                                 part of. This needs to be passed in so that
-     *                                 the compressed qname value can be packed in
-     *                                 with the names of the other parts of the 
-     *                                 packet.
+     * @param Packet $i_packet Packet object this question is
+     *                         part of. This needs to be passed in so that
+     *                         the compressed qname value can be packed in
+     *                         with the names of the other parts of the
+     *                         packet.
      *
      * @return string
      * @throws Exception
-     * @access public
-     *
      */
-    public function get( Packet $packet) : string
-    {
-        //
-        // validate the type and class
-        //
-        $type  = Lookups::$rr_types_by_name[$this->qtype];
-        $class = Lookups::$classes_by_name[$this->qclass];
+    public function get( Packet $i_packet ) : string {
 
-        if ( (!isset($type)) || (!isset($class)) ) {
+        # Validate the type and class.
+        $type = Lookups::$rrTypesByName[ $this->qType ];
+        $class = Lookups::$classesByName[ $this->qClass ];
+
+        if ( ( ! isset( $type ) ) || ( ! isset( $class ) ) ) {
 
             throw new Exception(
-                'invalid question section: invalid type (' . $this->qtype . 
-                ') or class (' . $this->qclass . ') specified.',
+                'invalid question section: invalid type (' . $this->qType .
+                ') or class (' . $this->qClass . ') specified.',
                 Lookups::E_QUESTION_INVALID
             );
         }
 
-        $data = $packet->compress($this->qname, $packet->offset);
+        $data = $i_packet->compress( $this->qName, $i_packet->offset );
 
-        $data .= chr($type >> 8) . chr($type) . chr($class >> 8) . chr($class);
-        $packet->offset += 4;
+        $data .= chr( $type >> 8 ) . chr( $type ) . chr( $class >> 8 ) . chr( $class );
+        $i_packet->offset += 4;
 
         return $data;
     }
+
+
 }

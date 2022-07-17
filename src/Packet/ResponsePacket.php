@@ -13,14 +13,12 @@ use JDWX\DNSQuery\RR\RR;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -29,126 +27,98 @@ use JDWX\DNSQuery\RR\RR;
  *
  */
 
+
 /**
  * This class handles building new DNS response packets; it parses binary packed
  * packets that come off the wire
- * 
+ *
  */
-class ResponsePacket extends Packet
-{
-    /*
-     * The name servers that this response came from
-     */
-    public string $answer_from;
+class ResponsePacket extends Packet {
+    /** @var string The name servers that this response came from. */
+    public string $answerFrom;
 
-    /*
-     * The socket type the answer came from (TCP/UDP)
-     */
-    public int $answer_socket_type;
+    /** @var int The socket type the answer came from (TCP/UDP) */
+    public int $answerSocketType;
 
-    /*
-     * The query response time in microseconds
-     */
-    public float $response_time = 0.0;
+    /** @var float The query response time in microseconds */
+    public float $responseTime = 0.0;
+
 
     /**
      * Constructor - builds a new ResponsePacket object
      *
-     * @param string $data binary DNS packet
-     * @param int    $size the length of the DNS packet
+     * @param string $i_data binary DNS packet
+     * @param int    $i_size the length of the DNS packet
      *
      * @throws Exception
-     * @access public
-     *
      */
-    public function __construct( string $data, int $size )
-    {
-        $this->set($data, $size);
+    public function __construct( string $i_data, int $i_size ) {
+        $this->set( $i_data, $i_size );
     }
 
+
     /**
-     * builds a new Net_DNS2_Packet_Response object
+     * builds a new ResponsePacket object
      *
-     * @param string $data binary DNS packet
-     * @param int    $size the length of the DNS packet
+     * @param string $i_data binary DNS packet
+     * @param int    $i_size the length of the DNS packet
      *
      * @return bool
      * @throws Exception
-     * @access public
-     *
      */
-    public function set( string $data, int $size) : bool
-    {
-        //
-        // store the full packet
-        //
-        $this->rdata    = $data;
-        $this->rdLength = $size;
+    public function set( string $i_data, int $i_size ) : bool {
 
-        //
-        // parse the header
-        // 
-        // we don't bother checking the size earlier, because the first thing the
-        // header class does is check the size and throw and exception if it's
-        // invalid.
-        //
+        # Store the full packet.
+        $this->rdata = $i_data;
+        $this->rdLength = $i_size;
+
+        # Parse the header.
+
+        # We don't bother checking the size yet, because the first thing the
+        # Header class does is check the size and throw and exception if it's
+        # invalid.
+        #
+        # We also don't need to worry about checking to see if the header is
+        # null or not, since the Header() constructor will throw an
+        # exception if the packet is invalid.
         $this->header = new Header( $this );
 
-        //
-        // if the truncation bit is set, then just return right here, because the
-        // rest of the packet is probably empty; and there's no point in processing
-        // anything else.
-        //
-        // we also don't need to worry about checking to see if the header is
-        // null or not, since the Net_DNS2_Header() constructor will throw an 
-        // exception if the packet is invalid.
-        //
-        if ($this->header->tc == 1) {
-
+        # If the truncation bit is set, then just return right here, because the
+        # rest of the packet is probably empty; and there's no point in processing
+        # anything else.
+        if ( $this->header->tc == 1 ) {
             return false;
         }
 
-        //
-        // parse the questions
-        //
-        for ( $x = 0; $x < $this->header->qdCount; ++$x) {
-
-            $this->question[$x] = new Question($this);
+        # Parse the questions.
+        for ( $ii = 0 ; $ii < $this->header->qdCount ; ++$ii ) {
+            $this->question[ $ii ] = new Question( $this );
         }
 
-        //
-        // parse the answers
-        //
-        for ( $x = 0; $x < $this->header->anCount; ++$x) {
+        # Parse the answers.
+        for ( $ii = 0 ; $ii < $this->header->anCount ; ++$ii ) {
+            $rr = RR::parse( $this );
+            if ( ! is_null( $rr ) ) {
 
-            $o = RR::parse($this);
-            if (!is_null($o)) {
-
-                $this->answer[] = $o;
-            }
-        } 
-
-        //
-        // parse the authority section
-        //
-        for ( $x = 0; $x < $this->header->nsCount; ++$x) {
-
-            $o = RR::parse($this);
-            if (!is_null($o)) {
-
-                $this->authority[] = $o;  
+                $this->answer[] = $rr;
             }
         }
 
-        //
-        // parse the additional section
-        //
-        for ( $x = 0; $x < $this->header->arCount; ++$x) {
+        # Parse the authority section.
+        for ( $ii = 0 ; $ii < $this->header->nsCount ; ++$ii ) {
+            $rr = RR::parse( $this );
+            if ( ! is_null( $rr ) ) {
 
-            $o = RR::parse($this);
-            if (!is_null($o)) {
+                $this->authority[] = $rr;
+            }
+        }
 
-                $this->additional[] = $o; 
+        # Parse the additional section.
+        for ( $ii = 0 ; $ii < $this->header->arCount ; ++$ii ) {
+            $rr = RR::parse( $this );
+            if ( ! is_null( $rr ) ) {
+
+                $this->additional[] = $rr;
             }
         }
 

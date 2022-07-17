@@ -7,20 +7,17 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
-use JDWX\DNSQuery\Net_DNS2;
+use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +25,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.4.5
  *
  */
+
 
 /**
  * AMTRELAY Resource Record - RFC8777 section 4.2
@@ -40,115 +38,76 @@ use JDWX\DNSQuery\Packet\Packet;
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class AMTRELAY extends RR
-{
-    /*
-     * type definitions that match the "type" field below
-     */
-    public const AMTRELAY_TYPE_NONE    = 0;
-    public const AMTRELAY_TYPE_IPV4    = 1;
-    public const AMTRELAY_TYPE_IPV6    = 2;
-    public const AMTRELAY_TYPE_DOMAIN  = 3;
+class AMTRELAY extends RR {
 
-    /*
-     * the precedence for this record
-     */
+    # Type definitions that match the "type" field below
+
+    /** @const AMTRELAY type None */
+    public const AMTRELAY_TYPE_NONE = 0;
+
+    /** @const AMTRELAY type IPv4 */
+    public const AMTRELAY_TYPE_IPV4 = 1;
+
+    /** @const AMTRELAY type IPv6 */
+    public const AMTRELAY_TYPE_IPV6 = 2;
+
+    /** @const AMTRELAY type Domain Name */
+    public const AMTRELAY_TYPE_DOMAIN = 3;
+
+    /** @var int The precedence for this record */
     public int $precedence;
 
-    /*
-     * "Discovery Optional" flag
-     */
+    /** @var int "Discovery Optional" flag */
     public int $discovery;
 
-    /*
-     * The type field indicates the format of the information that is stored in the relay field.
-     */
+    /** @var int The type field indicates the format of the information that is stored in the relay field. */
     public int $relayType;
 
-    /*
-     * The relay field is the address or domain name of the AMT relay.
-     */
+    /** @var string The relay field is the address or domain name of the AMT relay. */
     public string $relay;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        $out = $this->precedence . ' ' . $this->discovery . ' ' . $this->relayType . ' ' . $this->relay;
 
-        //
-        // 4.3.1 - If the relay type field is 0, the relay field MUST be ".".
-        //
-        if ( ($this->relayType == self::AMTRELAY_TYPE_NONE) || ($this->relayType == self::AMTRELAY_TYPE_DOMAIN) )
-        {
-            $out .= '.';
-        }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
 
-        return $out;
-    }
+        # Extract the values from the array.
+        $this->precedence = (int) array_shift( $i_rData );
+        $this->discovery = (int) array_shift( $i_rData );
+        $this->relayType = (int) array_shift( $i_rData );
+        $this->relay = trim( strtolower( trim( array_shift( $i_rData ) ) ), '.' );
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        //
-        // extract the values from the array
-        //
-        $this->precedence   = (int) array_shift( $rdata );
-        $this->discovery    = (int) array_shift( $rdata );
-        $this->relayType   = (int) array_shift( $rdata );
-        $this->relay        = trim(strtolower(trim(array_shift($rdata))), '.');
-
-        //
-        // if there's anything else other than 0 in the discovery value, then force it to one, so
-        // that it effectively is either "true" or "false".
-        //
-        if ($this->discovery != 0) {
+        # If there's anything other than 0 in the discovery value, then force it to 1, so
+        # that it is effectively either "true" or "false."
+        if ( $this->discovery != 0 ) {
             $this->discovery = 1;
         }
 
-        //
-        // validate the type & relay values
-        //
-        switch($this->relayType) {
-        case self::AMTRELAY_TYPE_NONE:
-            $this->relay = '';
-            break;
+        # Validate the type & relay values.
+        switch ( $this->relayType ) {
+            case self::AMTRELAY_TYPE_NONE:
+                $this->relay = '';
+                break;
 
-        case self::AMTRELAY_TYPE_IPV4:
-            if ( ! Net_DNS2::isIPv4( $this->relay ) ) {
+            case self::AMTRELAY_TYPE_IPV4:
+                if ( ! BaseQuery::isIPv4( $this->relay ) ) {
+                    return false;
+                }
+                break;
+
+            case self::AMTRELAY_TYPE_IPV6:
+                if ( ! BaseQuery::isIPv6( $this->relay ) ) {
+                    return false;
+                }
+                break;
+
+            case self::AMTRELAY_TYPE_DOMAIN:
+                # Do nothing.
+                break;
+
+            default:
+
+                # Invalid type value.
                 return false;
-            }
-            break;
-
-        case self::AMTRELAY_TYPE_IPV6:
-            if ( ! Net_DNS2::isIPv6( $this->relay ) ) {
-                return false;
-            }
-            break;
-
-        case self::AMTRELAY_TYPE_DOMAIN:
-            // do nothing
-            break;
-
-        default:
-
-            //
-            // invalid type value
-            //
-            return false;
 
         }
 
@@ -156,70 +115,82 @@ class AMTRELAY extends RR
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
 
-            //
-            // parse off the first two octets
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack('Cprecedence/Csecond', $this->rdata);
+        # Pack the precedence, discovery, and type.
+        $data = pack( 'CC', $this->precedence, ( $this->discovery << 7 ) | $this->relayType );
 
-            $this->precedence   = $x['precedence'];
-            $this->discovery    = ($x['second'] >> 7) & 0x1;
-            $this->relayType   = $x['second'] & 0xf;
-
-            $offset = 2;
-
-            //
-            // parse the relay value based on the type
-            //
-            switch($this->relayType) {
+        # Add the relay data based on the type.
+        switch ( $this->relayType ) {
             case self::AMTRELAY_TYPE_NONE:
-                $this->relay = '';
+                # Add nothing.
                 break;
 
             case self::AMTRELAY_TYPE_IPV4:
-                $this->relay = inet_ntop(substr($this->rdata, $offset, 4));
-                break;
-
             case self::AMTRELAY_TYPE_IPV6:
-
-                //
-                // PHP's inet_ntop returns IPv6 addresses in their compressed form, but we want to keep 
-                // with the preferred standard, so we'll parse it manually.
-                //
-                $ip = unpack('n8', substr($this->rdata, $offset, 16));
-                if (count($ip) == 8) {
-                    $this->relay = vsprintf('%x:%x:%x:%x:%x:%x:%x:%x', $ip);
-                } else
-                {
-                    return false;
-                }
+                $data .= inet_pton( $this->relay );
                 break;
 
             case self::AMTRELAY_TYPE_DOMAIN:
-                $domainOffset = $packet->offset + $offset;
-                $this->relay = $packet->labelEx( $domainOffset );
-
+                $data .= pack( 'Ca*', strlen( $this->relay ), $this->relay );
                 break;
 
             default:
-                //
-                // invalid type value
-                //
-                return false;
+                return null;
+        }
+
+        $i_packet->offset += strlen( $data );
+
+        return $data;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Parse off the first two octets.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'Cprecedence/Csecond', $this->rdata );
+
+            $this->precedence = $parse[ 'precedence' ];
+            $this->discovery = ( $parse[ 'second' ] >> 7 ) & 0x1;
+            $this->relayType = $parse[ 'second' ] & 0xf;
+
+            $offset = 2;
+
+            # Parse the relay value based on the type.
+            switch ( $this->relayType ) {
+                case self::AMTRELAY_TYPE_NONE:
+                    $this->relay = '';
+                    break;
+
+                case self::AMTRELAY_TYPE_IPV4:
+                    $this->relay = inet_ntop( substr( $this->rdata, $offset, 4 ) );
+                    break;
+
+                case self::AMTRELAY_TYPE_IPV6:
+
+                    # PHP's inet_ntop returns IPv6 addresses in their compressed form, but we want to keep
+                    # with the preferred standard, so we'll parse it manually.
+                    $ip = unpack( 'n8', substr( $this->rdata, $offset, 16 ) );
+                    if ( count( $ip ) == 8 ) {
+                        $this->relay = vsprintf( '%x:%x:%x:%x:%x:%x:%x:%x', $ip );
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case self::AMTRELAY_TYPE_DOMAIN:
+                    $domainOffset = $i_packet->offset + $offset;
+                    $this->relay = $i_packet->labelEx( $domainOffset );
+
+                    break;
+
+                default:
+                    # Invalid type value.
+                    return false;
             }
 
             return true;
@@ -228,47 +199,16 @@ class AMTRELAY extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        //
-        // pack the precedence, discovery, and type
-        //
-        $data = pack('CC', $this->precedence, ($this->discovery << 7) | $this->relayType);
 
-        //
-        // add the relay data based on the type
-        //
-        switch($this->relayType) {
-        case self::AMTRELAY_TYPE_NONE:
-            // add nothing
-            break;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        $out = $this->precedence . ' ' . $this->discovery . ' ' . $this->relayType . ' ' . $this->relay;
 
-        case self::AMTRELAY_TYPE_IPV4:
-        case self::AMTRELAY_TYPE_IPV6:
-            $data .= inet_pton($this->relay);
-            break;
-
-        case self::AMTRELAY_TYPE_DOMAIN:
-            $data .= pack('Ca*', strlen($this->relay), $this->relay);
-            break;
-
-        default:
-            return null;
+        # 4.3.1 - If the relay type field is 0, the relay field MUST be a dot literal.
+        if ( ( $this->relayType == self::AMTRELAY_TYPE_NONE ) || ( $this->relayType == self::AMTRELAY_TYPE_DOMAIN ) ) {
+            $out .= '.';
         }
 
-        $packet->offset += strlen($data);
-
-        return $data;
+        return $out;
     }
 }

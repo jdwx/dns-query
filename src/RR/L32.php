@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -26,6 +24,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 1.3.1
  *
  */
+
 
 /**
  * L32 Resource Record - RFC6742 section 2.2
@@ -38,73 +37,52 @@ use JDWX\DNSQuery\Packet\Packet;
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-class L32 extends RR
-{
-    /*
-     * The preference
-     */
+class L32 extends RR {
+
+
+    /** @var int Preference */
     public int $preference;
 
-    /*
-     * The locator32 field
-     */
+    /** @var string Locator32 field */
     public string $locator32;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->preference . ' ' . $this->locator32;
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->preference = (int) array_shift($rdata);
-        $this->locator32  = array_shift($rdata);
-
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->preference = (int) array_shift( $i_rData );
+        $this->locator32 = array_shift( $i_rData );
         return true;
     }
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     * 
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
 
-            //
-            // unpack the values
-            //
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->locator32 ) > 0 ) {
+
+            # Break out the locator value.
+            $split = explode( '.', $this->locator32 );
+
+            # Pack the data.
+            return pack( 'nC4', $this->preference, $split[ 0 ], $split[ 1 ], $split[ 2 ], $split[ 3 ] );
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the values.
             /** @noinspection SpellCheckingInspection */
-            $x = unpack('npreference/C4locator', $this->rdata);
+            $parse = unpack( 'npreference/C4locator', $this->rdata );
 
-            $this->preference = $x['preference'];
+            $this->preference = $parse[ 'preference' ];
 
-            //
-            // build the locator value
-            //
-            $this->locator32 = $x['locator1'] . '.' . $x['locator2'] . '.' .
-                $x['locator3'] . '.' . $x['locator4'];
+            # Build the locator value.
+            $this->locator32 = $parse[ 'locator1' ] . '.' . $parse[ 'locator2' ] . '.' .
+                $parse[ 'locator3' ] . '.' . $parse[ 'locator4' ];
 
             return true;
         }
@@ -112,32 +90,11 @@ class L32 extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     * 
-     * @param Packet $packet a Net_DNS2_Packet packet use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     * 
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->locator32) > 0) {
 
-            //
-            // break out the locator value
-            //
-            $n = explode('.', $this->locator32);
-
-            //
-            // pack the data
-            //
-            return pack('nC4', $this->preference, $n[0], $n[1], $n[2], $n[3]);
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->preference . ' ' . $this->locator32;
     }
+
+
 }

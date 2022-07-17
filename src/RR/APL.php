@@ -11,14 +11,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -27,142 +25,169 @@ use JDWX\DNSQuery\Packet\Packet;
  *
  */
 
+
 /**
  * APL Resource Record - RFC3123
  *
  *     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *     |                          ADDRESSFAMILY                        |
+ *     |                          AddressFamily                        |
  *     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *     |             PREFIX            | N |         AFDLENGTH         |
+ *     |             Prefix            | N |         AFDLength         |
  *     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *     /                            AFDPART                            /
+ *     /                            AFDPart                            /
  *     |                                                               |
  *     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  */
-class APL extends RR
-{
-    /*
-     * a list of all the address prefix list items
-     */
-    public array $apl_items = [];
+class APL extends RR {
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
-        $out = '';
 
-        foreach ($this->apl_items as $item) {
+    /** @var array[] List of all the address prefix list items */
+    public array $aplItems = [];
 
-            if ($item['n'] == 1) {
 
-                $out .= '!';
-            }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        foreach ( $i_rData as $item ) {
 
-            $out .= $item['address_family'] . ':' . 
-                $item['afd_part'] . '/' . $item['prefix'] . ' ';
-        }
+            if ( preg_match( '/^(!?)([1|2]):([^\/]*)\/(\d{1,3})$/', $item, $matches ) ) {
 
-        return trim($out);
-    }
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool
-    {
-        foreach ($rdata as $item) {
-
-            if (preg_match('/^(!?)([1|2]):([^\/]*)\/(\d{1,3})$/', $item, $m)) {
-
-                $i = [
-
-                    'address_family'    => (int) $m[2],
-                    'prefix'            => $m[4],
-                    'n'                 => ($m[1] == '!') ? 1 : 0,
-                    'afd_part'          => strtolower($m[3])
+                $newItem = [
+                    'address_family' => (int) $matches[ 2 ],
+                    'prefix' => $matches[ 4 ],
+                    'n' => ( $matches[ 1 ] == '!' ) ? 1 : 0,
+                    'afd_part' => strtolower( $matches[ 3 ] ),
                 ];
 
                 $address = $this->_trimZeros(
-                    $i['address_family'], $i['afd_part']
+                    $newItem[ 'address_family' ], $newItem[ 'afd_part' ]
                 );
-                    
-                $i['afd_length'] = count(explode('.', $address));
 
-                $this->apl_items[] = $i;
+                $newItem[ 'afd_length' ] = count( explode( '.', $address ) );
+
+                $this->aplItems[] = $newItem;
             }
         }
 
         return true;
     }
 
-    /** {@inheritdoc} */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
+
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( count( $this->aplItems ) > 0 ) {
+
+            $data = '';
+
+            foreach ( $this->aplItems as $item ) {
+
+                # Pack the address_family and prefix values.
+                $data .= pack(
+                    'nCC',
+                    $item[ 'address_family' ],
+                    $item[ 'prefix' ],
+                    ( $item[ 'n' ] << 7 ) | $item[ 'afd_length' ]
+                );
+
+                switch ( $item[ 'address_family' ] ) {
+                    case 1:
+                        $address = explode(
+                            '.',
+                            $this->_trimZeros( $item[ 'address_family' ], $item[ 'afd_part' ] )
+                        );
+
+                        foreach ( $address as $byte ) {
+                            $data .= chr( (int) $byte );
+                        }
+                        break;
+                    case 2:
+                        $address = explode(
+                            ':',
+                            $this->_trimZeros( $item[ 'address_family' ], $item[ 'afd_part' ] )
+                        );
+
+                        foreach ( $address as $byte ) {
+                            $data .= pack( 'H', $byte );
+                        }
+                        break;
+                    default:
+                        return null;
+                }
+            }
+
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
 
             $offset = 0;
 
-            while ($offset < $this->rdLength) {
+            while ( $offset < $this->rdLength ) {
 
-                //
-                // unpack the family, prefix, negate and length values
-                //   
+                # Unpack the family, prefix, negate and length values.
                 /** @noinspection SpellCheckingInspection */
-                $x = unpack(
-                    'naddress_family/Cprefix/Cextra', substr($this->rdata, $offset)
+                $parse = unpack(
+                    'naddress_family/Cprefix/Cextra', substr( $this->rdata, $offset )
                 );
 
                 $item = [
-            
-                    'address_family'    => $x['address_family'],
-                    'prefix'            => $x['prefix'],
-                    'n'                 => ($x['extra'] >> 7) & 0x1,
-                    'afd_length'        => $x['extra'] & 0xf
+
+                    'address_family' => $parse[ 'address_family' ],
+                    'prefix' => $parse[ 'prefix' ],
+                    'n' => ( $parse[ 'extra' ] >> 7 ) & 0x1,
+                    'afd_length' => $parse[ 'extra' ] & 0xf,
                 ];
 
-                switch($item['address_family']) {
+                switch ( $item[ 'address_family' ] ) {
 
-                case 1:
-                    $r = unpack(
-                        'C*', substr($this->rdata, $offset + 4, $item['afd_length'])
-                    );
-                    assert( is_array( $r ) );
-                    if (count($r) < 4) {
+                    case 1:
+                        $octets = unpack(
+                            'C*', substr( $this->rdata, $offset + 4, $item[ 'afd_length' ] )
+                        );
+                        assert( is_array( $octets ) );
+                        if ( count( $octets ) < 4 ) {
 
-                        for ($c=count($r)+1; $c<4+1; $c++) {
-
-                            $r[$c] = 0;
+                            for ( $count = count( $octets ) + 1 ; $count < 4 + 1 ; $count++ ) {
+                                $octets[ $count ] = 0;
+                            }
                         }
-                    }
 
-                    $item['afd_part'] = implode('.', $r);
+                        $item[ 'afd_part' ] = implode( '.', $octets );
 
-                    break;
-                case 2:
-                    $r = unpack(
-                        'C*', substr($this->rdata, $offset + 4, $item['afd_length'])
-                    );
-                    assert( is_array( $r ) );
-                    if (count($r) < 8) {
+                        break;
+                    case 2:
+                        $octets = unpack(
+                            'C*', substr( $this->rdata, $offset + 4, $item[ 'afd_length' ] )
+                        );
+                        assert( is_array( $octets ) );
+                        if ( count( $octets ) < 8 ) {
 
-                        for ($c=count($r)+1; $c<8+1; $c++) {
-
-                            $r[$c] = 0;
+                            for ( $count = count( $octets ) + 1 ; $count < 8 + 1 ; $count++ ) {
+                                $octets[ $count ] = 0;
+                            }
                         }
-                    }
 
-                    $item['afd_part'] = sprintf(
-                        '%x:%x:%x:%x:%x:%x:%x:%x', 
-                        $r[1], $r[2], $r[3], $r[4], $r[5], $r[6], $r[7], $r[8]
-                    );
+                        $item[ 'afd_part' ] = sprintf(
+                            '%x:%x:%x:%x:%x:%x:%x:%x',
+                            $octets[ 1 ], $octets[ 2 ], $octets[ 3 ], $octets[ 4 ], $octets[ 5 ], $octets[ 6 ], $octets[ 7 ], $octets[ 8 ]
+                        );
 
-                    break;
-                default:
-                    return false;
+                        break;
+                    default:
+                        return false;
                 }
 
-                $this->apl_items[] = $item;
+                $this->aplItems[] = $item;
 
-                $offset += 4 + $item['afd_length'];
+                $offset += 4 + $item[ 'afd_length' ];
             }
 
             return true;
@@ -171,95 +196,61 @@ class APL extends RR
         return false;
     }
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (count($this->apl_items) > 0) {
 
-            $data = '';
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        $out = '';
 
-            foreach ($this->apl_items as $item) {
+        foreach ( $this->aplItems as $item ) {
 
-                //
-                // pack the address_family and prefix values
-                //
-                $data .= pack(
-                    'nCC', 
-                    $item['address_family'], 
-                    $item['prefix'],
-                    ($item['n'] << 7) | $item['afd_length']
-                );
+            if ( $item[ 'n' ] == 1 ) {
 
-                switch($item['address_family']) {
-                case 1:
-                    $address = explode(
-                        '.', 
-                        $this->_trimZeros($item['address_family'], $item['afd_part'])
-                    );
-
-                    foreach ($address as $b) {
-                        $data .= chr( (int) $b);
-                    }
-                    break;
-                case 2:
-                    $address = explode(
-                        ':', 
-                        $this->_trimZeros($item['address_family'], $item['afd_part'])
-                    );
-
-                    foreach ($address as $b) {
-                        $data .= pack('H', $b);
-                    }
-                    break;
-                default:
-                    return null;
-                }
+                $out .= '!';
             }
 
-            $packet->offset += strlen($data);
-
-            return $data;
+            $out .= $item[ 'address_family' ] . ':' .
+                $item[ 'afd_part' ] . '/' . $item[ 'prefix' ] . ' ';
         }
 
-        return null;
+        return trim( $out );
     }
 
+
     /**
-     * returns an IP address with the right-hand zero's trimmed
+     * Return an IP address with the right-hand zeros trimmed
      *
-     * @param int    $family  the IP address family from the rdata
-     * @param string $address the IP address
+     * @param int    $family IP address family from the rdata
+     * @param string $address IP address
      *
-     * @return string the trimmed IP addresses.
+     * @return string The trimmed IP address.
      *
      * @access private
      *
      */
-    private function _trimZeros( int $family, string $address ) : string
-    {
+    private function _trimZeros( int $family, string $address ) : string {
 
-        switch($family) {
-        case 1:
-            $a = array_reverse(explode('.', $address));
-            break;
-        case 2:
-            $a = array_reverse(explode(':', $address));
-            break;
-        default:
-            return '';
+        switch ( $family ) {
+            case 1:
+                $aa = array_reverse( explode( '.', $address ) );
+                break;
+            case 2:
+                $aa = array_reverse( explode( ':', $address ) );
+                break;
+            default:
+                return '';
         }
 
-        foreach ($a as $value) {
+        foreach ( $aa as $value ) {
 
-            if ($value === '0') {
+            if ( $value === '0' ) {
 
-                array_shift($a);
+                array_shift( $aa );
             }
         }
 
         return match ( $family ) {
-            1 => implode( '.', array_reverse( $a ) ),
-            2 => implode( ':', array_reverse( $a ) ),
+            1 => implode( '.', array_reverse( $aa ) ),
+            2 => implode( ':', array_reverse( $aa ) ),
             default => '',
         };
     }

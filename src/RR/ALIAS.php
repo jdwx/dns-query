@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -18,14 +17,13 @@ use JDWX\DNSQuery\Packet\Packet;
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Benjamin Schwarze <chaosben@gmail.com>
  * @copyright 2022 Benjamin Schwarze <chaosben@gmail.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link      https://netdns2.com/
  *
  */
+
 
 /**
  * ALIAS Resource Record - as implemented by PowerDNS according to draft-ietf-dnsop-aname
@@ -36,56 +34,35 @@ use JDWX\DNSQuery\Packet\Packet;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class ALIAS extends RR
-{
-    /*
-     * The alias
-     */
+class ALIAS extends RR {
+
+
+    /** @var string Alias */
     public string $alias;
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->cleanString($this->alias) . '.';
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        $this->alias = $this->cleanString(array_shift($rdata));
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->alias = $this->cleanString( array_shift( $i_rData ) );
         return true;
     }
 
 
-    /**
-     * parses the rdata of the Net_DNS2_Packet object
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
-            $offset = $packet->offset;
-            $this->alias = $packet->expandEx( $offset );
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->alias ) > 0 ) {
+            return $i_packet->compress( $this->alias, $i_packet->offset );
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+            $offset = $i_packet->offset;
+            $this->alias = $i_packet->expandEx( $offset );
 
             return true;
         }
@@ -93,23 +70,11 @@ class ALIAS extends RR
         return false;
     }
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Net_DNS2_Packet packet to use for
-     *                                 compressed names
-     *
-     * @return ?string                   either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     *
-     */
-    protected function rrGet( Packet $packet) : ?string
-    {
-        if (strlen($this->alias) > 0) {
-            return $packet->compress($this->alias, $packet->offset);
-        }
 
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->cleanString( $this->alias ) . '.';
     }
+
+
 }

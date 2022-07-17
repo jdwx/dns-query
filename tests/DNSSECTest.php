@@ -13,6 +13,10 @@ use JDWX\DNSQuery\RR\OPT;
 use PHPUnit\Framework\TestCase;
 
 
+/** Basic DNSSEC test.
+ *
+ * TODO: Expand this dramatically.
+ */
 class DNSSECTest extends TestCase {
 
 

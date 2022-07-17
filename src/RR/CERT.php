@@ -13,14 +13,12 @@ use JDWX\DNSQuery\Packet\Packet;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * CERT Resource Record - RFC4398 section 2
@@ -42,11 +41,10 @@ use JDWX\DNSQuery\Packet\Packet;
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
  *
  */
-class CERT extends RR
-{
-    /*
-     * format's allowed for certificates
-     */
+class CERT extends RR {
+
+
+    # Formats allowed for certificates
     public const CERT_FORMAT_RES = 0;
     public const CERT_FORMAT_PKIX = 1;
     public const CERT_FORMAT_SPKI = 2;
@@ -59,40 +57,34 @@ class CERT extends RR
     public const CERT_FORMAT_URI = 253;
     public const CERT_FORMAT_OID = 254;
 
-    public array $cert_format_name_to_id = [];
-    public array $cert_format_id_to_name = [
+    /** @var array<string, int> Map format names to IDs */
+    public array $certFormatNameToId = [];
 
-        self::CERT_FORMAT_RES       => 'Reserved',
-        self::CERT_FORMAT_PKIX      => 'PKIX',
-        self::CERT_FORMAT_SPKI      => 'SPKI',
-        self::CERT_FORMAT_PGP       => 'PGP',
-        self::CERT_FORMAT_IPKIX     => 'IPKIX',
-        self::CERT_FORMAT_ISPKI     => 'ISPKI',
-        self::CERT_FORMAT_IPGP      => 'IPGP',
-        self::CERT_FORMAT_ACPKIX    => 'ACPKIX',
-        self::CERT_FORMAT_IACPKIX   => 'IACPKIX',
-        self::CERT_FORMAT_URI       => 'URI',
-        self::CERT_FORMAT_OID       => 'OID'
+    /** @var array<int, string> Map format IDs to names */
+    public array $certFormatIdToName = [
+        self::CERT_FORMAT_RES => 'Reserved',
+        self::CERT_FORMAT_PKIX => 'PKIX',
+        self::CERT_FORMAT_SPKI => 'SPKI',
+        self::CERT_FORMAT_PGP => 'PGP',
+        self::CERT_FORMAT_IPKIX => 'IPKIX',
+        self::CERT_FORMAT_ISPKI => 'ISPKI',
+        self::CERT_FORMAT_IPGP => 'IPGP',
+        self::CERT_FORMAT_ACPKIX => 'ACPKIX',
+        self::CERT_FORMAT_IACPKIX => 'IACPKIX',
+        self::CERT_FORMAT_URI => 'URI',
+        self::CERT_FORMAT_OID => 'OID',
     ];
 
-    /*
-      * certificate format
-     */
+    /** @var int Certificate format */
     public int $format;
 
-    /*
-     * key tag
-     */
+    /** @var int Key tag */
     public int $keytag;
 
-    /*
-     * The algorithm used for the CERT
-     */
+    /** @var int Algorithm used for the CERT */
     public int $algorithm;
 
-    /*
-     * certificate
-     */
+    /** @var string Certificate */
     public string $certificate;
 
 
@@ -100,120 +92,93 @@ class CERT extends RR
      * we have our own constructor so that we can load our certificate
      * information for parsing.
      *
-     * @param ?Packet $packet a Packet to parse the RR from
-     * @param ?array            $rr an array with parsed RR values
+     * @param ?Packet $i_packet a Packet to parse the RR from
+     * @param ?array  $i_rr an array with parsed RR values
      *
      * @throws Exception
      */
-    public function __construct(?Packet $packet = null, array $rr = null)
-    {
-        parent::__construct($packet, $rr);
-    
-        //
-        // load the lookup values
-        //
-        $this->cert_format_name_to_id = array_flip($this->cert_format_id_to_name);
+    public function __construct( ?Packet $i_packet = null, array $i_rr = null ) {
+        parent::__construct( $i_packet, $i_rr );
+
+        # Load the lookup values
+        $this->certFormatNameToId = array_flip( $this->certFormatIdToName );
     }
 
-    /**
-     * method to return the rdata portion of the packet as a string
-     *
-     * @return  string
-     * @access  protected
-     *
-     */
-    protected function rrToString() : string
-    {
-        return $this->format . ' ' . $this->keytag . ' ' . $this->algorithm . 
-            ' ' . base64_encode($this->certificate);
-    }
 
-    /**
-     * parses the rdata portion from a standard DNS config line
-     *
-     * @param string[] $rdata a string split line of values for the rdata
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrFromString(array $rdata) : bool
-    {
-        //
-        // load and check the format; can be an int, or a mnemonic symbol
-        //
-        $format = array_shift( $rdata );
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+
+        # Load and check the format; can be an int, or a mnemonic symbol.
+        $format = array_shift( $i_rData );
         if ( ! is_numeric( $format ) ) {
             $mnemonic = strtoupper( trim( $format ) );
-            if ( ! isset( $this->cert_format_name_to_id[ $mnemonic ] ) ) {
+            if ( ! isset( $this->certFormatNameToId[ $mnemonic ] ) ) {
                 return false;
             }
-            $format = $this->cert_format_name_to_id[$mnemonic];
-        } elseif ( ! isset( $this->cert_format_id_to_name[ (int) $format ] ) ) {
-             return false;
+            $format = $this->certFormatNameToId[ $mnemonic ];
+        } elseif ( ! isset( $this->certFormatIdToName[ (int) $format ] ) ) {
+            return false;
         } else {
             $format = (int) $format;
         }
         $this->format = $format;
 
-        $this->keytag = (int) array_shift($rdata);
+        $this->keytag = (int) array_shift( $i_rData );
 
-        //
-        // parse and check the algorithm; can be an int, or a mnemonic symbol
-        //
-        $algorithm = array_shift($rdata);
+        # Parse and check the algorithm; can be an int, or a mnemonic symbol.
+        $algorithm = array_shift( $i_rData );
         if ( ! is_numeric( $algorithm ) ) {
             $mnemonic = strtoupper( trim( $algorithm ) );
-            if ( ! isset( Lookups::$algorithm_name_to_id[ $mnemonic ] ) ) {
+            if ( ! isset( Lookups::$algorithmNameToID[ $mnemonic ] ) ) {
                 return false;
             }
-            $algorithm = Lookups::$algorithm_name_to_id[
-                $mnemonic
-            ];
-        } elseif ( ! isset( Lookups::$algorithm_id_to_name[ $algorithm ] ) ) {
+            $algorithm = Lookups::$algorithmNameToID[ $mnemonic ];
+        } elseif ( ! isset( Lookups::$algorithmIdToName[ $algorithm ] ) ) {
             return false;
         } else {
             $algorithm = (int) $algorithm;
         }
         $this->algorithm = $algorithm;
 
-        //
-        // parse and base64 decode the certificate
-        //
-        // certificates MUST be provided base64 encoded, if not, everything will
-        // be broken after this point, as we assume it's base64 encoded.
-        //
-        $this->certificate = base64_decode(implode(' ', $rdata));
+        # Parse and base64 decode the certificate.
+        #
+        # Certificates MUST be provided base64 encoded.  If not, everything will
+        # be broken after this point, as we assume it's base64 encoded.
+        $this->certificate = base64_decode( implode( ' ', $i_rData ) );
 
         return true;
     }
 
-    /**
-     * parses the rdata of the Packet object
-     *
-     * @param Packet $packet a Packet to parse the RR from
-     *
-     * @return bool
-     * @access protected
-     *
-     */
-    protected function rrSet(Packet $packet) : bool
-    {
-        if ($this->rdLength > 0) {
 
-            //
-            // unpack the format, keytag and algorithm
-            //
-            $x = unpack('nformat/nkeytag/Calgorithm', $this->rdata);
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->certificate ) > 0 ) {
 
-            $this->format       = $x['format'];
-            $this->keytag       = $x['keytag'];
-            $this->algorithm    = $x['algorithm'];
+            $data = pack( 'nnC', $this->format, $this->keytag, $this->algorithm ) . $this->certificate;
 
-            //
-            // copy the certificate
-            //
-            $this->certificate  = substr($this->rdata, 5, $this->rdLength - 5);
+            $i_packet->offset += strlen( $data );
+
+            return $data;
+        }
+
+        return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the format, keytag and algorithm.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'nformat/nkeytag/Calgorithm', $this->rdata );
+
+            $this->format = $parse[ 'format' ];
+            $this->keytag = $parse[ 'keytag' ];
+            $this->algorithm = $parse[ 'algorithm' ];
+
+            # Copy the certificate.
+            $this->certificate = substr( $this->rdata, 5, $this->rdLength - 5 );
 
             return true;
         }
@@ -222,26 +187,11 @@ class CERT extends RR
     }
 
 
-    /**
-     * returns the rdata portion of the DNS packet
-     *
-     * @param Packet $packet a Packet to use for compressed names
-     *
-     * @return ?string either returns a binary packed
-     *                                 string or null on failure
-     * @access protected
-     */
-    protected function rrGet(Packet $packet) : ?string
-    {
-        if (strlen($this->certificate) > 0) {
-
-            $data = pack('nnC', $this->format, $this->keytag, $this->algorithm) . $this->certificate;
-
-            $packet->offset += strlen($data);
-
-            return $data;
-        }
-
-        return null;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->format . ' ' . $this->keytag . ' ' . $this->algorithm .
+            ' ' . base64_encode( $this->certificate );
     }
+
+
 }

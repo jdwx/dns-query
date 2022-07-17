@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -19,8 +18,6 @@ use JetBrains\PhpStorm\ArrayShape;
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +25,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * SRV Resource Record - RFC2782
@@ -43,32 +41,23 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class SRV extends RR
-{
+class SRV extends RR {
 
 
-    /*
-     * The priority of this target host.
-     */
+    /** @var int Priority of this target host. */
     public int $priority;
 
-    /*
-     * a relative weight for entries with the same priority
-     */
+    /** @var int Relative weight for entries with the same priority */
     public int $weight;
 
-    /*
-      * The port on this target host of this service.
-     */
+    /** @var int Port on the target host for the service. */
     public int $port;
 
-    /*
-      * The domain name of the target host
-     */
+    /** @var string Domain name of the target host */
     public string $target;
 
 
-    /** {@inheritdoc}
+    /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
     #[ArrayShape( [ 'pri' => "int", 'weight' => "int", 'target' => "string", 'port' => "int" ] )]
@@ -82,64 +71,60 @@ class SRV extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string {
-        return $this->priority . ' ' . $this->weight . ' ' . 
-            $this->port . ' ' . $this->cleanString($this->target) . '.';
-    }
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $this->priority = (int) $i_rData[ 0 ];
+        $this->weight = (int) $i_rData[ 1 ];
+        $this->port = (int) $i_rData[ 2 ];
 
+        $this->target = $this->cleanString( $i_rData[ 3 ] );
 
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool {
-        $this->priority = (int) $rdata[0];
-        $this->weight   = (int) $rdata[1];
-        $this->port     = (int) $rdata[2];
-
-        $this->target   = $this->cleanString($rdata[3]);
-        
         return true;
     }
 
 
-    /** {@inheritdoc}
-     * @throws Exception
-     */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
-            
-            //
-            // unpack the priority, weight and port
-            //
-            /** @noinspection SpellCheckingInspection */
-            $x = unpack('npriority/nweight/nport', $this->rdata);
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        if ( strlen( $this->target ) > 0 ) {
 
-            $this->priority = $x['priority'];
-            $this->weight   = $x['weight'];
-            $this->port     = $x['port'];
+            $data = pack( 'nnn', $this->priority, $this->weight, $this->port );
+            $i_packet->offset += 6;
 
-            $offset         = $packet->offset + 6;
-            $this->target   = $packet->expandEx( $offset );
-
-            return true;
-        }
-        
-        return false;
-    }
-
-
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string {
-        if (strlen($this->target) > 0) {
-
-            $data = pack('nnn', $this->priority, $this->weight, $this->port);
-            $packet->offset += 6;
-
-            $data .= $packet->compress($this->target, $packet->offset);
+            $data .= $i_packet->compress( $this->target, $i_packet->offset );
 
             return $data;
         }
 
         return null;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
+
+            # Unpack the priority, weight and port.
+            /** @noinspection SpellCheckingInspection */
+            $parse = unpack( 'npriority/nweight/nport', $this->rdata );
+
+            $this->priority = $parse[ 'priority' ];
+            $this->weight = $parse[ 'weight' ];
+            $this->port = $parse[ 'port' ];
+
+            $offset = $i_packet->offset + 6;
+            $this->target = $i_packet->expandEx( $offset );
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        return $this->priority . ' ' . $this->weight . ' ' .
+            $this->port . ' ' . $this->cleanString( $this->target ) . '.';
     }
 
 

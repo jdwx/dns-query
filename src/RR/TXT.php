@@ -13,14 +13,12 @@ use JetBrains\PhpStorm\ArrayShape;
 
 
 /**
- * DNS Library for handling lookups and updates. 
+ * DNS Library for handling lookups and updates.
  *
  * Copyright (c) 2020, Mike Pultz <mike@mikepultz.com>. All rights reserved.
  *
  * See LICENSE for more details.
  *
- * @category  Networking
- * @package   Net_DNS2
  * @author    Mike Pultz <mike@mikepultz.com>
  * @copyright 2020 Mike Pultz <mike@mikepultz.com>
  * @license   http://www.opensource.org/licenses/bsd-license.php  BSD License
@@ -28,6 +26,7 @@ use JetBrains\PhpStorm\ArrayShape;
  * @since     File available since Release 0.6.0
  *
  */
+
 
 /**
  * TXT Resource Record - RFC1035 section 3.3.14
@@ -37,15 +36,16 @@ use JetBrains\PhpStorm\ArrayShape;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class TXT extends RR
-{
+class TXT extends RR {
 
 
     /** @var string[] an array of the text strings */
     public array $text = [];
 
 
-    /** {@inheritdoc} @noinspection PhpMissingParentCallCommonInspection */
+    /** @inheritdoc
+     * @noinspection PhpMissingParentCallCommonInspection
+     */
     #[ArrayShape( [ 'txt' => "string" ] )] public function getPHPRData() : array {
         return [
             'txt' => $this->rrToString(),
@@ -53,29 +53,10 @@ class TXT extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrToString() : string
-    {
-        if (count($this->text) == 0) {
-            return '""';
-        }
-
-        $data = '';
-
-        foreach ($this->text as $t) {
-
-            $data .= $this->formatString( $t ) . ' ';
-        }
-
-        return trim($data);
-    }
-
-
-    /** {@inheritdoc} */
-    protected function rrFromString(array $rdata) : bool {
-        $data = $this->buildString($rdata);
-        if (count($data) > 0) {
-
+    /** @inheritDoc */
+    protected function rrFromString( array $i_rData ) : bool {
+        $data = $this->buildString( $i_rData );
+        if ( count( $data ) > 0 ) {
             $this->text = $data;
         }
 
@@ -83,18 +64,31 @@ class TXT extends RR
     }
 
 
-    /** {@inheritdoc}
+    /** @inheritDoc */
+    protected function rrGet( Packet $i_packet ) : ?string {
+        $data = '';
+
+        foreach ( $this->text as $txt ) {
+            $data .= chr( strlen( $txt ) ) . $txt;
+        }
+
+        $i_packet->offset += strlen( $data );
+
+        return $data;
+    }
+
+
+    /** @inheritDoc
      * @throws Exception
      */
-    protected function rrSet( Packet $packet) : bool {
-        if ($this->rdLength > 0) {
-            
-            $length = $packet->offset + $this->rdLength;
-            $offset = $packet->offset;
+    protected function rrSet( Packet $i_packet ) : bool {
+        if ( $this->rdLength > 0 ) {
 
-            while ($length > $offset) {
+            $length = $i_packet->offset + $this->rdLength;
+            $offset = $i_packet->offset;
 
-                $this->text[] = $packet->labelEx( $offset );
+            while ( $length > $offset ) {
+                $this->text[] = $i_packet->labelEx( $offset );
             }
 
             return true;
@@ -104,17 +98,19 @@ class TXT extends RR
     }
 
 
-    /** {@inheritdoc} */
-    protected function rrGet( Packet $packet) : ?string {
-        $data = '';
-
-        foreach ($this->text as $t) {
-            $data .= chr(strlen($t)) . $t;
+    /** @inheritDoc */
+    protected function rrToString() : string {
+        if ( count( $this->text ) == 0 ) {
+            return '""';
         }
 
-        $packet->offset += strlen($data);
+        $data = '';
 
-        return $data;
+        foreach ( $this->text as $txt ) {
+            $data .= $this->formatString( $txt ) . ' ';
+        }
+
+        return trim( $data );
     }
 
 

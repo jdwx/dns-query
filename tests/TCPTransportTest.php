@@ -13,6 +13,7 @@ use JDWX\DNSQuery\Packet\RequestPacket;
 use PHPUnit\Framework\TestCase;
 
 
+/** Additional coverage tests for the TCPTransport class. */
 class TCPTransportTest extends TestCase {
 
 
