@@ -134,9 +134,9 @@ class HIP extends RR {
             # Unpack the algorithm and length values.
             $parse = unpack( 'ChitLength/CpkAlgorithm/npkLength', $this->rdata );
 
-            $this->hitLength = $parse[ 'hit_length' ];
-            $this->pubkeyAlgorithm = $parse[ 'pk_algorithm' ];
-            $this->pubkeyLength = $parse[ 'pk_length' ];
+            $this->hitLength = $parse[ 'hitLength' ];
+            $this->pubkeyAlgorithm = $parse[ 'pkAlgorithm' ];
+            $this->pubkeyLength = $parse[ 'pkLength' ];
 
             $offset = 4;
 
