@@ -44,14 +44,14 @@ use JDWX\DNSQuery\Packet\Packet;
 class OPT extends RR {
 
 
-    /** @var int Option code - assigned by IANA */
-    public int $optionCode;
+    /** @var ?int Option code - assigned by IANA */
+    public ?int $optionCode = null;
 
     /** @var int Length of the option data */
     public int $optionLength;
 
-    /** @var string The option data */
-    public string $optionData;
+    /** @var ?string The option data */
+    public ?string $optionData = null;
 
     /** @var int Extended response code stored in the TTL */
     public int $extendedResponseCode;
@@ -129,13 +129,7 @@ class OPT extends RR {
         $this->optionData = array_shift( $i_rData );
         $this->optionLength = strlen( $this->optionData );
 
-        /** @noinspection SpellCheckingInspection */
-        $parse = unpack( 'Cextended/Cversion/Cdo/Cz', pack( 'N', $this->ttl ) );
-
-        $this->extendedResponseCode = $parse[ 'extended' ];
-        $this->version = $parse[ 'version' ];
-        $this->do = ( $parse[ 'do' ] >> 7 );
-        $this->extFlags = $parse[ 'z' ];
+        $this->unpackTTL();
 
         return true;
     }
@@ -162,24 +156,17 @@ class OPT extends RR {
     /** @inheritDoc */
     protected function rrSet( Packet $i_packet ) : bool {
 
-        # Parse out the TTL value
-        /** @noinspection SpellCheckingInspection */
-        $parse = unpack( 'Cextended/Cversion/Cdo/Cz', pack( 'N', $this->ttl ) );
-
-        $this->extendedResponseCode = $parse[ 'extended' ];
-        $this->version = $parse[ 'version' ];
-        $this->do = ( $parse[ 'do' ] >> 7 );
-        $this->extFlags = $parse[ 'z' ];
+        $this->unpackTTL();
 
         # Parse the data, if there is any
         if ( $this->rdLength > 0 ) {
 
             # Unpack the code and length
             /** @noinspection SpellCheckingInspection */
-            $parse = unpack( 'noption_code/noption_length', $this->rdata );
+            $parse = unpack( 'noptionCode/noptionLength', $this->rdata );
 
-            $this->optionCode = $parse[ 'option_code' ];
-            $this->optionLength = $parse[ 'option_length' ];
+            $this->optionCode = $parse[ 'optionCode' ];
+            $this->optionLength = $parse[ 'optionLength' ];
 
             # Copy out the data based on the length.
             $this->optionData = substr( $this->rdata, 4 );
@@ -195,6 +182,23 @@ class OPT extends RR {
      */
     protected function rrToString() : string {
         return $this->optionCode . ' ' . $this->optionData;
+    }
+
+
+    /** Unpack the TTL value, which has special meaning in OPT records.
+     * @return void
+     */
+    protected function unpackTTL() : void {
+
+        # Parse out the TTL value
+        /** @noinspection SpellCheckingInspection */
+        $parse = unpack( 'Cextended/Cversion/Cdo/Cz', pack( 'N', $this->ttl ) );
+
+        $this->extendedResponseCode = $parse[ 'extended' ];
+        $this->version = $parse[ 'version' ];
+        $this->do = ( $parse[ 'do' ] >> 7 );
+        $this->extFlags = $parse[ 'z' ];
+
     }
 
 
