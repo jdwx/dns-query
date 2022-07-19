@@ -43,7 +43,7 @@ class UDPTransport extends IPTransport {
         $size = 0;
 
         # Read the content, using select to wait for a response.
-        $result = $this->read( $size, Lookups::DNS_MAX_UDP_SIZE );
+        $result = $this->read( $size, 65535 );
         if ( $size < Lookups::DNS_HEADER_SIZE ) {
             throw new Exception("received packet is too small to be a valid DNS packet", Lookups::E_NS_SOCKET_FAILED );
         }
