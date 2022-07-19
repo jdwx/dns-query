@@ -11,6 +11,8 @@ use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\Resolver;
+use JDWX\DNSQuery\RR\A;
+use JDWX\DNSQuery\RR\CNAME;
 use JDWX\DNSQuery\RR\MX;
 use PHPUnit\Framework\TestCase;
 
@@ -91,6 +93,50 @@ class ResolverTest extends TestCase {
         $rActual[ 0 ][ 'serial' ] = '0';
         $this->compareRRArrays( $rExpected, $rActual );
 
+    }
+
+
+    /** Test that CNAME queries return the CNAME and indirect RR both in the answer field,
+     * as expected by default.
+     *
+     * @throws Exception
+     */
+    public function testCNAME() {
+        $dns = new Resolver();
+        $rsp = $dns->query( 'www.icann.org' );
+        $foundCNAME = false;
+        $foundA = false;
+        $fromName = null;
+        $toName = null;
+        static::assertCount( 2, $rsp->answer );
+        foreach ( $rsp->answer as $rr ) {
+            if ( $rr instanceOf CNAME ) {
+                static::assertSame( 'www.icann.org', $rr->name );
+                $fromName = $rr->cname;
+                $foundCNAME = true;
+            }
+            if ( $rr instanceOf A ) {
+                static::assertSame( '192.0.32.7', $rr->address );
+                $toName = $rr->name;
+                $foundA = true;
+            }
+        }
+        static::assertTrue( $foundCNAME );
+        static::assertTrue( $foundA );
+        static::assertSame( $fromName, $toName );
+
+    }
+
+
+    /** With strict query mode, the resolver should return a non-error response with no
+     * answers when a CNAME is encountered.
+     * @throws Exception
+     */
+    public function testCNAMEStrict() {
+        $dns = ( new Resolver() )->setStrictQueryMode();
+        $rsp = $dns->query( 'www.icann.org' );
+        static::assertCount( 0, $rsp->answer );
+        static::assertSame( Lookups::E_NONE, $rsp->header->rCode );
     }
 
 
