@@ -9,6 +9,9 @@ namespace JDWX\DNSQuery\Packet;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Question;
+use JDWX\DNSQuery\RR\A;
+use JDWX\DNSQuery\RR\AAAA;
+use JDWX\DNSQuery\RR\NS;
 use JDWX\DNSQuery\RR\RR;
 
 
@@ -54,6 +57,84 @@ class ResponsePacket extends Packet {
      */
     public function __construct( string $i_data, int $i_size ) {
         $this->set( $i_data, $i_size );
+    }
+
+
+    /** Returns a list of name server addresses that the response claims are
+     * authoritative for the given name.
+     *
+     * The array returned has two levels.  The first is the name server name.
+     * The second is an array containing any addresses found in the
+     * "additional" section of the response.  This list may be empty if no
+     * records of the given type are present in that section.
+     *
+     * @param ?string $i_name Name the returned addresses must be authoritative for.
+     *                        If null, the name will be taken from the question section.
+     * @param bool    $i_useIPv4 If true, IPv4 addresses will be returned.
+     * @param bool    $i_useIPv6 If true, IPv6 addresses will be returned.
+     *
+     * @return string[][] List of name server names and their addresses.
+     * @throws Exception
+     */
+    public function extractAuthoritativeAddresses( ?string $i_name = null, bool $i_useIPv4 = true,
+                                                   bool $i_useIPv6 = false ) : array {
+        $names = $this->extractAuthoritativeNameServers( $i_name );
+        if ( empty( $names ) ) {
+            return [];
+        }
+
+        $out = [];
+        foreach ( $names as $name ) {
+            $out[ $name ] = [];
+            foreach ( $this->additional as $rr ) {
+                if ( $rr->name != $name ) {
+                    continue;
+                }
+                if ( $i_useIPv4 && $rr instanceOf A ) {
+                    $out[ $name ][] = $rr->address;
+                }
+                if ( $i_useIPv6 && $rr instanceOf AAAA ) {
+                    $out[ $name ][] = $rr->address;
+                }
+            }
+        }
+        return $out;
+    }
+
+
+    /** Returns a list of name servers that the response claims are authoritative for the
+     *  specified name.
+     *
+     * @param ?string $i_name The name that the name servers must be authoritative for.
+     *                        If null, uses the name from the question section of the packet.
+     * @return string[]       A list of any authoritative name servers found.
+     * @throws Exception
+     */
+    public function extractAuthoritativeNameServers( ?string $i_name = null ) : array {
+
+        if ( ! is_string( $i_name ) ) {
+            if ( 1 !== count( $this->question ) ) {
+                throw new Exception(
+                    'There must be exactly one question in the response to use the default name.'
+                );
+            }
+            $i_name = $this->question[ 0 ]->qName;
+        }
+
+        $nameList = explode( '.', $i_name );
+        $newNameServers = [];
+        foreach ( $this->authority as $rr ) {
+            if ( ! $rr instanceof NS ) {
+                continue;
+            }
+            $authList = explode( '.', $rr->name );
+            $len = count( $authList );
+            $check = array_slice( $nameList, -$len );
+            if ( $authList == $check ) {
+                $newNameServers[] = $rr->nsdName;
+            }
+        }
+        return $newNameServers;
     }
 
 
