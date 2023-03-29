@@ -153,7 +153,7 @@ class Socket {
         $opts = [ 'socket' => [] ];
 
         # Bind to a local IP/port if it's set.
-        if ( is_string( $this->localAddress ) || $this->localPort != 0 ) ) {
+        if ( is_string( $this->localAddress ) || $this->localPort != 0 ) {
             /** @noinspection SpellCheckingInspection */
             $opts[ 'socket' ][ 'bindto' ] = ( $this->localAddress ?? '0' ) . ':' . ( $this->localPort ?? 0 );
         }
