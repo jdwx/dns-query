@@ -69,7 +69,7 @@ class BaseQuery {
     protected array $lastExceptionList = [];
 
     /** @var string The IPv4 or IPv6 address to use for local sockets */
-    protected string $localAddress = '';
+    protected ?string $localAddress = null;
 
     /** @var int The port to use for local sockets (0 = selected by OS) */
     protected int $localPort = 0;
@@ -764,7 +764,7 @@ class BaseQuery {
 
                 $this->lastException = new Exception(
 
-                    'DNS request failed: ' .
+                    "DNS request to {$ns} failed: " .
                     Lookups::$resultCodeMessages[ $response->header->rCode ],
                     $response->header->rCode,
                     null,
