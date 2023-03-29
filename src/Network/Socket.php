@@ -155,7 +155,7 @@ class Socket {
         # Bind to a local IP/port if it's set.
         if ( is_string( $this->localAddress ) || is_int( $this->localPort ) ) {
             /** @noinspection SpellCheckingInspection */
-            $opts[ 'socket' ][ 'bindto' ] = ( $this->localAddress ?? '' ) . ':' . ( $this->localPort ?? 0 );
+            $opts[ 'socket' ][ 'bindto' ] = ( $this->localAddress ?? '0' ) . ':' . ( $this->localPort ?? 0 );
         }
 
         # Create the context.
