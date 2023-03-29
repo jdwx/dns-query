@@ -219,7 +219,9 @@ class RecursiveResolver {
         }
         $i_maxDepth -= 1;
 
-        echo "Resolve ", $i_name, " ", $i_type, " on: ", implode( ', ', $i_nameServers ), "\n";
+        if ( $this->debug )  {
+            echo "Resolve ", $i_name, " ", $i_type, " on: ", implode( ', ', $i_nameServers ), "\n";
+        }
         $rsv = $this->makeResolver( $i_nameServers );
 
         $rsp = $rsv->query( $i_name, $i_type );
@@ -230,7 +232,9 @@ class RecursiveResolver {
         if ( 1 === count( $rsp->answer ) ) {
             $answer = $rsp->answer[ 0 ];
             if ( $answer instanceof CNAME ) {
-                echo "CNAME: ", $answer->name, " => ", $answer->cname, "\n";
+                if ( $this->debug ) {
+                    echo "CNAME: ", $answer->name, " => ", $answer->cname, "\n";
+                }
                 if ( $answer->name == $i_name ) {
                     return [ $rsp, ...$this->queryCNAME( $answer->cname, $i_type, $rsp, $i_maxDepth ) ];
                 }
