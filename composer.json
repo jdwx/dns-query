@@ -11,18 +11,21 @@
     "dns",
     "network"
   ],
-  "homepage": "https://netdns2.com/",
+  "homepage": "https://github.com/jdwx/dns-query/",
   "license": "BSD-2-Clause",
   "support": {
-    "issues": "https://github.com/jdwx/netdns2/issues",
-    "source": "https://github.com/jdwx/netdns2"
+    "issues": "https://github.com/jdwx/dns-query/issues",
+    "source": "https://github.com/jdwx/dns-query"
   },
   "authors": [
+	{
+		"name": "Jeff W",
+      "homepage": "https://github.com/jdwx/"
+	},
     {
       "name": "Mike Pultz",
       "email": "mike@mikepultz.com",
-      "homepage": "https://mikepultz.com/",
-      "role": "lead"
+      "homepage": "https://mikepultz.com/"
     }
   ],
   "require": {
@@ -31,7 +34,7 @@
     "ext-openssl": "*",
     "ext-sockets": "*",
     "ext-ctype": "*",
-    "cache/array-adapter": "^1.2"
+    "jdwx/array-cache": "^1.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^9",

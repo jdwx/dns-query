@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Cache;
 
 
-use Cache\Adapter\PHPArray\ArrayCachePool;
+use JDWX\ArrayCache\ArrayCache;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -30,7 +30,7 @@ class Cache extends BaseCache implements ICache {
      */
     public function __construct( ?CacheInterface $i_cache = null ) {
         if ( ! $i_cache instanceof CacheInterface ) {
-            $i_cache = new ArrayCachePool();
+            $i_cache = new ArrayCache();
         }
         $this->cache = $i_cache;
     }
