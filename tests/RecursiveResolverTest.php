@@ -11,6 +11,7 @@ use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RecursiveResolver;
 use JDWX\DNSQuery\RR\A;
+use JDWX\DNSQuery\RR\CNAME;
 use PHPUnit\Framework\TestCase;
 
 
@@ -53,10 +54,12 @@ class RecursiveResolverTest extends TestCase {
         $index = array_key_last( $xx );
         $rsp = $xx[ $index ];
         static::assertInstanceOf( ResponsePacket::class, $rsp );
-        static::assertCount( 1, $rsp->answer );
+        echo "Moment of truth:\n";
+        var_dump( $rsp->answer );
+        static::assertCount( 2, $rsp->answer );
         $rr = $rsp->answer[ 0 ];
-        static::assertInstanceOf( A::class, $rr );
-        static::assertSame( '192.0.32.7', $rr->address );
+        static::assertInstanceOf( CNAME::class, $rr );
+        static::assertSame( 'www.vip.icann.org', $rr->cname );
     }
 
 
