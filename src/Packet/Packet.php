@@ -11,6 +11,7 @@ use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Question;
 use JDWX\DNSQuery\RR\RR;
+use Stringable;
 
 
 /**
@@ -44,7 +45,7 @@ use JDWX\DNSQuery\RR\RR;
  * class.
  *
  */
-class Packet {
+class Packet implements Stringable {
 
     /** @var string Full binary data for this packet. */
     public string $rdata;

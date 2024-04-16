@@ -210,6 +210,7 @@ class RecursiveResolver {
 
     /**
      * @throws Exception
+     * @suppress PhanTypeSuspiciousEcho Packets are Stringable.
      */
     protected function queryRecursive( string $i_name, string $i_type, array $i_nameServers, int $i_maxDepth ) : array {
 
