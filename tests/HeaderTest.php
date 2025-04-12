@@ -13,47 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 
 /** Test the Header class. */
-class HeaderTest extends TestCase {
-
-
-    /**
-     * @throws Exception
-     */
-    public function testHeader() {
-        $hdr = $this->makeTestHeader();
-        $pack = $hdr->pack();
-
-        $hdr2 = new Header( $pack );
-
-        static::assertEquals( $hdr, $hdr2 );
-    }
-
-
-    /** Coverage test for Header::__toString(). */
-    public function testHeaderToString() {
-        $hdr = $this->makeTestHeader();
-        $str = (string) $hdr;
-        /** @noinspection SpellCheckingInspection */
-        $strExpected = ";; ->>HEADER<<- opcode: OPCODE10, status: NOTZONE, id: 12345\n;; flags: qr tc ra ad; QUERY: 23456, ANSWER: 45678, AUTHORITY: 56789, ADDITIONAL: 6789\n";
-        static::assertEquals( $strExpected, $str );
-    }
-
-
-    /** Coverage test for Header::__toString() with additional flags. */
-    public function testHeaderToString2() {
-        $hdr = $this->makeTestHeader( aa: true, rd: true, z: true, cd: true );
-        $str = (string) $hdr;
-        /** @noinspection SpellCheckingInspection */
-        $strExpected = ";; ->>HEADER<<- opcode: OPCODE10, status: NOTZONE, id: 12345\n;; flags: qr aa tc rd ra z ad cd; QUERY: 23456, ANSWER: 45678, AUTHORITY: 56789, ADDITIONAL: 6789\n";
-        static::assertEquals( $strExpected, $str );
-    }
-
-
-    /** @suppress PhanNoopNew */
-    public function testHeaderShort() {
-        $this->expectException( Exception::class );
-        new Header( "TooShort" );
-    }
+final class HeaderTest extends TestCase {
 
 
     /** Generate a header to use for testing.
@@ -83,6 +43,46 @@ class HeaderTest extends TestCase {
         $hdr->cd = $cd ? 1 : 0;
         $hdr->rCode = 10;
         return $hdr;
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function testHeader() : void {
+        $hdr = $this->makeTestHeader();
+        $pack = $hdr->pack();
+
+        $hdr2 = new Header( $pack );
+
+        self::assertEquals( $hdr, $hdr2 );
+    }
+
+
+    /** @suppress PhanNoopNew */
+    public function testHeaderShort() : void {
+        $this->expectException( Exception::class );
+        new Header( 'TooShort' );
+    }
+
+
+    /** Coverage test for Header::__toString(). */
+    public function testHeaderToString() : void {
+        $hdr = $this->makeTestHeader();
+        $str = (string) $hdr;
+        /** @noinspection SpellCheckingInspection */
+        $strExpected = ";; ->>HEADER<<- opcode: OPCODE10, status: NOTZONE, id: 12345\n;; flags: qr tc ra ad; QUERY: 23456, ANSWER: 45678, AUTHORITY: 56789, ADDITIONAL: 6789\n";
+        self::assertEquals( $strExpected, $str );
+    }
+
+
+    /** Coverage test for Header::__toString() with additional flags. */
+    public function testHeaderToString2() : void {
+        $hdr = $this->makeTestHeader( aa: true, rd: true, z: true, cd: true );
+        $str = (string) $hdr;
+        /** @noinspection SpellCheckingInspection */
+        $strExpected = ";; ->>HEADER<<- opcode: OPCODE10, status: NOTZONE, id: 12345\n;; flags: qr aa tc rd ra z ad cd; QUERY: 23456, ANSWER: 45678, AUTHORITY: 56789, ADDITIONAL: 6789\n";
+        self::assertEquals( $strExpected, $str );
     }
 
 

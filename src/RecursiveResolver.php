@@ -19,6 +19,7 @@ use JDWX\DNSQuery\RR\CNAME;
 class RecursiveResolver {
 
 
+    /** @var list<string> */
     protected array $rootNameServers = [];
 
     protected bool $useIPv4;
@@ -30,6 +31,7 @@ class RecursiveResolver {
     /** @var array<string, Resolver> A stash of resolvers with given name server lists. */
     protected array $resolvers = [];
 
+    /** @var array<string, mixed[]> */
     protected array $addressCache = [];
 
     protected bool $debug = false;
@@ -37,10 +39,10 @@ class RecursiveResolver {
 
     /** Constructor, optionally taking one or more custom root nameservers
      *
-     * @param null|string|array|NamedRoot $i_rootNameServers A list of root name servers
-     * @param bool                        $i_useIPv4       Whether to use IPv4 nameservers
-     * @param bool                        $i_useIPv6       Whether to use IPv6 nameservers
-     * @param bool                        $i_useDNSSEC     Whether to request and validate DNSSEC (not implemented yet)
+     * @param null|string|list<string>|NamedRoot $i_rootNameServers A list of root name servers
+     * @param bool $i_useIPv4 Whether to use IPv4 nameservers
+     * @param bool $i_useIPv6 Whether to use IPv6 nameservers
+     * @param bool $i_useDNSSEC Whether to request and validate DNSSEC (not implemented yet)
      */
     public function __construct( string|array|NamedRoot|null $i_rootNameServers = null,
                                  bool                        $i_useIPv4 = true, bool $i_useIPv6 = false,
@@ -64,8 +66,9 @@ class RecursiveResolver {
 
     /** Extracts a list of authoritative name server addresses from a response packet.
      *
-     * @param string $i_name        Name the servers need to be authoritative for.
+     * @param string $i_name Name the servers need to be authoritative for.
      * @param ResponsePacket $i_rsp Response packet to try to extract name servers from.
+     * @return list<string> A list of IP addresses for the name servers.
      *
      * @throws Exception
      */
@@ -83,13 +86,13 @@ class RecursiveResolver {
                 array_push( $out, ...$this->lookupNameServer( $nsName ) );
             }
         }
-        echo "Authoritative for ", $i_name, ": ", implode( ', ', $out ), "\n";
+        echo 'Authoritative for ', $i_name, ': ', implode( ', ', $out ), "\n";
         return $out;
     }
 
 
     /** Get the configured list of root name server addresses.
-     * @return array A list of IP addresses for the root name servers.
+     * @return list<string> A list of IP addresses for the root name servers.
      */
     public function getRootNameServers() : array {
         return $this->rootNameServers;
@@ -111,8 +114,75 @@ class RecursiveResolver {
         if ( in_array( $i_address, $this->addressCache[ $i_name ] ) ) {
             return;
         }
-        echo "Learned ", $i_name, ": ", $i_address, "\n";
+        echo 'Learned ', $i_name, ': ', $i_address, "\n";
         $this->addressCache[ $i_name ][] = $i_address;
+    }
+
+
+    /**
+     * @return mixed[] The list of addresses for the name server.
+     *
+     * When a name server is listed in the authority section but it isn't given an address in the
+     * glue records, we have to start over and look up that name server separately.
+     */
+    public function lookupNameServer( string $i_nameServer ) : array {
+        echo 'Lookup: ', $i_nameServer, "\n";
+        if ( ! array_key_exists( $i_nameServer, $this->addressCache ) ) {
+            if ( $this->useIPv4 ) {
+                $this->query( $i_nameServer );
+            }
+            if ( $this->useIPv6 ) {
+                $this->query( $i_nameServer, 'AAAA' );
+            }
+        }
+        return $this->addressCache[ $i_nameServer ];
+    }
+
+
+    /** Make a resolver with the correct properties, mainly attaching the cache.
+     *
+     * @param list<string> $i_nameServers List of name server addresses to use.
+     *
+     * @return Resolver Initialized resolver
+     *
+     * @throws Exception
+     */
+    public function makeResolver( array $i_nameServers ) : Resolver {
+        $key = implode( ',', $i_nameServers );
+        if ( array_key_exists( $key, $this->resolvers ) ) {
+            return $this->resolvers[ $key ];
+        }
+        $rsv = ( new Resolver( $i_nameServers ) )->setCacheDefault()->setRecurse( false );
+        if ( $this->useDNSSEC ) {
+            $rsv->setDNSSEC();
+        }
+        $this->resolvers[ $key ] = $rsv;
+        return $rsv;
+    }
+
+
+    /**
+     * Perform recursive resolution.
+     *
+     * @param string $i_name
+     * @param string $i_type
+     * @param int $i_maxDepth
+     * @return list<ResponsePacket>
+     * @throws Exception
+     */
+    public function query( string $i_name, string $i_type = 'A', int $i_maxDepth = 16 ) : array {
+        return $this->queryRecursive( $i_name, $i_type, $this->getRootNameServers(), $i_maxDepth );
+    }
+
+
+    /** Enable or disable debugging.
+     *
+     * @param bool $i_debug
+     * @return $this
+     */
+    public function setDebug( bool $i_debug ) : static {
+        $this->debug = $i_debug;
+        return $this;
     }
 
 
@@ -141,54 +211,6 @@ class RecursiveResolver {
     }
 
 
-    /** When a name server is listed in the authority section but it isn't given an address in the
-     * glue records, we have to start over and look up that name server separately.
-     * @throws Exception
-     */
-    public function lookupNameServer( string $i_nameServer ) : array {
-        echo "Lookup: ", $i_nameServer, "\n";
-        if ( ! array_key_exists( $i_nameServer, $this->addressCache ) ) {
-            if ( $this->useIPv4 ) {
-                $this->query( $i_nameServer );
-            }
-            if ( $this->useIPv6 ) {
-                $this->query( $i_nameServer, 'AAAA' );
-            }
-        }
-        return $this->addressCache[ $i_nameServer ];
-    }
-
-
-    /** Make a resolver with the correct properties, mainly attaching the cache.
-     *
-     * @param string[] $i_nameServers List of name server addresses to use.
-     *
-     * @return Resolver Initialized resolver
-     *
-     * @throws Exception
-     */
-    public function makeResolver( array $i_nameServers ) : Resolver {
-        $key = implode( ',', $i_nameServers );
-        if ( array_key_exists( $key, $this->resolvers ) ) {
-            return $this->resolvers[ $key ];
-        }
-        $rsv = ( new Resolver( $i_nameServers ) )->setCacheDefault()->setRecurse( false );
-        if ( $this->useDNSSEC ) {
-            $rsv->setDNSSEC();
-        }
-        $this->resolvers[ $key ] = $rsv;
-        return $rsv;
-    }
-
-
-    /** Perform recursive resolution.
-     * @throws Exception
-     */
-    public function query( string $i_name, string $i_type = 'A', int $i_maxDepth = 16 ) : array {
-        return $this->queryRecursive( $i_name, $i_type, $this->getRootNameServers(), $i_maxDepth );
-    }
-
-
     /** If we hit a CNAME, we have to potentially start over or continue with a different name.
      * @return ResponsePacket[] A sequence of response packets.
      * @throws Exception
@@ -196,7 +218,7 @@ class RecursiveResolver {
     protected function queryCNAME( string $i_name, string $i_type, ResponsePacket $i_rsp, int $i_maxDepth ) : array {
 
         $newNameServers = $this->extractAuthoritativeAddresses( $i_name, $i_rsp );
-        echo "CNAME Restart: ", implode( ", ", $newNameServers ), "\n";
+        echo 'CNAME Restart: ', implode( ', ', $newNameServers ), "\n";
 
         # If we have not been given any usable additional name servers, we have to start over.
         if ( empty( $newNameServers ) ) {
@@ -209,32 +231,34 @@ class RecursiveResolver {
 
 
     /**
-     * @throws Exception
+     * @param list<string> $i_nameServers
+     * @return list<ResponsePacket> A list of response packets.
      * @suppress PhanTypeSuspiciousEcho Packets are Stringable.
      */
-    protected function queryRecursive( string $i_name, string $i_type, array $i_nameServers, int $i_maxDepth ) : array {
+    protected function queryRecursive( string $i_name, string $i_type, array $i_nameServers,
+                                       int    $i_maxDepth ) : array {
 
         # Malicious name servers can create infinite loops.  We do not want to loop forever.
         if ( 0 == $i_maxDepth ) {
-            throw new Exception( "Maximum depth exceeded" );
+            throw new Exception( 'Maximum depth exceeded' );
         }
         $i_maxDepth -= 1;
 
-        if ( $this->debug )  {
-            echo "Resolve ", $i_name, " ", $i_type, " on: ", implode( ', ', $i_nameServers ), "\n";
+        if ( $this->debug ) {
+            echo 'Resolve ', $i_name, ' ', $i_type, ' on: ', implode( ', ', $i_nameServers ), "\n";
         }
         $rsv = $this->makeResolver( $i_nameServers );
 
         $rsp = $rsv->query( $i_name, $i_type );
         if ( $this->debug ) {
-            echo "Response: ", $rsp, "\n";
+            echo 'Response: ', $rsp, "\n";
         }
         $this->learnFromResponse( $rsp );
         if ( 1 === count( $rsp->answer ) ) {
             $answer = $rsp->answer[ 0 ];
             if ( $answer instanceof CNAME ) {
                 if ( $this->debug ) {
-                    echo "CNAME: ", $answer->name, " => ", $answer->cname, "\n";
+                    echo 'CNAME: ', $answer->name, ' => ', $answer->cname, "\n";
                 }
                 if ( $answer->name == $i_name ) {
                     return [ $rsp, ...$this->queryCNAME( $answer->cname, $i_type, $rsp, $i_maxDepth ) ];
@@ -256,20 +280,9 @@ class RecursiveResolver {
         if ( empty( $nsList ) ) {
             return [ $rsp ];
         }
-        echo "New list from ", $rsp->answerFrom, ": ", implode( ', ', $nsList ), "\n";
+        echo 'New list from ', $rsp->answerFrom, ': ', implode( ', ', $nsList ), "\n";
 
         return [ $rsp, ... $this->queryRecursive( $i_name, $i_type, $nsList, $i_maxDepth ) ];
-    }
-
-
-    /** Enable or disable debugging.
-     *
-     * @param bool $i_debug
-     * @return $this
-     */
-    public function setDebug( bool $i_debug ) : static {
-        $this->debug = $i_debug;
-        return $this;
     }
 
 

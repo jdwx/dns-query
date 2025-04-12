@@ -65,17 +65,21 @@ class Resolver extends BaseQuery {
      * recursive local resolver.  If you find one, please open an issue on GitHub with
      * the details.
      *
-     * @param string            $hostname The hostname to use for the query.
-     * @param int               $type    The type of record to look up (using PHP constants like DNS_A)
-     * @param null|array|string $i_nameServers Optional name server or list of name servers to use.
-     * @param null|string       $i_resolvConf Optional path to resolv.conf file to use.
-     * @return array|false
+     * @param string $hostname The hostname to use for the query.
+     * @param int $type The type of record to look up (using PHP constants like DNS_A)
+     * @param null|list<string>|string $i_nameServers Optional name server or list of name servers to use.
+     * @param null|string $i_resolvConf Optional path to resolv.conf file to use.
+     * @return list<array<string, mixed>>|false
      * @throws Exception
      * @noinspection PhpMethodNamingConventionInspection
      */
     public static function dns_get_record( string            $hostname, int $type = DNS_ANY,
                                            array|string|null $i_nameServers = null,
                                            ?string           $i_resolvConf = null ) : array|false {
+        /**
+         * I mean, phpStan isn't wrong, but it's *currently* safe.
+         * @phpstan-ignore new.static
+         */
         $resolver = new static( $i_nameServers, $i_resolvConf );
         $thing1 = null;
         $thing2 = null;
@@ -94,18 +98,18 @@ class Resolver extends BaseQuery {
      * use the native query() method or the compatQuery() method, which also returns results
      * similar to dns_get_record().
      *
-     * @param string                $hostname The hostname to look up
-     * @param int                   $type     The type of record to look up (using PHP constants)
-     * @param array|null           &$authoritativeNameServers (output) Any authoritative name servers found.
-     * @param array|null           &$additionalRecords (output) Any additional records found.
+     * @param string $hostname The hostname to look up
+     * @param int $type The type of record to look up (using PHP constants)
+     * @param list<array<string, mixed>>|null &$authoritativeNameServers (output) Any authoritative name servers found.
+     * @param list<array<string, mixed>>|null &$additionalRecords (output) Any additional records found.
      *
-     * @return array[]|false      An array of the discovered records on success, otherwise false
+     * @return list<array<string, mixed>>|false      An array of the discovered records on success, otherwise false
      *
      * @throws Exception
      */
     public function compatQuery( string $hostname, int $type = DNS_ANY,
-                                 array  &$authoritativeNameServers = null,
-                                 array  &$additionalRecords = null ) : array|false {
+                                 ?array &$authoritativeNameServers = null,
+                                 ?array &$additionalRecords = null ) : array|false {
         if ( $type == DNS_A6 ) {
             trigger_error( 'Per RFC6563, A6 records should not be implemented or deployed.', E_USER_WARNING );
             return false;
@@ -373,7 +377,7 @@ class Resolver extends BaseQuery {
      * record in the response and restarts the query at the domain name
      * specified in the data field of the CNAME record.
      *
-     * this can cause "unexpected" behaviours, since i'm sure *most* people
+     * This can cause "unexpected" behaviours, since I'm sure *most* people
      * don't know DNS does this; there may be cases where the resolver returns a
      * positive response, even though the hostname the user looked up did not
      * actually exist.

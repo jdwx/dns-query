@@ -14,26 +14,30 @@ use PHPUnit\Framework\TestCase;
 
 
 /** Test the TransportManager class. */
-class TransportManagerTest extends TestCase {
+final class TransportManagerTest extends TestCase {
 
 
     /**
      * @throws Exception
      * @suppress PhanUndeclaredProperty
      */
-    public function testTransportManager() {
+    public function testTransportManager() : void {
         $mgr = new TransportManager( null, null, 5 );
-        static::assertCount( 0, $mgr );
-        $udp = $mgr->acquire( Socket::SOCK_DGRAM, "1.1.1.1", 53 );
-        static::assertCount( 0, $mgr );
+        self::assertCount( 0, $mgr );
+        $udp = $mgr->acquire( Socket::SOCK_DGRAM, '1.1.1.1', 53 );
+        self::assertCount( 0, $mgr );
         $mgr->release( $udp );
-        /** @noinspection PhpUndefinedFieldInspection */
+        /**
+         * @noinspection PhpDynamicFieldDeclarationInspection
+         * @phpstan-ignore property.notFound
+         */
         $udp->foo = true;
-        static::assertCount( 1, $mgr );
+        self::assertCount( 1, $mgr );
 
-        $udp = $mgr->acquire( Socket::SOCK_DGRAM, "1.1.1.1", 53 );
-        static::assertTrue( $udp->foo );
-        static::assertCount( 0, $mgr );
+        $udp = $mgr->acquire( Socket::SOCK_DGRAM, '1.1.1.1', 53 );
+        /** @phpstan-ignore property.notFound */
+        self::assertTrue( $udp->foo );
+        self::assertCount( 0, $mgr );
     }
 
 
@@ -41,24 +45,30 @@ class TransportManagerTest extends TestCase {
      * @throws Exception
      * @suppress PhanUndeclaredProperty
      */
-    public function testTransportManagerDoubleUp() {
+    public function testTransportManagerDoubleUp() : void {
         $mgr = new TransportManager( null, null, 5 );
-        $udp = $mgr->acquire( Socket::SOCK_DGRAM, "1.1.1.1", 53 );
-        $udp2 = $mgr->acquire( Socket::SOCK_DGRAM, "1.1.1.1", 53 );
-        static::assertCount( 0, $mgr );
+        $udp = $mgr->acquire( Socket::SOCK_DGRAM, '1.1.1.1', 53 );
+        $udp2 = $mgr->acquire( Socket::SOCK_DGRAM, '1.1.1.1', 53 );
+        self::assertCount( 0, $mgr );
 
         $mgr->release( $udp );
-        static::assertCount( 1, $mgr );
+        self::assertCount( 1, $mgr );
 
-        /** @noinspection PhpUndefinedFieldInspection */
+        /**
+         * @noinspection PhpDynamicFieldDeclarationInspection
+         * @phpstan-ignore property.notFound
+         */
         $udp2->foo = true;
         $mgr->release( $udp2 );
-        static::assertCount( 1, $mgr );
+        self::assertCount( 1, $mgr );
 
-        $udp3 = $mgr->acquire( Socket::SOCK_DGRAM, "1.1.1.1", 53 );
-        /** @noinspection PhpUndefinedFieldInspection */
-        static::assertTrue( $udp3->foo );
-        static::assertCount( 0, $mgr );
+        $udp3 = $mgr->acquire( Socket::SOCK_DGRAM, '1.1.1.1', 53 );
+        /**
+         * @noinspection PhpUndefinedFieldInspection
+         * @phpstan-ignore property.notFound
+         */
+        self::assertTrue( $udp3->foo );
+        self::assertCount( 0, $mgr );
     }
 
 

@@ -1,4 +1,7 @@
-<?php /** @noinspection PhpUnused */
+<?php /** @noinspection PhpClassNamingConventionInspection */
+
+
+/** @noinspection PhpUnused */
 
 
 declare( strict_types = 1 );
@@ -89,12 +92,12 @@ abstract class RR {
      *
      * @param ?Packet $i_packet a Packet or null to create an empty object
      *
-     * @param ?array  $i_rr an array with RR parse values or null to
+     * @param array<string, mixed>|null $i_rr an array with RR parse values or null to
      *                                 create an empty object
      *
      * @throws Exception
      */
-    public function __construct( Packet $i_packet = null, array $i_rr = null ) {
+    public function __construct( ?Packet $i_packet = null, ?array $i_rr = null ) {
         if ( ( ! is_null( $i_packet ) ) && ( ! is_null( $i_rr ) ) ) {
             if ( ! $this->set( $i_packet, $i_rr ) ) {
                 throw new Exception(
@@ -103,8 +106,9 @@ abstract class RR {
                 );
             }
         } else {
-            $class = Lookups::$rrTypesClassToId[ $this::class ];
-            if ( isset( $class ) ) {
+            $class = Lookups::$rrTypesClassToId[ static::class ];
+            /** @phpstan-ignore function.alreadyNarrowedType */
+            if ( is_int( $class ) ) {
                 $this->type = Lookups::$rrTypesById[ $class ];
             }
 
@@ -117,7 +121,7 @@ abstract class RR {
     /**
      * parses a standard RR format lines, as defined by rfc1035 (kinda)
      *
-     * In our implementation, the domain *must* be specified- format must be
+     * In our implementation, the domain *must* be specified. Format must be:
      *
      *        <name> [<ttl>] [<class>] <type> <rdata>
      * or
@@ -128,10 +132,10 @@ abstract class RR {
      *
      * @param string $line a standard DNS config line
      *
-     * @return static       returns a new RR object for the given RR
+     * @return RR       returns a new RR object for the given RR
      * @throws Exception
      */
-    public static function fromString( string $line ) : static {
+    public static function fromString( string $line ) : RR {
 
         if ( strlen( $line ) == 0 ) {
             throw new Exception(
@@ -164,7 +168,8 @@ abstract class RR {
                 case is_numeric( $value ):
                     # This is here because of a bug in is_numeric() in certain versions of
                     # PHP on Windows.
-                    # Unable to verify. - JDWX 2022-07-09
+                    # Unable to verify, but it doesn't hurt anything. - JDWX 2025-04-12
+                    /** @phpstan-ignore identical.alwaysFalse */
                 case ( $value === 0 ):
 
                     $ttl = (int) array_shift( $values );
@@ -192,8 +197,7 @@ abstract class RR {
         # Look up the class to use.
         $className = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $type ] ];
 
-        if ( ! isset( $className ) ) {
-
+        if ( ! class_exists( $className ) ) {
             throw new Exception(
                 'un-implemented resource record type: ' . $type,
                 Lookups::E_RR_INVALID
@@ -201,8 +205,7 @@ abstract class RR {
         }
 
         $obj = new $className();
-        if ( is_null( $obj ) ) {
-
+        if ( ! $obj instanceof RR ) {
             throw new Exception(
                 'failed to create new RR record for type: ' . $type,
                 Lookups::E_RR_INVALID
@@ -278,17 +281,15 @@ abstract class RR {
         # Lookup the class to use.
         $class = Lookups::$rrTypesIdToClass[ $object[ 'type' ] ];
 
-        if ( ! isset( $class ) ) {
-
+        if ( ! class_exists( $class ) ) {
             throw new Exception(
-                'un-implemented resource record type: ' . $object[ 'type' ],
+                'unimplemented resource record type: ' . $object[ 'type' ],
                 Lookups::E_RR_INVALID
             );
         }
 
         $obj = new $class( $packet, $object );
-        if ( $obj ) {
-
+        if ( $obj instanceof RR ) {
             $packet->offset += $object[ 'rdlength' ];
         }
         return $obj;
@@ -311,11 +312,11 @@ abstract class RR {
      * return the same data as __toString(), but as an array, so each value can be
      * used without having to parse the string.
      *
-     * @return array
+     * @return array<string, int|string>
      */
     #[ArrayShape(
-        [ 'name' => "string", 'ttl' => "int", 'class' => "string",
-        'type' => "mixed|string", 'rdata' => "string" ]
+        [ 'name' => 'string', 'ttl' => 'int', 'class' => 'string',
+            'type' => 'mixed|string', 'rdata' => 'string' ]
     )]
     public function asArray() : array {
         return [
@@ -395,7 +396,7 @@ abstract class RR {
 
 
     /** Get the rdata in the format used by PHP's dns_get_record() function.
-     * @return array The rdata or an empty array if this record type isn't support by dns_get_record().
+     * @return array<string, mixed> The rdata or an empty array if this record type isn't support by dns_get_record().
      */
     public function getPHPRData() : array {
         return [];
@@ -406,7 +407,7 @@ abstract class RR {
      *
      * See the caveats in getPHPRData() about RR-specific data.
      *
-     * @return array The record as an array.
+     * @return array<string, mixed> The record as an array.
      */
     public function getPHPRecord() : array {
         return array_merge( [
@@ -422,7 +423,7 @@ abstract class RR {
      * builds a new RR object
      *
      * @param Packet $i_packet (output) a Packet or null to create an empty object
-     * @param array  $i_rr an array with RR parse values or null to
+     * @param array<string, mixed> $i_rr an array with RR parse values or null to
      *                                 create an empty object
      *
      * @return bool
@@ -555,7 +556,7 @@ abstract class RR {
         if ( is_string( $str ) ) {
             return $str;
         }
-        throw new Exception( "getting type-specific RDATA failed" );
+        throw new Exception( 'getting type-specific RDATA failed' );
     }
 
 
@@ -580,4 +581,6 @@ abstract class RR {
      * @return  string The rdata portion of the packet as a string.
      */
     abstract protected function rrToString() : string;
+
+
 }

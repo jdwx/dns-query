@@ -70,13 +70,13 @@ class OPT extends RR {
      * Constructor - builds a new OPT object; normally you wouldn't call
      * this directly, but OPT RRs are a little different
      *
-     * @param ?Packet    $i_packet a Packet or null to create an empty object
-     * @param ?array     $i_rr an array with RR parse values or null to
+     * @param ?Packet $i_packet a Packet or null to create an empty object
+     * @param array<string, mixed>|null $i_rr an array with RR parse values or null to
      *                           create an empty object
      *
      * @throws Exception
      */
-    public function __construct( Packet $i_packet = null, array $i_rr = null ) {
+    public function __construct( ?Packet $i_packet = null, ?array $i_rr = null ) {
 
         # This is for when we're manually building an OPT RR object; we aren't
         # passing in binary data to parse, we just want a clean/empty object.

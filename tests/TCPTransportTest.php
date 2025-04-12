@@ -14,15 +14,15 @@ use PHPUnit\Framework\TestCase;
 
 
 /** Additional coverage tests for the TCPTransport class. */
-class TCPTransportTest extends TestCase {
+final class TCPTransportTest extends TestCase {
 
 
     /**
      * @throws Exception
      */
-    public function testTCPTransport() {
-        $req = new RequestPacket( "google.com", "MX" );
-        $tcp = new TCPTransport( "1.1.1.1" );
+    public function testTCPTransport() : void {
+        $req = new RequestPacket( 'google.com', 'MX' );
+        $tcp = new TCPTransport( '1.1.1.1' );
         $tcp->sendRequest( $req );
         $rsp = $tcp->receiveResponse();
         ResolverTest::googleMXResponseCheck( $rsp );
@@ -32,8 +32,8 @@ class TCPTransportTest extends TestCase {
     /**
      * @throws \Exception
      */
-    public function testTCPTransportSocketReadTooShort() {
-        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP );
+    public function testTCPTransportSocketReadTooShort() : void {
+        $socket = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
         $port = random_int( 2048, 65535 );
         socket_bind( $socket, '127.0.0.1', $port );
         socket_listen( $socket );
@@ -46,11 +46,11 @@ class TCPTransportTest extends TestCase {
         $udp->sendRequest( $req );
         socket_recv( $socketClient, $buf, 1024, 0 );
         socket_send( $socketClient, pack( 'n', 5 ), 2, 0 );
-        socket_send( $socketClient, "Nope!", 5, 0 );
+        socket_send( $socketClient, 'Nope!', 5, 0 );
         socket_close( $socketClient );
         socket_close( $socket );
 
-        $this->expectException( Exception::class );
+        self::expectException( Exception::class );
         $udp->receiveResponse();
     }
 

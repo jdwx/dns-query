@@ -1,4 +1,6 @@
 <?php
+
+
 declare( strict_types = 1 );
 
 
@@ -34,43 +36,82 @@ use PHPUnit\Framework\TestCase;
  * Test class to test the parsing code
  *
  */
-class LegacyParserTest extends TestCase {
+final class LegacyParserTest extends TestCase {
+
+
     /**
-     * function to test the TSIG logic
+     * function to test the compression logic
      *
      * @return void
      * @access public
      *
      * @throws Exception
      */
-    public function testTSIG() : void {
-
-        # Create a new packet.
-        $request = new RequestPacket( 'example.com', 'SOA', 'IN' );
-
-        # Add an A record to the authority section, like an update request.
-        $request->authority[] = RR::fromString( 'test.example.com A 10.10.10.10' );
-        $request->header->nsCount = 1;
-
-        # Add the TSIG as additional.
+    public function testCompression() : void {
+        # This list of RRs uses name compression.
         /** @noinspection SpellCheckingInspection */
-        $request->additional[] = RR::fromString( 'mykey TSIG Zm9vYmFy' );
-        $request->header->arCount = 1;
+        $rrs = [
+            'NS' => 'example.com. 300 IN NS ns1.mrdns.com.',
+            'CNAME' => 'example.com. 300 IN CNAME www.example.com.',
+            'SOA' => 'example.com. 300 IN SOA ns1.mrdns.com. help\.desk.mrhost.ca. 1278700841 900 1800 86400 21400',
+            'MX' => 'example.com. 300 IN MX 10 mx1.mrhost.ca.',
+            'RP' => 'example.com. 300 IN RP louie\.trantor.umd.edu. lam1.people.test.com.',
+            'AFSDB' => 'example.com. 300 IN AFSDB 3 afsdb.example.com.',
+            'RT' => 'example.com. 300 IN RT 2 relay.prime.com.',
+            'PX' => 'example.com. 300 IN PX 10 ab.net2.it. o-ab.prmd-net2.admdb.c-it.',
+            'SRV' => 'example.com. 300 IN SRV 20 0 5269 xmpp-server2.l.google.com.',
+            'NAPTR' => 'example.com. 300 IN NAPTR 100 10 S SIP+D2U !^.*$!sip:customer-service@example.com! _sip._udp.example.com.',
+            'DNAME' => 'example.com. 300 IN DNAME frobozz-division.acme.example.',
+            'HIP' => 'example.com. 300 IN HIP 2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com. another.example.com. test.domain.org.',
+        ];
 
-        assert( $request->additional[ 0 ] instanceof TSIG );
-        $line = $request->additional[ 0 ]->name . '. ' . $request->additional[ 0 ]->ttl . ' ' .
-            $request->additional[ 0 ]->class . ' ' . $request->additional[ 0 ]->type . ' ' .
-            $request->additional[ 0 ]->algorithm . '. ' . $request->additional[ 0 ]->timeSigned . ' ' .
-            $request->additional[ 0 ]->fudge;
+        # Create a new updater object.
+        $updater = new Updater( 'example.com' );
+        $updater->setNameServer( '10.10.0.1' );
 
-        # Get the binary packet data.
-        $data = $request->get();
+        # Add each RR to the same object, so we can build a build compressed name list.
+        foreach ( $rrs as $rrType => $line ) {
+
+            $className = '\\JDWX\\DNSQuery\\RR\\' . $rrType;
+
+            # Parse the line.
+            $rr = RR::fromString( $line );
+
+            # Check that the object is right.
+            self::assertInstanceOf( $className, $rr );
+
+            # Set it on the packet.
+            $updater->add( $rr );
+        }
+
+        # Get the request packet.
+        $request = $updater->packet();
+
+        # Get the authority section of the request.
+        $requestAuthority = $request->authority;
 
         # Parse the binary.
+        $data = $request->get();
         $response = new ResponsePacket( $data, strlen( $data ) );
 
-        # The answer data in the response, should match our initial line exactly.
-        static::assertSame( $line, substr( $response->additional[ 0 ]->__toString(), 0, 58 ) );
+        # Get the authority section of the response, and clean up the
+        # rdata so everything will match.
+        #
+        # The request packet doesn't have the rdLength and rdata fields
+        # built yet, so it will throw off the hash.
+        $responseAuthority = $response->authority;
+
+        foreach ( $responseAuthority as $object ) {
+            $object->rdLength = 0;
+            $object->rdata = '';
+        }
+
+        # Build the hashes.
+        $rr = md5( print_r( $requestAuthority, true ) );
+        $otherRR = md5( print_r( $responseAuthority, true ) );
+
+        # The new hashes should match.
+        self::assertSame( $rr, $otherRR );
     }
 
 
@@ -170,7 +211,7 @@ class LegacyParserTest extends TestCase {
                 $rr = RR::fromString( $line );
 
                 # Check that the object is right.
-                static::assertInstanceOf( $className, $rr );
+                self::assertInstanceOf( $className, $rr );
 
                 # Set it on the packet.
                 $request->answer[] = $rr;
@@ -183,85 +224,48 @@ class LegacyParserTest extends TestCase {
                 $response = new ResponsePacket( $data, strlen( $data ) );
 
                 # The answer data in the response, should match our initial line exactly.
-                static::assertSame( $line, $response->answer[ 0 ]->__toString() );
+                self::assertSame( $line, $response->answer[ 0 ]->__toString() );
             }
         }
     }
 
 
     /**
-     * function to test the compression logic
+     * function to test the TSIG logic
      *
      * @return void
      * @access public
      *
      * @throws Exception
      */
-    public function testCompression() : void {
-        # This list of RRs uses name compression.
+    public function testTSIG() : void {
+
+        # Create a new packet.
+        $request = new RequestPacket( 'example.com', 'SOA', 'IN' );
+
+        # Add an A record to the authority section, like an update request.
+        $request->authority[] = RR::fromString( 'test.example.com A 10.10.10.10' );
+        $request->header->nsCount = 1;
+
+        # Add the TSIG as additional.
         /** @noinspection SpellCheckingInspection */
-        $rrs = [
-            'NS' => 'example.com. 300 IN NS ns1.mrdns.com.',
-            'CNAME' => 'example.com. 300 IN CNAME www.example.com.',
-            'SOA' => 'example.com. 300 IN SOA ns1.mrdns.com. help\.desk.mrhost.ca. 1278700841 900 1800 86400 21400',
-            'MX' => 'example.com. 300 IN MX 10 mx1.mrhost.ca.',
-            'RP' => 'example.com. 300 IN RP louie\.trantor.umd.edu. lam1.people.test.com.',
-            'AFSDB' => 'example.com. 300 IN AFSDB 3 afsdb.example.com.',
-            'RT' => 'example.com. 300 IN RT 2 relay.prime.com.',
-            'PX' => 'example.com. 300 IN PX 10 ab.net2.it. o-ab.prmd-net2.admdb.c-it.',
-            'SRV' => 'example.com. 300 IN SRV 20 0 5269 xmpp-server2.l.google.com.',
-            'NAPTR' => 'example.com. 300 IN NAPTR 100 10 S SIP+D2U !^.*$!sip:customer-service@example.com! _sip._udp.example.com.',
-            'DNAME' => 'example.com. 300 IN DNAME frobozz-division.acme.example.',
-            'HIP' => 'example.com. 300 IN HIP 2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com. another.example.com. test.domain.org.',
-        ];
+        $request->additional[] = RR::fromString( 'mykey TSIG Zm9vYmFy' );
+        $request->header->arCount = 1;
 
-        # Create a new updater object.
-        $updater = new Updater( "example.com" );
-        $updater->setNameServer( '10.10.0.1' );
+        assert( $request->additional[ 0 ] instanceof TSIG );
+        $line = $request->additional[ 0 ]->name . '. ' . $request->additional[ 0 ]->ttl . ' ' .
+            $request->additional[ 0 ]->class . ' ' . $request->additional[ 0 ]->type . ' ' .
+            $request->additional[ 0 ]->algorithm . '. ' . $request->additional[ 0 ]->timeSigned . ' ' .
+            $request->additional[ 0 ]->fudge;
 
-        # Add each RR to the same object, so we can build a build compressed name list.
-        foreach ( $rrs as $rrType => $line ) {
-
-            $className = '\\JDWX\\DNSQuery\\RR\\' . $rrType;
-
-            # Parse the line.
-            $rr = RR::fromString( $line );
-
-            # Check that the object is right.
-            static::assertInstanceOf( $className, $rr );
-
-            # Set it on the packet.
-            $updater->add( $rr );
-        }
-
-        # Get the request packet.
-        $request = $updater->packet();
-
-        # Get the authority section of the request.
-        $requestAuthority = $request->authority;
+        # Get the binary packet data.
+        $data = $request->get();
 
         # Parse the binary.
-        $data = $request->get();
         $response = new ResponsePacket( $data, strlen( $data ) );
 
-        # Get the authority section of the response, and clean up the
-        # rdata so everything will match.
-        #
-        # The request packet doesn't have the rdLength and rdata fields
-        # built yet, so it will throw off the hash.
-        $responseAuthority = $response->authority;
-
-        foreach ( $responseAuthority as $object ) {
-            $object->rdLength = 0;
-            $object->rdata = '';
-        }
-
-        # Build the hashes.
-        $rr = md5( print_r( $requestAuthority, true ) );
-        $otherRR = md5( print_r( $responseAuthority, true ) );
-
-        # The new hashes should match.
-        static::assertSame( $rr, $otherRR );
+        # The answer data in the response, should match our initial line exactly.
+        self::assertSame( $line, substr( $response->additional[ 0 ]->__toString(), 0, 58 ) );
     }
 
 

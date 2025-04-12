@@ -101,6 +101,41 @@ class Question {
 
 
     /**
+     * returns a binary packed Question object
+     *
+     * @param Packet $i_packet Packet object this question is
+     *                         part of. This needs to be passed in so that
+     *                         the compressed qname value can be packed in
+     *                         with the names of the other parts of the
+     *                         packet.
+     *
+     * @return string
+     * @throws Exception
+     */
+    public function get( Packet $i_packet ) : string {
+
+        # Validate the type and class.
+        $type = Lookups::$rrTypesByName[ $this->qType ] ?? null;
+        $class = Lookups::$classesByName[ $this->qClass ] ?? null;
+
+        if ( ! is_int( $type ) || ! is_int( $class ) ) {
+            throw new Exception(
+                'invalid question section: invalid type (' . $this->qType .
+                ') or class (' . $this->qClass . ') specified.',
+                Lookups::E_QUESTION_INVALID
+            );
+        }
+
+        $data = $i_packet->compress( $this->qName, $i_packet->offset );
+
+        $data .= chr( $type >> 8 ) . chr( $type ) . chr( $class >> 8 ) . chr( $class );
+        $i_packet->offset += 4;
+
+        return $data;
+    }
+
+
+    /**
      * Populate this Question object from a Packet object
      *
      * @param Packet $i_packet Packet object
@@ -127,11 +162,10 @@ class Question {
             ord( $i_packet->rdata[ $i_packet->offset++ ] );
 
         # Validate it.
-        $typeName = Lookups::$rrTypesById[ $type ];
-        $className = Lookups::$classesById[ $class ];
+        $typeName = Lookups::$rrTypesById[ $type ] ?? null;
+        $className = Lookups::$classesById[ $class ] ?? null;
 
-        if ( ( ! isset( $typeName ) ) || ( ! isset( $className ) ) ) {
-
+        if ( ! is_string( $typeName ) || ! is_string( $className ) ) {
             throw new Exception(
                 'invalid question section: invalid type (' . $type .
                 ') or class (' . $class . ') specified.',
@@ -143,42 +177,6 @@ class Question {
         $this->qType = $typeName;
         $this->qClass = $className;
 
-    }
-
-
-    /**
-     * returns a binary packed Question object
-     *
-     * @param Packet $i_packet Packet object this question is
-     *                         part of. This needs to be passed in so that
-     *                         the compressed qname value can be packed in
-     *                         with the names of the other parts of the
-     *                         packet.
-     *
-     * @return string
-     * @throws Exception
-     */
-    public function get( Packet $i_packet ) : string {
-
-        # Validate the type and class.
-        $type = Lookups::$rrTypesByName[ $this->qType ];
-        $class = Lookups::$classesByName[ $this->qClass ];
-
-        if ( ( ! isset( $type ) ) || ( ! isset( $class ) ) ) {
-
-            throw new Exception(
-                'invalid question section: invalid type (' . $this->qType .
-                ') or class (' . $this->qClass . ') specified.',
-                Lookups::E_QUESTION_INVALID
-            );
-        }
-
-        $data = $i_packet->compress( $this->qName, $i_packet->offset );
-
-        $data .= chr( $type >> 8 ) . chr( $type ) . chr( $class >> 8 ) . chr( $class );
-        $i_packet->offset += 4;
-
-        return $data;
     }
 
 

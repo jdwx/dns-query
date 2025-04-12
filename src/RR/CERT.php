@@ -45,17 +45,27 @@ class CERT extends RR {
 
 
     # Formats allowed for certificates
-    public const CERT_FORMAT_RES = 0;
-    public const CERT_FORMAT_PKIX = 1;
-    public const CERT_FORMAT_SPKI = 2;
-    public const CERT_FORMAT_PGP = 3;
-    public const CERT_FORMAT_IPKIX = 4;
-    public const CERT_FORMAT_ISPKI = 5;
-    public const CERT_FORMAT_IPGP = 6;
-    public const CERT_FORMAT_ACPKIX = 7;
+    public const CERT_FORMAT_RES     = 0;
+
+    public const CERT_FORMAT_PKIX    = 1;
+
+    public const CERT_FORMAT_SPKI    = 2;
+
+    public const CERT_FORMAT_PGP     = 3;
+
+    public const CERT_FORMAT_IPKIX   = 4;
+
+    public const CERT_FORMAT_ISPKI   = 5;
+
+    public const CERT_FORMAT_IPGP    = 6;
+
+    public const CERT_FORMAT_ACPKIX  = 7;
+
     public const CERT_FORMAT_IACPKIX = 8;
-    public const CERT_FORMAT_URI = 253;
-    public const CERT_FORMAT_OID = 254;
+
+    public const CERT_FORMAT_URI     = 253;
+
+    public const CERT_FORMAT_OID     = 254;
 
     /** @var array<string, int> Map format names to IDs */
     public array $certFormatNameToId = [];
@@ -93,11 +103,11 @@ class CERT extends RR {
      * information for parsing.
      *
      * @param ?Packet $i_packet a Packet to parse the RR from
-     * @param ?array  $i_rr an array with parsed RR values
+     * @param array<string, mixed>|null $i_rr an array with parsed RR values
      *
      * @throws Exception
      */
-    public function __construct( ?Packet $i_packet = null, array $i_rr = null ) {
+    public function __construct( ?Packet $i_packet = null, ?array $i_rr = null ) {
         parent::__construct( $i_packet, $i_rr );
 
         # Load the lookup values

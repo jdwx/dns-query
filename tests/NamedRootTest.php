@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 
 /** Test the NamedRoot class. */
-class NamedRootTest extends TestCase {
+final class NamedRootTest extends TestCase {
 
 
     /** @var array|string[] The list of root name servers. */
@@ -51,26 +51,17 @@ class NamedRootTest extends TestCase {
     ];
 
 
-    /** Test the list of root name server names. */
-    public function testRootNames() {
-        $root = new NamedRoot();
-        $check = $root->listNameServers();
-        sort( $check );
-        static::assertSame( static::$rootNameServers, $check );
-    }
-
-
     /** Check the list of returned IPv4 addresses for the root name servers. */
-    public function testNamedRootIPv4() {
+    public function testNamedRootIPv4() : void {
         $namedRoot = new NamedRoot();
         $check = $namedRoot->listAddresses();
         sort( $check );
-        static::assertSame( static::$rootNameServersIPv4, $check );
+        self::assertSame( self::$rootNameServersIPv4, $check );
     }
 
 
     /** Test the IPv6 root name server addresses. */
-    public function testNamedRootIPv6() {
+    public function testNamedRootIPv6() : void {
         $rootNameServersIPv6 = [
             '2001:503:ba3e::2:30',  # a.root-servers.net
             '2001:500:200::b',      # b.root-servers.net
@@ -91,7 +82,16 @@ class NamedRootTest extends TestCase {
         $namedRoot = new NamedRoot();
         $check = $namedRoot->listAddresses( false, true );
         sort( $check );
-        static::assertSame( $rootNameServersIPv6, $check );
+        self::assertSame( $rootNameServersIPv6, $check );
+    }
+
+
+    /** Test the list of root name server names. */
+    public function testRootNames() : void {
+        $root = new NamedRoot();
+        $check = $root->listNameServers();
+        sort( $check );
+        self::assertSame( self::$rootNameServers, $check );
     }
 
 

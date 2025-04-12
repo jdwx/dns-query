@@ -21,22 +21,23 @@ class NamedRoot {
     public const DEFAULT_NAMED_ROOT_FILE = __DIR__ . '/../data/named.root';
 
 
+    /** @var array<string, array<string, mixed>> */
     protected array $records = [];
 
 
     /** Construct the object, optionally using a custom file.
      * @throws Exception
      */
-    public function __construct( string $i_namedRootPath = null ) {
+    public function __construct( ?string $i_namedRootPath = null ) {
         if ( is_null( $i_namedRootPath ) ) {
             $i_namedRootPath = self::DEFAULT_NAMED_ROOT_FILE;
         }
         foreach ( file( $i_namedRootPath ) as $line ) {
             $line = strtolower( trim( $line ) );
-            if ( "" === $line ) {
+            if ( '' === $line ) {
                 continue;
             }
-            if ( ";" === $line[0] ) {
+            if ( ';' === $line[ 0 ] ) {
                 continue;
             }
             $rr = RR::fromString( $line );
@@ -51,7 +52,9 @@ class NamedRoot {
     }
 
 
-    /** Get a list of the root name server IP addresses. */
+    /**
+     * @return list<string> A list of root name server IP addresses.
+     */
     public function listAddresses( bool $i_useIPv4 = true, bool $i_useIPv6 = false ) : array {
         $out = [];
         foreach ( $this->listNameServers() as $nameServer ) {

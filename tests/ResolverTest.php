@@ -18,51 +18,68 @@ use PHPUnit\Framework\TestCase;
 
 
 /** Test the Resolver class. */
-class ResolverTest extends TestCase {
+final class ResolverTest extends TestCase {
 
 
-    /**
+    /** Check the results of a query for Google's MX server. */
+    public static function googleMXResponseCheck( ResponsePacket $rsp ) : void {
+
+        self::assertInstanceOf( ResponsePacket::class, $rsp );
+        self::assertSame( Lookups::QR_RESPONSE, $rsp->header->qr );
+        self::assertCount( 1, $rsp->question );
+        self::assertCount( 1, $rsp->answer );
+
+        $mx = $rsp->answer[ 0 ];
+        assert( $mx instanceof MX );
+
+        self::assertInstanceOf( MX::class, $mx );
+        self::assertSame( 10, $mx->preference );
+        self::assertSame( 'smtp.google.com', $mx->exchange );
+
+    }
+
+
+    /** Test that CNAME queries return the CNAME and indirect RR both in the answer field,
+     * as expected by default.
+     *
      * @throws Exception
      */
-    public function testQueryNoServersSpecified() {
+    public function testCNAME() : void {
         $dns = new Resolver();
-        $rsp = $dns->query( 'google.com', 'mx' );
-        self::googleMXResponseCheck( $rsp );
+        $rsp = $dns->query( 'www.jdw.sx' );
+        $foundCNAME = false;
+        $foundA = false;
+        $fromName = null;
+        $toName = null;
+        self::assertCount( 2, $rsp->answer );
+        foreach ( $rsp->answer as $rr ) {
+            if ( $rr instanceof CNAME ) {
+                self::assertSame( 'www.jdw.sx', $rr->name );
+                $fromName = $rr->cname;
+                $foundCNAME = true;
+            }
+            if ( $rr instanceof A ) {
+                self::assertSame( '204.13.89.4', $rr->address );
+                $toName = $rr->name;
+                $foundA = true;
+            }
+        }
+        self::assertTrue( $foundCNAME );
+        self::assertTrue( $foundA );
+        self::assertSame( $fromName, $toName );
+
     }
 
 
-    /**
+    /** With strict query mode, the resolver should return a non-error response with no
+     * answers when a CNAME is encountered.
      * @throws Exception
      */
-    public function testQueryGooglePublicDNS() : void {
-
-        $ns = [ '8.8.8.8', '8.8.4.4' ];
-        $dns = new Resolver( $ns );
-        $result = $dns->query( 'google.com', 'mx' );
-        self::googleMXResponseCheck( $result );
-
-    }
-
-
-    /**
-     * @throws Exception
-     */
-    public function testQueryCloudflarePublicDNS() : void {
-        $ns = [ '1.1.1.1', '1.0.0.1' ];
-        $dns = ( new Resolver() )->setNameServers( $ns );
-        $result = $dns->query( 'google.com', 'mx' );
-        self::googleMXResponseCheck( $result );
-    }
-
-
-    /**
-     * @throws Exception
-     */
-    public function testQueryTCP() : void {
-        $dns = new Resolver( '1.1.1.1' );
-        $dns->setUseTCP();
-        $result = $dns->query( 'google.com', 'mx' );
-        self::googleMXResponseCheck( $result );
+    public function testCNAMEStrict() : void {
+        $dns = ( new Resolver() )->setStrictQueryMode();
+        $rsp = $dns->query( 'www.icann.org' );
+        self::assertCount( 0, $rsp->answer );
+        self::assertSame( Lookups::E_NONE, $rsp->header->rCode );
     }
 
 
@@ -96,51 +113,56 @@ class ResolverTest extends TestCase {
     }
 
 
-    /** Test that CNAME queries return the CNAME and indirect RR both in the answer field,
-     * as expected by default.
-     *
+    /**
      * @throws Exception
      */
-    public function testCNAME() {
+    public function testQueryCloudflarePublicDNS() : void {
+        $ns = [ '1.1.1.1', '1.0.0.1' ];
+        $dns = ( new Resolver() )->setNameServers( $ns );
+        $result = $dns->query( 'google.com', 'mx' );
+        self::googleMXResponseCheck( $result );
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function testQueryGooglePublicDNS() : void {
+
+        $ns = [ '8.8.8.8', '8.8.4.4' ];
+        $dns = new Resolver( $ns );
+        $result = $dns->query( 'google.com', 'mx' );
+        self::googleMXResponseCheck( $result );
+
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function testQueryNoServersSpecified() : void {
         $dns = new Resolver();
-        $rsp = $dns->query( 'www.icann.org' );
-        $foundCNAME = false;
-        $foundA = false;
-        $fromName = null;
-        $toName = null;
-        static::assertCount( 2, $rsp->answer );
-        foreach ( $rsp->answer as $rr ) {
-            if ( $rr instanceOf CNAME ) {
-                static::assertSame( 'www.icann.org', $rr->name );
-                $fromName = $rr->cname;
-                $foundCNAME = true;
-            }
-            if ( $rr instanceOf A ) {
-                static::assertSame( '192.0.32.7', $rr->address );
-                $toName = $rr->name;
-                $foundA = true;
-            }
-        }
-        static::assertTrue( $foundCNAME );
-        static::assertTrue( $foundA );
-        static::assertSame( $fromName, $toName );
-
+        $rsp = $dns->query( 'google.com', 'mx' );
+        self::googleMXResponseCheck( $rsp );
     }
 
 
-    /** With strict query mode, the resolver should return a non-error response with no
-     * answers when a CNAME is encountered.
+    /**
      * @throws Exception
      */
-    public function testCNAMEStrict() {
-        $dns = ( new Resolver() )->setStrictQueryMode();
-        $rsp = $dns->query( 'www.icann.org' );
-        static::assertCount( 0, $rsp->answer );
-        static::assertSame( Lookups::E_NONE, $rsp->header->rCode );
+    public function testQueryTCP() : void {
+        $dns = new Resolver( '1.1.1.1' );
+        $dns->setUseTCP();
+        $result = $dns->query( 'google.com', 'mx' );
+        self::googleMXResponseCheck( $result );
     }
 
 
-    /** Helper to compare two sets of RRs.
+    /**
+     * @param list<array<string, mixed>> $rExpected
+     * @param list<array<string, mixed>> $rActual
+     *
+     * Helper to compare two sets of RRs.
      *
      * It zeros out the TTLs as they can vary between successive queries if you are querying a name
      * server (like 1.1.1.1) that is actually a cluster of servers.
@@ -152,30 +174,7 @@ class ResolverTest extends TestCase {
         foreach ( $rExpected as & $row ) {
             $row[ 'ttl' ] = 0;
         }
-        static::assertSame( $rExpected, $rActual );
-    }
-
-
-    /** Check the results of a query for Google's MX server. */
-    public static function googleMXResponseCheck( ResponsePacket $rsp ) :void {
-
-        static::assertInstanceOf( ResponsePacket::class, $rsp );
-
-        static::assertSame( Lookups::QR_RESPONSE, $rsp->header->qr );
-
-        static::assertIsArray( $rsp->question );
-        static::assertCount( 1, $rsp->question );
-
-        static::assertIsArray( $rsp->answer );
-        static::assertCount( 1, $rsp->answer );
-
-        $mx = $rsp->answer[0];
-        assert( $mx instanceof MX );
-
-        static::assertInstanceOf( MX::class, $mx );
-        static::assertSame( 10, $mx->preference);
-        static::assertSame( 'smtp.google.com', $mx->exchange );
-
+        self::assertSame( $rExpected, $rActual );
     }
 
 

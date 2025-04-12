@@ -81,9 +81,10 @@ class SOA extends RR {
 
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
+     * @return array<string, int|string>
      */
-    #[ArrayShape( [ 'mname' => "string", 'rname' => "string", 'serial' => "int", 'refresh' => "int",
-        'retry' => "int", 'expire' => "int", 'minimum-ttl' => "int" ] )]
+    #[ArrayShape( [ 'mname' => 'string', 'rname' => 'string', 'serial' => 'int', 'refresh' => 'int',
+        'retry' => 'int', 'expire' => 'int', 'minimum-ttl' => 'int' ] )]
     public function getPHPRData() : array {
         return [
             'mname' => $this->mName,
@@ -172,4 +173,6 @@ class SOA extends RR {
             $this->serial . ' ' . $this->refresh . ' ' . $this->retry . ' ' .
             $this->expire . ' ' . $this->minimum;
     }
+
+
 }

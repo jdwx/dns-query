@@ -16,50 +16,51 @@ use PHPUnit\Framework\TestCase;
 
 
 /** Test the recursive resolver. */
-class RecursiveResolverTest extends TestCase {
+final class RecursiveResolverTest extends TestCase {
+
+
+    /** Try resolution with DNSSEC enabled.
+     * @throws Exception
+     */
+    public function testDNSSEC() : void {
+        $rrv = new RecursiveResolver( i_useDNSSEC: true );
+        $rrv->setDebug( true );
+        $xx = $rrv->query( 'www.icann.org' );
+        $index = array_key_last( $xx );
+        $rsp = $xx[ $index ];
+        self::assertInstanceOf( ResponsePacket::class, $rsp );
+        echo "Moment of truth:\n";
+        var_dump( $rsp->answer );
+        self::assertCount( 2, $rsp->answer );
+        $rr = $rsp->answer[ 0 ];
+        assert( $rr instanceof CNAME );
+        self::assertSame( 'www.icann.org.cdn.cloudflare.net', $rr->cname );
+    }
 
 
     /** Check that the default list of root servers is sane. */
-    public function testDefaultRootNameServers() {
+    public function testDefaultRootNameServers() : void {
         $rrv = new RecursiveResolver();
         $check = $rrv->getRootNameServers();
         sort( $check );
-        static::assertSame( NamedRootTest::$rootNameServersIPv4, $check );
+        self::assertSame( NamedRootTest::$rootNameServersIPv4, $check );
     }
 
 
     /** Test the recursive resolver.
      * @throws Exception
      */
-    public function testResolve() {
+    public function testResolve() : void {
         $rrv = new RecursiveResolver( i_useDNSSEC: false );
-        $xx = $rrv->query( 'www.icann.org' );
+        $xx = $rrv->query( 'xs.jdw.sx' );
         $index = array_key_last( $xx );
         $rsp = $xx[ $index ];
-        static::assertInstanceOf( ResponsePacket::class, $rsp );
-        static::assertCount( 1, $rsp->answer );
-        $rr = $rsp->answer[ 0 ];
-        static::assertInstanceOf( A::class, $rr );
-        static::assertSame( '192.0.32.7', $rr->address );
-    }
-
-
-    /** Try resolution with DNSSEC enabled.
-     * @throws Exception
-     */
-    public function testDNSSEC() {
-        $rrv = new RecursiveResolver( i_useDNSSEC: true );
-        $rrv->setDebug( true );
-        $xx = $rrv->query( 'www.icann.org' );
-        $index = array_key_last( $xx );
-        $rsp = $xx[ $index ];
-        static::assertInstanceOf( ResponsePacket::class, $rsp );
-        echo "Moment of truth:\n";
+        self::assertInstanceOf( ResponsePacket::class, $rsp );
         var_dump( $rsp->answer );
-        static::assertCount( 2, $rsp->answer );
+        self::assertCount( 1, $rsp->answer );
         $rr = $rsp->answer[ 0 ];
-        static::assertInstanceOf( CNAME::class, $rr );
-        static::assertSame( 'www.vip.icann.org', $rr->cname );
+        assert( $rr instanceof A );
+        self::assertSame( '204.13.89.4', $rr->address );
     }
 
 

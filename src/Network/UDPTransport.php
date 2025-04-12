@@ -19,11 +19,11 @@ class UDPTransport extends IPTransport {
     /**
      * Create a UDP transport for DNS packets.
      *
-     * @param string      $i_nameserver The nameserver to use as an IPv4 or IPv6 address.
-     * @param int         $i_port       The port to use (53 is default).
-     * @param null|string $i_localHost  The local host to use (or null for default).
-     * @param null|int    $i_localPort  The local port to use (or null for default).
-     * @param int         $i_timeout    The timeout in seconds to use for the socket.
+     * @param string $i_nameserver The nameserver to use as an IPv4 or IPv6 address.
+     * @param int $i_port The port to use (53 is default).
+     * @param null|string $i_localHost The local host to use (or null for default).
+     * @param null|int $i_localPort The local port to use (or null for default).
+     * @param int $i_timeout The timeout in seconds to use for the socket.
      * @throws Exception
      */
     public function __construct( string $i_nameserver, int $i_port = 53, ?string $i_localHost = null,
@@ -45,7 +45,7 @@ class UDPTransport extends IPTransport {
         # Read the content, using select to wait for a response.
         $result = $this->read( $size, 65535 );
         if ( $size < Lookups::DNS_HEADER_SIZE ) {
-            throw new Exception("received packet is too small to be a valid DNS packet", Lookups::E_NS_SOCKET_FAILED );
+            throw new Exception( 'received packet is too small to be a valid DNS packet', Lookups::E_NS_SOCKET_FAILED );
         }
 
         # Create the packet object.

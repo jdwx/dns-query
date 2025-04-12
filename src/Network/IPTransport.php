@@ -42,13 +42,13 @@ abstract class IPTransport implements ITransport {
     /**
      * Create an IP transport for DNS packets.
      *
-     * @param int         $i_type The type of socket to use (Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
-     * @param string      $i_nameserver The nameserver to use as an IPv4 or IPv6 address.
-     * @param int         $i_port The port to use (53 is default).
+     * @param int $i_type The type of socket to use (Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
+     * @param string $i_nameserver The nameserver to use as an IPv4 or IPv6 address.
+     * @param int $i_port The port to use (53 is default).
      * @param null|string $i_localAddress The local address to use (or null for default).
-     * @param null|int    $i_localPort The local port to use (or null for default).
-     * @param int         $i_timeout The timeout in seconds to use for the socket.
-     * @param int         $i_maxSize The maximum size of an incoming packet.
+     * @param null|int $i_localPort The local port to use (or null for default).
+     * @param int $i_timeout The timeout in seconds to use for the socket.
+     * @param int $i_maxSize The maximum size of an incoming packet.
      * @throws Exception
      */
     public function __construct( int  $i_type, string $i_nameserver, int $i_port = 53, ?string $i_localAddress = null,
@@ -99,12 +99,12 @@ abstract class IPTransport implements ITransport {
      * reads a response from a DNS server
      *
      * @param int       &$o_size (output) Size of the DNS packet read
-     * @param ?int       $i_maxSize Max data size to be read (if null, use max size from construction).
+     * @param ?int $i_maxSize Max data size to be read (if null, use max size from construction).
      *
      * @return string    binary data from read
      * @throws Exception
      */
-    public function read( int & $o_size, ?int $i_maxSize = null ) : string {
+    public function read( int &$o_size, ?int $i_maxSize = null ) : string {
         $result = $this->socket->read( $o_size, $i_maxSize ?? $this->maxSize );
         if ( is_string( $result ) ) {
             return $result;
@@ -139,7 +139,7 @@ abstract class IPTransport implements ITransport {
      *
      * @throws Exception
      */
-    private function generateError() : void {
+    private function generateError() : never {
         throw new Exception( $this->socket->lastError, Lookups::E_NS_SOCKET_FAILED );
     }
 

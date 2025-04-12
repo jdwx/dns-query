@@ -18,25 +18,25 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 
 /** Test the Cache class. */
-class CacheTest extends TestCase {
+final class CacheTest extends TestCase {
 
 
     /**
      * @throws InvalidArgumentException
      * @throws Exception
      */
-    public function testCacheBasics() {
+    public function testCacheBasics() : void {
         $dns = new Resolver( '8.8.8.8' );
         $rsp = $dns->query( 'google.com', 'MX' );
 
         $cache = new Cache();
-        static::assertFalse( $cache->has( 'foo' ) );
+        self::assertFalse( $cache->has( 'foo' ) );
         $cache->put( 'foo', $rsp );
-        static::assertTrue( $cache->has( 'foo' ) );
+        self::assertTrue( $cache->has( 'foo' ) );
         $xx = $cache->get( 'foo' );
         $ans = $xx->answer[ 0 ];
-        assert( $ans instanceOf MX );
-        static::assertEquals( 'smtp.google.com', $ans->exchange );
+        assert( $ans instanceof MX );
+        self::assertEquals( 'smtp.google.com', $ans->exchange );
     }
 
 
@@ -44,61 +44,51 @@ class CacheTest extends TestCase {
      * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function testCacheExpire() {
+    public function testCacheExpire() : void {
         $dns = new Resolver( '8.8.8.8' );
         $rsp = $dns->query( 'google.com', 'MX' );
         $rsp->answer[ 0 ]->ttl = 1;
 
         $cache = new Cache();
-        static::assertFalse( $cache->has( 'foo' ) );
+        self::assertFalse( $cache->has( 'foo' ) );
         $cache->put( 'foo', $rsp );
         usleep( 1010000 );
-        static::assertFalse( $cache->has( 'foo' ) );
+        self::assertFalse( $cache->has( 'foo' ) );
     }
 
 
-    /** Coverage test for Cache::isTypeCacheable(). */
-    public function testCacheIsTypeCacheable() {
-        static::assertTrue( Cache::isTypeCacheable( 'A' ) );
-        static::assertTrue( Cache::isTypeCacheable( 'MX' ) );
-        static::assertFalse( Cache::isTypeCacheable( 'AXFR' ) );
-        static::assertFalse( Cache::isTypeCacheable( 'OPT' ) );
+    /** Coverage test for Cache::getEx() throwing an exception. */
+    public function testCacheGetExException() : void {
+        $cache = new Cache();
+        self::expectException( Exception::class );
+        $cache->getEx( 'foo' );
     }
 
 
-    /**
-     * @throws InvalidArgumentException|Exception
-     */
-    public function testCacheGetExPass() {
+    public function testCacheGetExPass() : void {
         $dns = new Resolver( '8.8.8.8' );
         $rsp = $dns->query( 'google.com', 'MX' );
         $cache = new Cache();
         $cache->put( 'foo', $rsp );
         $xx = $cache->getEx( 'foo' );
-        static::assertInstanceOf( ResponsePacket::class, $xx );
+        self::assertInstanceOf( ResponsePacket::class, $xx );
     }
 
 
-    /** Coverage test for Cache::getEx() throwing an exception. */
-    public function testCacheGetExException() {
-        $cache = new Cache();
-        static::expectException( Exception::class );
-        $cache->getEx( 'foo' );
+    /** Coverage test for Cache::hashRequest(). */
+    public function testCacheHashRequest() : void {
+        $req = new RequestPacket( 'foo', 'A' );
+        $xx = Cache::hashRequest( $req );
+        self::assertSame( '392642df2bfd95cb29616e386cd83a171998105c', $xx );
     }
 
 
-    /**
-     * @throws Exception
-     * @throws InvalidArgumentException
-     */
-    public function testCachePutAuthorityTTL() {
-        $aRoot = gethostbyname( 'a.root-servers.net' );
-        $dns = new Resolver( $aRoot );
-        $rsp = $dns->query( 'org', 'SOA' );
-
-        $cache = new Cache();
-        $cache->put( 'foo',$rsp );
-        static::assertTrue( $cache->has( 'foo' ) );
+    /** Coverage test for Cache::isTypeCacheable(). */
+    public function testCacheIsTypeCacheable() : void {
+        self::assertTrue( Cache::isTypeCacheable( 'A' ) );
+        self::assertTrue( Cache::isTypeCacheable( 'MX' ) );
+        self::assertFalse( Cache::isTypeCacheable( 'AXFR' ) );
+        self::assertFalse( Cache::isTypeCacheable( 'OPT' ) );
     }
 
 
@@ -106,7 +96,7 @@ class CacheTest extends TestCase {
      * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function testCachePutAdditionalTTL() {
+    public function testCachePutAdditionalTTL() : void {
         $aRoot = gethostbyname( 'a.root-servers.net' );
         $dns = new Resolver( $aRoot );
         $rsp = $dns->query( 'org', 'SOA' );
@@ -115,16 +105,23 @@ class CacheTest extends TestCase {
         $rsp->authority = [];
 
         $cache = new Cache();
-        $cache->put( 'foo',$rsp );
-        static::assertTrue( $cache->has( 'foo' ) );
+        $cache->put( 'foo', $rsp );
+        self::assertTrue( $cache->has( 'foo' ) );
     }
 
 
-    /** Coverage test for Cache::hashRequest(). */
-    public function testCacheHashRequest() {
-        $req = new RequestPacket( "foo", "A" );
-        $xx = Cache::hashRequest( $req );
-        static::assertSame( "392642df2bfd95cb29616e386cd83a171998105c", $xx );
+    /**
+     * @throws Exception
+     * @throws InvalidArgumentException
+     */
+    public function testCachePutAuthorityTTL() : void {
+        $aRoot = gethostbyname( 'a.root-servers.net' );
+        $dns = new Resolver( $aRoot );
+        $rsp = $dns->query( 'org', 'SOA' );
+
+        $cache = new Cache();
+        $cache->put( 'foo', $rsp );
+        self::assertTrue( $cache->has( 'foo' ) );
     }
 
 

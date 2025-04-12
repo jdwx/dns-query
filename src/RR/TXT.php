@@ -43,10 +43,12 @@ class TXT extends RR {
     public array $text = [];
 
 
-    /** @inheritdoc
+    /**
+     * @inheritdoc
      * @noinspection PhpMissingParentCallCommonInspection
+     * @return array<string, string>
      */
-    #[ArrayShape( [ 'txt' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'txt' => 'string' ] )] public function getPHPRData() : array {
         return [
             'txt' => $this->rrToString(),
         ];

@@ -49,16 +49,21 @@ class LOC extends RR {
 
 
     # Some conversion values
-    public const CONV_SEC = 1000;
+    public const CONV_SEC          = 1000;
 
-    public const CONV_MIN = 60000;
+    public const CONV_MIN          = 60000;
 
-    public const CONV_DEG = 3600000;
+    public const CONV_DEG          = 3600000;
 
-    public const REFERENCE_ALT = 10000000;
+    public const REFERENCE_ALT     = 10000000;
 
     public const REFERENCE_LAT_LON = 2147483648;
 
+    /** @var int[] used for quick power-of-ten lookups */
+    private static array $powerOfTen = [
+        1, 10, 100, 1000, 10000, 100000,
+        1000000, 10000000, 100000000, 1000000000,
+    ];
 
     /** @var int LOC version (should only ever be 0) */
     public int $version;
@@ -81,12 +86,6 @@ class LOC extends RR {
     /** @var float Longitude - stored in decimal degrees */
     public float $longitude;
 
-    /** @var int[] used for quick power-of-ten lookups */
-    private static array $powerOfTen = [
-        1, 10, 100, 1000, 10000, 100000,
-        1000000, 10000000, 100000000, 1000000000
-    ];
-
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
@@ -106,16 +105,16 @@ class LOC extends RR {
 
             # Latitude
             $latDegrees = (int) $matches[ 1 ];
-            $latMinutes = ( isset( $matches[ 3 ] ) ) ? (int) $matches[ 3 ] : 0;
-            $latSeconds = ( isset( $matches[ 5 ] ) ) ? (float) $matches[ 5 ] : 0;
+            $latMinutes = (int) $matches[ 3 ];
+            $latSeconds = (float) $matches[ 5 ];
             $latHemisphere = strtoupper( $matches[ 6 ] );
 
             $this->latitude = $this->convertDMSHToDecimal( $latDegrees, $latMinutes, $latSeconds, $latHemisphere );
 
             # Longitude
             $longDegrees = (int) $matches[ 7 ];
-            $longMinutes = ( isset( $matches[ 9 ] ) ) ? (int) $matches[ 9 ] : 0;
-            $longSeconds = ( isset( $matches[ 11 ] ) ) ? (float) $matches[ 11 ] : 0;
+            $longMinutes = (int) $matches[ 9 ];
+            $longSeconds = (float) $matches[ 11 ];
             $longHemisphere = strtoupper( $matches[ 12 ] );
 
             $this->longitude = $this->convertDMSHToDecimal( $longDegrees, $longMinutes, $longSeconds, $longHemisphere );
@@ -239,9 +238,26 @@ class LOC extends RR {
 
 
     /**
+     * convert lat/lng in deg/min/sec/hem to decimal value
+     *
+     * @param int $deg the degree value
+     * @param int $min the minutes value
+     * @param float $sec the seconds value
+     * @param string $hem the hemisphere (N/E/S/W)
+     *
+     * @return float the decimal value
+     */
+    private function convertDMSHToDecimal( int $deg, int $min, float $sec, string $hem ) : float {
+
+        $sign = ( $hem == 'W' || $hem == 'S' ) ? -1 : 1;
+        return ( ( ( $sec / 60 + $min ) / 60 ) + $deg ) * $sign;
+    }
+
+
+    /**
      * convert lat/lng in decimal to deg/min/sec/hem
      *
-     * @param float  $data the decimal value
+     * @param float $data the decimal value
      * @param string $i_latLong either LAT or LNG so we can determine the HEM value
      *
      * @return string
@@ -261,23 +277,6 @@ class LOC extends RR {
         $ms = round( ( ( ( ( ( ( $data - $deg ) * 60 ) - $min ) * 60 ) - $sec ) * 1000 ) );
 
         return sprintf( '%d %02d %02d.%03d %s', $deg, $min, $sec, round( $ms ), $hem );
-    }
-
-
-    /**
-     * convert lat/lng in deg/min/sec/hem to decimal value
-     *
-     * @param int    $deg the degree value
-     * @param int    $min the minutes value
-     * @param float  $sec the seconds value
-     * @param string $hem the hemisphere (N/E/S/W)
-     *
-     * @return float the decimal value
-     */
-    private function convertDMSHToDecimal( int $deg, int $min, float $sec, string $hem ) : float {
-
-        $sign = ( $hem == 'W' || $hem == 'S' ) ? -1 : 1;
-        return ( ( ( $sec / 60 + $min ) / 60 ) + $deg ) * $sign;
     }
 
 

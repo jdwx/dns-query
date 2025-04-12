@@ -56,7 +56,7 @@ class Updater extends BaseQuery {
      * dynamic DNS updates
      *
      * @param string $i_zone the domain name to use for DNS updates
-     * @param array|string|null $i_nameServers The name server or list of name servers to update.
+     * @param list<string>|string|null $i_nameServers The name server or list of name servers to update.
      *
      * @throws Exception
      */
@@ -119,10 +119,9 @@ class Updater extends BaseQuery {
         $this->_checkName( $i_name );
 
         $class = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $i_type ] ];
-        if ( ! isset( $class ) ) {
-
+        if ( ! class_exists( $class ) ) {
             throw new Exception(
-                'unknown or un-supported resource record type: ' . $i_type,
+                'unknown or unsupported resource record type: ' . $i_type,
                 Lookups::E_RR_INVALID
             );
         }
@@ -248,10 +247,9 @@ class Updater extends BaseQuery {
         $this->_checkName( $name );
 
         $class = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $type ] ];
-        if ( ! isset( $class ) ) {
-
+        if ( ! class_exists( $class ) ) {
             throw new Exception(
-                'unknown or un-supported resource record type: ' . $type,
+                'unknown or unsupported resource record type: ' . $type,
                 Lookups::E_RR_INVALID
             );
         }
@@ -393,9 +391,9 @@ class Updater extends BaseQuery {
         $this->_checkName( $i_name );
 
         $class = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $i_type ] ];
-        if ( ! isset( $class ) ) {
+        if ( ! class_exists( $class ) ) {
             throw new Exception(
-                'unknown or un-supported resource record type: ' . $i_type,
+                'unknown or unsupported resource record type: ' . $i_type,
                 Lookups::E_RR_INVALID
             );
         }
@@ -446,11 +444,12 @@ class Updater extends BaseQuery {
      * executes the update request with the object information
      *
      * @param ?ResponsePacket &$o_response ref to the response object or null to ignore response
+     * @param-out ResponsePacket $o_response
      *
      * @return bool
      * @throws Exception
      */
-    public function update( ResponsePacket & $o_response = null ) : bool {
+    public function update( ?ResponsePacket &$o_response = null ) : bool {
 
         # Check for an authentication method; either TSIG or SIG.
         if ( ( $this->authSignature instanceof TSIG )

@@ -54,10 +54,12 @@ class Notifier extends BaseQuery {
      * DNS notification for a changed zone
      *
      * @param string $i_zone the domain name to use for DNS updates
+     * @param list<string>|string|null $i_nameServers the name servers to notify
      *
      * @throws Exception
      */
-    public function __construct( string $i_zone, array|string|null $i_nameServers = null, ?string $i_resolvConf = null ) {
+    public function __construct( string  $i_zone, array|string|null $i_nameServers = null,
+                                 ?string $i_resolvConf = null ) {
         parent::__construct( $i_nameServers, $i_resolvConf );
 
         # Create the packet.
@@ -93,6 +95,7 @@ class Notifier extends BaseQuery {
      * executes the notify request
      *
      * @param ?ResponsePacket $response contains a reference to the response object after running
+     * @param-out ResponsePacket $response
      *
      * @return bool
      * @throws Exception
@@ -176,4 +179,6 @@ class Notifier extends BaseQuery {
             );
         }
     }
+
+
 }

@@ -42,11 +42,14 @@ use JDWX\DNSQuery\Packet\Packet;
 class APL extends RR {
 
 
-    /** @var array[] List of all the address prefix list items */
+    /** @var list<array<string, mixed>> List of all the address prefix list items */
     public array $aplItems = [];
 
 
-    /** @inheritDoc */
+    /**
+     * @inheritDoc
+     * @param array<string, string> $i_rData
+     */
     protected function rrFromString( array $i_rData ) : bool {
         foreach ( $i_rData as $item ) {
 
@@ -219,7 +222,7 @@ class APL extends RR {
     /**
      * Return an IP address with the right-hand zeros trimmed
      *
-     * @param int    $family IP address family from the rdata
+     * @param int $family IP address family from the rdata
      * @param string $address IP address
      *
      * @return string The trimmed IP address.
@@ -248,7 +251,8 @@ class APL extends RR {
         return match ( $family ) {
             1 => implode( '.', array_reverse( $aa ) ),
             2 => implode( ':', array_reverse( $aa ) ),
-            default => '',
         };
     }
+
+
 }

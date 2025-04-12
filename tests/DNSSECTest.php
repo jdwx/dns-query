@@ -17,22 +17,21 @@ use PHPUnit\Framework\TestCase;
  *
  * TODO: Expand this dramatically.
  */
-class DNSSECTest extends TestCase {
+final class DNSSECTest extends TestCase {
 
 
     /**
      * @throws Exception
      */
-    public function testDOFlag() {
+    public function testDOFlag() : void {
         $dns = new Resolver( '8.8.8.8' );
         $dns->setDNSSEC();
         $rsp = $dns->query( 'org.', 'SOA' );
-        static::assertSame( 1, $rsp->header->ad );
-        static::assertCount( 1, $rsp->additional );
-        static::assertInstanceOf( OPT::class, $rsp->additional[ 0 ] );
+        self::assertSame( 1, $rsp->header->ad );
+        self::assertCount( 1, $rsp->additional );
         $opt = $rsp->additional[ 0 ];
         assert( $opt instanceof OPT );
-        static::assertSame( 1, $opt->do );
+        self::assertSame( 1, $opt->do );
     }
 
 

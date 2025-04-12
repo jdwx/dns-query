@@ -59,8 +59,9 @@ class SRV extends RR {
 
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
+     * @return array<string, int|string>
      */
-    #[ArrayShape( [ 'pri' => "int", 'weight' => "int", 'target' => "string", 'port' => "int" ] )]
+    #[ArrayShape( [ 'pri' => 'int', 'weight' => 'int', 'target' => 'string', 'port' => 'int' ] )]
     public function getPHPRData() : array {
         return [
             'pri' => $this->priority,

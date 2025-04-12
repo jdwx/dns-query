@@ -37,6 +37,8 @@ use JetBrains\PhpStorm\ArrayShape;
  *
  */
 class A extends RR {
+
+
     /*
      * The IPv4 address in quad-dotted notation
      */
@@ -46,7 +48,7 @@ class A extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'ip' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'ip' => 'string' ] )] public function getPHPRData() : array {
         return [
             'ip' => $this->address,
         ];
@@ -79,6 +81,11 @@ class A extends RR {
         if ( $this->rdLength > 0 ) {
 
             $this->address = inet_ntop( $this->rdata );
+            /**
+             * PhpStan doesn't know that inet_ntop() will return false if the
+             * address is invalid.
+             * @phpstan-ignore notIdentical.alwaysTrue
+             */
             if ( $this->address !== false ) {
 
                 return true;

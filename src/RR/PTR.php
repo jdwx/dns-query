@@ -45,8 +45,9 @@ class PTR extends RR {
 
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
+     * @return array<string, string>
      */
-    #[ArrayShape( [ 'target' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'target' => 'string' ] )] public function getPHPRData() : array {
         return [
             'target' => $this->ptrDName,
         ];
