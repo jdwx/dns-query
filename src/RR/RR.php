@@ -149,7 +149,10 @@ abstract class RR {
         $ttl = 86400;
 
         # Split the line by spaces.
-        $values = preg_split( '/\s+/', $line );
+        // $values = preg_split( '/\s+/', $line );
+        preg_match_all( '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|\\S+/', $line, $m );
+        $values = $m[ 0 ];
+
         if ( count( $values ) < 3 ) {
 
             throw new Exception(

@@ -134,7 +134,10 @@ final class LegacyParserTest extends TestCase {
             'PTR' => '1.0.0.127.in-addr.arpa. 300 IN PTR localhost.',
             'HINFO' => 'example.com. 300 IN HINFO "PC-Intel-700mhz" "Redhat \"Linux\" 7.1"',
             'MX' => 'example.com. 300 IN MX 10 mx1.mrhost.ca.',
-            'TXT' => 'example.com. 300 IN TXT "first record" "another records" "a third"',
+            'TXT' => [
+                'example.com. 300 IN TXT "first record" "another records" "a third"',
+                'another.example.com. 3600 IN TXT "k=rsa;p=DAQAB" " aa " "b "', # GitHub Issue 8
+            ],
             'RP' => 'example.com. 300 IN RP louie\.trantor.umd.edu. lam1.people.test.com.',
             'AFSDB' => 'example.com. 300 IN AFSDB 3 afsdb.example.com.',
             'X25' => 'example.com. 300 IN X25 "311 06 17 0 09 56"',
