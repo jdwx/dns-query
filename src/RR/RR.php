@@ -145,7 +145,7 @@ abstract class RR {
         }
 
         $type = '';
-        $class = 'IN';
+        $class = '';
         $ttl = 86400;
 
         # Split the line by spaces.
@@ -176,10 +176,22 @@ abstract class RR {
                 case ( $value === 0 ):
 
                     $ttl = (int) array_shift( $values );
+                    if ( $ttl < 0 || $ttl > 2147483647 ) {
+                        throw new Exception(
+                            'invalid ttl provided: ' . $ttl,
+                            Lookups::E_PARSE_ERROR
+                        );
+                    }
                     break;
 
                 case isset( Lookups::$classesByName[ strtoupper( $value ) ] ):
 
+                    if ( ! empty( $class ) ) {
+                        throw new Exception(
+                            'invalid config line provided: multiple classes specified: ' . $line,
+                            Lookups::E_PARSE_ERROR
+                        );
+                    }
                     $class = strtoupper( array_shift( $values ) );
                     break;
 
@@ -191,10 +203,17 @@ abstract class RR {
                 default:
 
                     throw new Exception(
-                        'invalid config line provided: unknown file: ' . $value,
+                        'invalid config line provided: unknown value: ' . $value,
                         Lookups::E_PARSE_ERROR
                     );
             }
+        }
+        $class = $class ?: 'IN';
+        if ( empty( $type ) ) {
+            throw new Exception(
+                'invalid config line provided: no type specified: ' . $line,
+                Lookups::E_PARSE_ERROR
+            );
         }
 
         # Look up the class to use.
