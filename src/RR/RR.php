@@ -320,6 +320,18 @@ abstract class RR {
 
 
     /**
+     * return a formatted string; escapes nested quotes
+     *
+     * @param string $i_str the string to format
+     *
+     * @return string
+     */
+    protected static function formatString( string $i_str ) : string {
+        return '"' . str_replace( '"', '\"', $i_str ) . '"';
+    }
+
+
+    /**
      * magic __toString() method to return the RR object as a string
      *
      * @return string
@@ -524,19 +536,6 @@ abstract class RR {
         }
 
         return $data;
-    }
-
-
-    /**
-     * return a formatted string; if a string has spaces in it, then return
-     * it with double quotes around it, otherwise, return it as it was passed in.
-     *
-     * @param string $i_str the string to format
-     *
-     * @return string
-     */
-    protected function formatString( string $i_str ) : string {
-        return '"' . str_replace( '"', '\"', trim( $i_str, '"' ) ) . '"';
     }
 
 

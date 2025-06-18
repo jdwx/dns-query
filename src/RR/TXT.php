@@ -109,7 +109,7 @@ class TXT extends RR {
         $data = '';
 
         foreach ( $this->text as $txt ) {
-            $data .= $this->formatString( $txt ) . ' ';
+            $data .= static::formatString( $txt ) . ' ';
         }
 
         return trim( $data );

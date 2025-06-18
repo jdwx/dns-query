@@ -104,8 +104,8 @@ class ISDN extends RR {
 
     /** @inheritDoc */
     protected function rrToString() : string {
-        return $this->formatString( $this->isdnAddress ) . ' ' .
-            $this->formatString( $this->sa );
+        return static::formatString( $this->isdnAddress ) . ' ' .
+            static::formatString( $this->sa );
     }
 
 

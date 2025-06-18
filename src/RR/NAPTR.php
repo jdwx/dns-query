@@ -141,10 +141,10 @@ class NAPTR extends RR {
     /** @inheritDoc */
     protected function rrToString() : string {
         return $this->order . ' ' . $this->preference . ' ' .
-            $this->formatString( $this->flags ) . ' ' .
-            $this->formatString( $this->services ) . ' ' .
-            $this->formatString( $this->regexp ) . ' ' .
-            $this->cleanString( $this->replacement ) . '.';
+            static::formatString( $this->flags ) . ' ' .
+            static::formatString( $this->services ) . ' ' .
+            static::formatString( $this->regexp ) . ' ' .
+            static::cleanString( $this->replacement ) . '.';
     }
 
 

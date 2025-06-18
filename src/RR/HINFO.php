@@ -109,7 +109,7 @@ class HINFO extends RR {
 
     /** @inheritDoc */
     protected function rrToString() : string {
-        return $this->formatString( $this->cpu ) . ' ' . $this->formatString( $this->os );
+        return static::formatString( $this->cpu ) . ' ' . $this->formatString( $this->os );
     }
 
 

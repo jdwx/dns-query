@@ -83,7 +83,7 @@ class X25 extends RR {
 
     /** @inheritDoc */
     protected function rrToString() : string {
-        return $this->formatString( $this->psdnAddress );
+        return static::formatString( $this->psdnAddress );
     }
 
 
