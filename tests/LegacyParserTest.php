@@ -247,7 +247,7 @@ final class LegacyParserTest extends TestCase {
         $request = new RequestPacket( 'example.com', 'SOA', 'IN' );
 
         # Add an A record to the authority section, like an update request.
-        $request->authority[] = RR::fromString( 'test.example.com A 10.10.10.10' );
+        $request->authority[] = RR::fromString( 'test.example.com IN A 10.10.10.10' );
         $request->header->nsCount = 1;
 
         # Add the TSIG as additional.
