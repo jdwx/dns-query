@@ -91,8 +91,8 @@ final class ResolverTest extends TestCase {
         $rActual = Resolver::dns_get_record( 'google.com', DNS_MX );
         $this->compareRRArrays( $rExpected, $rActual );
 
-        $rExpected = dns_get_record( 'google.com', DNS_A );
-        $rActual = Resolver::dns_get_record( 'google.com', DNS_A );
+        $rExpected = dns_get_record( 'iana.org', DNS_A );
+        $rActual = Resolver::dns_get_record( 'iana.org', DNS_A );
         $this->compareRRArrays( $rExpected, $rActual );
 
         $rExpected = dns_get_record( 'www.amazon.com', DNS_CNAME );
