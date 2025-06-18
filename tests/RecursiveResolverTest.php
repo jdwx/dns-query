@@ -56,7 +56,7 @@ final class RecursiveResolverTest extends TestCase {
         $index = array_key_last( $xx );
         $rsp = $xx[ $index ];
         self::assertInstanceOf( ResponsePacket::class, $rsp );
-        var_dump( $rsp->answer );
+        // var_dump( $rsp->answer ); # Needed to see changes in published records.
         self::assertCount( 1, $rsp->answer );
         $rr = $rsp->answer[ 0 ];
         assert( $rr instanceof A );
