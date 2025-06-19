@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\tests\RR;
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\RR\RR;
+use JDWX\DNSQuery\RR\TXT;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -112,6 +113,90 @@ final class RRTest extends TestCase {
     public function testFromStringForNoTypeWithoutTTL() : void {
         self::expectException( Exception::class );
         RR::fromString( 'example.com. IN 1.2.3.4' );
+    }
+
+
+    public function testFromStringForQuotedName() : void {
+        $rr = RR::fromString( '"Sure, why not?" 3600 IN A 1.2.3.4' );
+        # Still making up my mind about this behavior.
+        self::assertSame( '"sure, why not?"', $rr->name );
+    }
+
+
+    public function testFromStringForQuotesEmpty() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "" "This is a test" ""' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ '', 'This is a test', '' ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesMixed() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT foo "bar" baz' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ 'foo', 'bar', 'baz' ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesMixed2() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT foo "bar baz" qux' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ 'foo', 'bar baz', 'qux' ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesUnclosed() : void {
+        self::expectException( Exception::class );
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "This is a test' );
+        var_dump( $rr ); // This line should not be reached.
+    }
+
+
+    public function testFromStringForQuotesWithEmbeddedNewline() : void {
+        $rr = RR::fromString( "example.com. 3600 IN TXT \"This is a test with\nan embedded newline.\"" );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ "This is a test with\nan embedded newline." ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesWithEmbeddedNull() : void {
+        $rr = RR::fromString( "example.com. 3600 IN TXT \"This is a test with\0an embedded null.\"" );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ "This is a test with\0an embedded null." ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesWithEmbeddedTab() : void {
+        $rr = RR::fromString( "example.com. 3600 IN TXT \"This is a test with\ta tab.\"" );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ "This is a test with\ta tab." ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesWithEscapedBackslash() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "This is a test with an \\ escaped backslash"' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ 'This is a test with an \\ escaped backslash' ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesWithEscapedQuote() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "This is a test \\"with an escaped quote."' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ 'This is a test "with an escaped quote.' ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesWithEscapedQuote2() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "\\"escaped quote\\""' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ '"escaped quote"' ], $rr->text );
+    }
+
+
+    public function testFromStringForQuotesWithEscapedQuotes() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "This is a test \\"with escaped quotes\\"."' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ 'This is a test "with escaped quotes".' ], $rr->text );
     }
 
 
