@@ -4,10 +4,15 @@
 declare( strict_types = 1 );
 
 
+namespace JDWX\DNSQuery\tests\RR;
+
+
+use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\RR\RR;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 
 /**
@@ -18,32 +23,32 @@ final class RRTest extends TestCase {
 
 
     public function testFromStringForBadClass() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 FOO A 1.2.3.4' );
     }
 
 
     public function testFromStringForBadRData() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN A 1.2.3' );
     }
 
 
     public function testFromStringForBadTTLHuge() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 100000000000000 IN A' );
     }
 
 
     public function testFromStringForBadTTLNegative() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         $rr = RR::fromString( 'example.com. -20 IN A 1.2.3.4' );
         var_dump( $rr ); // This line should not be reached.
     }
 
 
     public function testFromStringForBadType() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN FOO 1.2.3.4' );
     }
 
@@ -71,7 +76,7 @@ final class RRTest extends TestCase {
 
 
     public function testFromStringForEmpty() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( '' );
     }
 
@@ -93,31 +98,31 @@ final class RRTest extends TestCase {
 
 
     public function testFromStringForNoTypeOrValue() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN' );
     }
 
 
     public function testFromStringForNoTypeWithTTL() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN 1.2.3.4' );
     }
 
 
     public function testFromStringForNoTypeWithoutTTL() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. IN 1.2.3.4' );
     }
 
 
     public function testFromStringForTotallyInvalid() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'invalid' );
     }
 
 
     public function testFromStringForTwoClasses() : void {
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. IN IN A 1.2.3.4' );
     }
 
@@ -125,7 +130,7 @@ final class RRTest extends TestCase {
     public function testFromStringForUnimplementedType() : void {
         Lookups::$rrTypesByName[ 'UNIMPLEMENTED' ] = 9999; // Simulate an unimplemented type.
         Lookups::$rrTypesIdToClass[ 9999 ] = 'Not even a little bit.';
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN UNIMPLEMENTED 1.2.3.4' );
     }
 
@@ -133,7 +138,7 @@ final class RRTest extends TestCase {
     public function testFromStringForWrongRRClass() : void {
         Lookups::$rrTypesByName[ 'SAY_WHAT' ] = 9998; // Simulate a breathtakingly incompetent developer.
         Lookups::$rrTypesIdToClass[ 9998 ] = stdClass::class;
-        self::expectException( \JDWX\DNSQuery\Exception::class );
+        self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN SAY_WHAT 1.2.3.4' );
     }
 
