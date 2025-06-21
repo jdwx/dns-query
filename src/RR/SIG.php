@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 use JDWX\DNSQuery\Packet\RequestPacket;
@@ -148,7 +149,7 @@ class SIG extends RR {
         /** @noinspection SpellCheckingInspection */
         $data = pack(
             'nCCNNNn',
-            Lookups::$rrTypesByName[ $this->typeCovered ],
+            RecordType::nameToId( $this->typeCovered ),
             $this->algorithm,
             $this->labels,
             $this->origTTL,
@@ -243,7 +244,7 @@ class SIG extends RR {
                 $this->rdata
             );
 
-            $this->typeCovered = Lookups::$rrTypesById[ $parse[ 'tc' ] ];
+            $this->typeCovered = RecordType::idToName( $parse[ 'tc' ] );
             $this->algorithm = $parse[ 'algorithm' ];
             $this->labels = $parse[ 'labels' ];
             $this->origTTL = $parse[ 'origTTL' ];
@@ -279,4 +280,6 @@ class SIG extends RR {
             $this->keytag . ' ' . $this->cleanString( $this->signName ) . '. ' .
             $this->signature;
     }
+
+
 }

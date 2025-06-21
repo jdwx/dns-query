@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Lookups;
+use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -144,7 +144,7 @@ class RRSIG extends RR {
             /** @noinspection SpellCheckingInspection */
             $data = pack(
                 'nCCNNNn',
-                Lookups::$rrTypesByName[ $this->typeCovered ],
+                RecordType::nameToId( $this->typeCovered ),
                 $this->algorithm,
                 $this->labels,
                 $this->origTTL,
@@ -186,7 +186,7 @@ class RRSIG extends RR {
                 $this->rdata
             );
 
-            $this->typeCovered = Lookups::$rrTypesById[ $parse[ 'tc' ] ];
+            $this->typeCovered = RecordType::idToName( $parse[ 'tc' ] );
             $this->algorithm = $parse[ 'algorithm' ];
             $this->labels = $parse[ 'labels' ];
             $this->origTTL = $parse[ 'origttl' ];

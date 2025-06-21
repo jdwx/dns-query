@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery;
 
 use JDWX\DNSQuery\Cache\Cache;
 use JDWX\DNSQuery\Cache\ICache;
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\OPT;
@@ -114,13 +116,11 @@ class Resolver extends BaseQuery {
             trigger_error( 'Per RFC6563, A6 records should not be implemented or deployed.', E_USER_WARNING );
             return false;
         }
-        if ( ! array_key_exists( $type, Lookups::$rrClassByPHPId ) ) {
-            trigger_error( 'Invalid record type: $type', E_USER_WARNING );
+        $rrType = RecordType::tryPhpIdToName( $type );
+        if ( ! $rrType ) {
+            trigger_error( 'Invalid record type: ' . $type, E_USER_WARNING );
             return false;
         }
-        $class = Lookups::$rrClassByPHPId[ $type ];
-        $id = Lookups::$rrTypesClassToId[ $class ];
-        $rrType = Lookups::$rrTypesById[ $id ];
 
         $rsp = $this->query( $hostname, $rrType );
         $rAnswer = [];

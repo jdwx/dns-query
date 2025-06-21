@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use InvalidArgumentException;
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -115,10 +118,10 @@ class Question {
     public function get( Packet $i_packet ) : string {
 
         # Validate the type and class.
-        $type = Lookups::$rrTypesByName[ $this->qType ] ?? null;
+        $type = RecordType::tryFromName( $this->qType );
         $class = Lookups::$classesByName[ $this->qClass ] ?? null;
 
-        if ( ! is_int( $type ) || ! is_int( $class ) ) {
+        if ( ! $type instanceof RecordType || ! is_int( $class ) ) {
             throw new Exception(
                 'invalid question section: invalid type (' . $this->qType .
                 ') or class (' . $this->qClass . ') specified.',
@@ -128,7 +131,7 @@ class Question {
 
         $data = $i_packet->compress( $this->qName, $i_packet->offset );
 
-        $data .= chr( $type >> 8 ) . chr( $type ) . chr( $class >> 8 ) . chr( $class );
+        $data .= $type->toBinary() . chr( $class >> 8 ) . chr( $class );
         $i_packet->offset += 4;
 
         return $data;
@@ -156,25 +159,30 @@ class Question {
         }
 
         # Unpack the type and class.
-        $type = ord( $i_packet->rdata[ $i_packet->offset++ ] ) << 8 |
-            ord( $i_packet->rdata[ $i_packet->offset++ ] );
+        try {
+            $type = RecordType::consume( $i_packet->rdata, $i_packet->offset );
+        } catch ( InvalidArgumentException $e ) {
+            throw new Exception(
+                'Invalid question section: ' . $e->getMessage(),
+                Lookups::E_QUESTION_INVALID
+            );
+        }
+
         $class = ord( $i_packet->rdata[ $i_packet->offset++ ] ) << 8 |
             ord( $i_packet->rdata[ $i_packet->offset++ ] );
 
         # Validate it.
-        $typeName = Lookups::$rrTypesById[ $type ] ?? null;
         $className = Lookups::$classesById[ $class ] ?? null;
 
-        if ( ! is_string( $typeName ) || ! is_string( $className ) ) {
+        if ( ! is_string( $className ) ) {
             throw new Exception(
-                'invalid question section: invalid type (' . $type .
-                ') or class (' . $class . ') specified.',
+                'invalid question section class (' . $class . ') specified.',
                 Lookups::E_QUESTION_INVALID
             );
         }
 
         # Store it.
-        $this->qType = $typeName;
+        $this->qType = $type->name;
         $this->qClass = $className;
 
     }

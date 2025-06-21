@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Packet;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Data\ReturnCode;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 
 
@@ -53,6 +54,7 @@ use JDWX\DNSQuery\Lookups;
  *
  */
 class Header {
+
 
     /** @var int Identifier (16 bits) */
     public int $id;
@@ -130,39 +132,39 @@ class Header {
      * @return    string
      */
     public function __toString() : string {
-        $output = ";; ->>HEADER<<- opcode: " . Lookups::$opcodeTags[ $this->opcode ]
-            . ", status: " . Lookups::$resultCodeTags[ $this->rCode ]
-            . ", id: " . $this->id . "\n";
-        $output .= ";; flags: ";
+        $output = ';; ->>HEADER<<- opcode: ' . Lookups::$opcodeTags[ $this->opcode ]
+            . ', status: ' . ReturnCode::from( $this->rCode )->name
+            . ', id: ' . $this->id . "\n";
+        $output .= ';; flags: ';
         if ( $this->qr ) {
-            $output .= "qr ";
+            $output .= 'qr ';
         }
         if ( $this->aa ) {
-            $output .= "aa ";
+            $output .= 'aa ';
         }
         if ( $this->tc ) {
-            $output .= "tc ";
+            $output .= 'tc ';
         }
         if ( $this->rd ) {
-            $output .= "rd ";
+            $output .= 'rd ';
         }
         if ( $this->ra ) {
-            $output .= "ra ";
+            $output .= 'ra ';
         }
         if ( $this->zero ) {
-            $output .= "z ";
+            $output .= 'z ';
         }
         if ( $this->ad ) {
-            $output .= "ad ";
+            $output .= 'ad ';
         }
         if ( $this->cd ) {
-            $output .= "cd ";
+            $output .= 'cd ';
         }
         $output = trim( $output );
-        $output .= "; QUERY: " . $this->qdCount
-            . ", ANSWER: " . $this->anCount
-            . ", AUTHORITY: " . $this->nsCount
-            . ", ADDITIONAL: " . $this->arCount . "\n";
+        $output .= '; QUERY: ' . $this->qdCount
+            . ', ANSWER: ' . $this->anCount
+            . ', AUTHORITY: ' . $this->nsCount
+            . ', ADDITIONAL: ' . $this->arCount . "\n";
 
         return $output;
     }
@@ -239,7 +241,7 @@ class Header {
         $this->zero = 0;
         $this->ad = 0;
         $this->cd = 0;
-        $this->rCode = Lookups::RCODE_NOERROR;
+        $this->rCode = ReturnCode::NOERROR->value;
         $this->qdCount = 1;
         $this->anCount = 0;
         $this->nsCount = 0;
@@ -268,7 +270,7 @@ class Header {
 
 
         /** @noinspection SpellCheckingInspection */
-        $shorts = unpack( "nid/nflags/nqd/nan/nns/nar", $i_packedData );
+        $shorts = unpack( 'nid/nflags/nqd/nan/nns/nar', $i_packedData );
 
         $this->id = $shorts[ 'id' ];
 

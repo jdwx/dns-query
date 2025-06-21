@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\AAAA;
 use JDWX\DNSQuery\RR\NS;
@@ -18,7 +19,7 @@ class NamedRoot {
 
 
     /** The name of the named.root file. */
-    public const DEFAULT_NAMED_ROOT_FILE = __DIR__ . '/../data/named.root';
+    public const string DEFAULT_NAMED_ROOT_FILE = __DIR__ . '/../data/named.root';
 
 
     /** @var array<string, array<string, mixed>> */

@@ -55,12 +55,18 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class TKEY extends RR {
 
-    public const TSIG_MODE_RES = 0;
-    public const TSIG_MODE_SERV_ASSIGN = 1;
-    public const TSIG_MODE_DH = 2;
-    public const TSIG_MODE_GSS_API = 3;
-    public const TSIG_MODE_RESV_ASSIGN = 4;
-    public const TSIG_MODE_KEY_DELE = 5;
+
+    public const int TSIG_MODE_RES         = 0;
+
+    public const int TSIG_MODE_SERV_ASSIGN = 1;
+
+    public const int TSIG_MODE_DH          = 2;
+
+    public const int TSIG_MODE_GSS_API     = 3;
+
+    public const int TSIG_MODE_RESV_ASSIGN = 4;
+
+    public const int TSIG_MODE_KEY_DELE    = 5;
 
     /** @var string Algorithm */
     public string $algorithm;

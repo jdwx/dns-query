@@ -55,7 +55,7 @@ class CAA extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'flags' => "int", 'tag' => "string", 'value' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'flags' => 'int', 'tag' => 'string', 'value' => 'string' ] )] public function getPHPRData() : array {
         return [
             'flags' => $this->flags,
             'tag' => $this->tag,

@@ -53,7 +53,7 @@ class AAAA extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'ipv6' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'ipv6' => 'string' ] )] public function getPHPRData() : array {
         return [
             'ipv6' => $this->address,
         ];

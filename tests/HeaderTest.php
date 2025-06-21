@@ -4,10 +4,10 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\tests;
+namespace JDWX\DNSQuery\Tests;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\Header;
 use PHPUnit\Framework\TestCase;
 

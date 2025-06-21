@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Network;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Data\ReturnCode;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 
@@ -43,14 +44,14 @@ class TCPTransport extends IPTransport {
 
             if ( $size < Lookups::DNS_HEADER_SIZE ) {
 
-                # If we get an error, then keeping this socket around for a future request, could cause
-                # an error- for example, https://github.com/mikepultz/netdns2/issues/61
+                # If we get an error, then keeping this socket around for a future request could cause
+                # an error. For example, https://github.com/mikepultz/netdns2/issues/61
                 #
                 # in this case, the connection was timing out, which once it did finally respond, left
                 # data on the socket, which could be captured on a subsequent request.
                 #
                 # since there's no way to "reset" a socket, the only thing we can do it close it.
-                throw new Exception( "TCPTransport::receiveAXFR() - socket read too short",
+                throw new Exception( 'TCPTransport::receiveAXFR() - socket read too short',
                     Lookups::E_NS_SOCKET_FAILED );
             }
 
@@ -67,7 +68,7 @@ class TCPTransport extends IPTransport {
                 # Look for a failed response; if the zone transfer
                 # failed, then we don't need to do anything else at this
                 # point, and we should just break out.
-                if ( $response->header->rCode != Lookups::RCODE_NOERROR ) {
+                if ( $response->header->rCode !== ReturnCode::NOERROR->value ) {
                     break;
                 }
 
@@ -128,7 +129,7 @@ class TCPTransport extends IPTransport {
         $result = $this->read( $size );
 
         if ( $size < Lookups::DNS_HEADER_SIZE ) {
-            throw new Exception( "received packet is too small to be a valid DNS packet", Lookups::E_NS_SOCKET_FAILED );
+            throw new Exception( 'received packet is too small to be a valid DNS packet', Lookups::E_NS_SOCKET_FAILED );
         }
 
         # Create the packet object.

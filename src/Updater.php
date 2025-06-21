@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\ANY;
@@ -118,15 +120,8 @@ class Updater extends BaseQuery {
     public function checkExists( string $i_name, string $i_type ) : void {
         $this->_checkName( $i_name );
 
-        $class = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $i_type ] ];
-        if ( ! class_exists( $class ) ) {
-            throw new Exception(
-                'unknown or unsupported resource record type: ' . $i_type,
-                Lookups::E_RR_INVALID
-            );
-        }
-
-        $rr = new $class();
+        $typeClass = RecordType::nameToClassName( $i_type );
+        $rr = new $typeClass();
 
         $rr->name = $i_name;
         $rr->ttl = 0;
@@ -246,15 +241,8 @@ class Updater extends BaseQuery {
     public function checkNotExists( string $name, string $type ) : void {
         $this->_checkName( $name );
 
-        $class = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $type ] ];
-        if ( ! class_exists( $class ) ) {
-            throw new Exception(
-                'unknown or unsupported resource record type: ' . $type,
-                Lookups::E_RR_INVALID
-            );
-        }
-
-        $rr = new $class();
+        $typeClass = RecordType::nameToClassName( $type );
+        $rr = new $typeClass();
 
         $rr->name = $name;
         $rr->ttl = 0;
@@ -390,15 +378,8 @@ class Updater extends BaseQuery {
     public function deleteAny( string $i_name, string $i_type ) : void {
         $this->_checkName( $i_name );
 
-        $class = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $i_type ] ];
-        if ( ! class_exists( $class ) ) {
-            throw new Exception(
-                'unknown or unsupported resource record type: ' . $i_type,
-                Lookups::E_RR_INVALID
-            );
-        }
-
-        $rr = new $class();
+        $typeClass = RecordType::nameToClassName( $i_type );
+        $rr = new $typeClass();
 
         $rr->name = $i_name;
         $rr->ttl = 0;

@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Cache;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 
@@ -114,9 +114,9 @@ abstract class BaseCache implements ICache {
     /**
      * Store a response in the cache with a precalculated time-to-live (TTL).
      *
-     * @param string         $i_key Key for the new response
+     * @param string $i_key Key for the new response
      * @param ResponsePacket $i_rsp Response to cache
-     * @param int            $i_ttl TTL in seconds to cache this response
+     * @param int $i_ttl TTL in seconds to cache this response
      *
      * @return void
      */

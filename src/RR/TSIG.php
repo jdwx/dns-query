@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Data\ReturnCode;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 use JDWX\DNSQuery\Packet\RequestPacket;
@@ -55,14 +56,21 @@ use JDWX\DNSQuery\Packet\RequestPacket;
  */
 class TSIG extends RR {
 
+
     # TSIG Algorithm Identifiers
-    public const HMAC_MD5 = 'hmac-md5.sig-alg.reg.int';      # RFC 2845, required
-    public const GSS_TSIG = 'gss-tsig';                      # unsupported, optional
-    public const HMAC_SHA1 = 'hmac-sha1';                    # RFC 4635, required
-    public const HMAC_SHA224 = 'hmac-sha224';                # RFC 4635, optional
-    public const HMAC_SHA256 = 'hmac-sha256';                # RFC 4635, required
-    public const HMAC_SHA384 = 'hmac-sha384';                # RFC 4635, optional
-    public const HMAC_SHA512 = 'hmac-sha512';                # RFC 4635, optional
+    public const string HMAC_MD5    = 'hmac-md5.sig-alg.reg.int';      # RFC 2845, required
+
+    public const string GSS_TSIG    = 'gss-tsig';                      # unsupported, optional
+
+    public const string HMAC_SHA1   = 'hmac-sha1';                    # RFC 4635, required
+
+    public const string HMAC_SHA224 = 'hmac-sha224';                # RFC 4635, optional
+
+    public const string HMAC_SHA256 = 'hmac-sha256';                # RFC 4635, required
+
+    public const string HMAC_SHA384 = 'hmac-sha384';                # RFC 4635, optional
+
+    public const string HMAC_SHA512 = 'hmac-sha512';                # RFC 4635, optional
 
     /** @var array<string, string> Map of hash values to names */
     public static array $hashAlgorithms = [
@@ -191,7 +199,7 @@ class TSIG extends RR {
             $data .= $this->mac;
 
             # Check the error and other_length.
-            if ( $this->error == Lookups::RCODE_BADTIME ) {
+            if ( $this->error === ReturnCode::BADTIME->value ) {
 
                 $this->otherLength = strlen( $this->otherData );
                 if ( $this->otherLength != 6 ) {
@@ -266,8 +274,8 @@ class TSIG extends RR {
             # a BADTIME error code.
             #
             # The other length should be 6, and the other data field includes the
-            # servers current time - per RFC 2845 section 4.5.2
-            if ( $this->error == Lookups::RCODE_BADTIME ) {
+            # server's current time - per RFC 2845 section 4.5.2
+            if ( $this->error === ReturnCode::BADTIME->value ) {
 
                 if ( $this->otherLength != 6 ) {
 

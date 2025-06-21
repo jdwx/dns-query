@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -47,7 +47,7 @@ class CNAME extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'target' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'target' => 'string' ] )] public function getPHPRData() : array {
         return [
             'target' => $this->cname,
         ];

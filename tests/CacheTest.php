@@ -4,13 +4,12 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\tests;
+namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Cache\Cache;
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
-use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\Resolver;
 use JDWX\DNSQuery\RR\MX;
 use PHPUnit\Framework\TestCase;
@@ -71,7 +70,7 @@ final class CacheTest extends TestCase {
         $cache = new Cache();
         $cache->put( 'foo', $rsp );
         $xx = $cache->getEx( 'foo' );
-        self::assertInstanceOf( ResponsePacket::class, $xx );
+        self::assertSame( $rsp, $xx );
     }
 
 

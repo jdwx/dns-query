@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Network;
 
 
 use Countable;
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 
 
 /**
@@ -49,24 +49,13 @@ class TransportManager implements Countable {
      * of the pool in order for using the pool to make sense.
      *
      * @param null|string $i_localAddress The local address to bind to or null for default.
-     * @param null|int    $i_localPort The local port to bind to or null for default.
-     * @param int         $i_timeout The timeout for transports under management.
+     * @param null|int $i_localPort The local port to bind to or null for default.
+     * @param int $i_timeout The timeout for transports under management.
      */
     public function __construct( ?string $i_localAddress, ?int $i_localPort, int $i_timeout ) {
         $this->localAddress = $i_localAddress;
         $this->localPort = $i_localPort;
         $this->timeout = $i_timeout;
-    }
-
-
-    /** Close all sockets in the pool.
-     * @return void
-     */
-    public function flush() : void {
-        foreach( $this->transports as $transport ) {
-            unset( $transport );
-        }
-        $this->transports = [];
     }
 
 
@@ -76,7 +65,7 @@ class TransportManager implements Countable {
      * @return string The hash of the transport.
      */
     private static function hashTransport( ITransport $i_transport ) : string {
-        return $i_transport->getType() . ":" . $i_transport->getNameServer() . ":" . $i_transport->getPort();
+        return $i_transport->getType() . ':' . $i_transport->getNameServer() . ':' . $i_transport->getPort();
     }
 
 
@@ -108,6 +97,17 @@ class TransportManager implements Countable {
      */
     public function count() : int {
         return count( $this->transports );
+    }
+
+
+    /** Close all sockets in the pool.
+     * @return void
+     */
+    public function flush() : void {
+        foreach ( $this->transports as $transport ) {
+            unset( $transport );
+        }
+        $this->transports = [];
     }
 
 

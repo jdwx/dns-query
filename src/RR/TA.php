@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpClassNamingConventionInspection */
 
 
 declare( strict_types = 1 );
@@ -29,4 +29,6 @@ namespace JDWX\DNSQuery\RR;
  *
  */
 class TA extends DS {
+
+
 }

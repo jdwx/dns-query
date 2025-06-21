@@ -5,7 +5,7 @@ parameters:
 		- src
 		- tests
 	phpVersion:
-		min: 80100
+		min: 80300
 		max: 80400
 	scanDirectories:
 		- vendor

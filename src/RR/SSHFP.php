@@ -43,18 +43,23 @@ class SSHFP extends RR {
 
 
     /** The algorithm used */
-    public const SSHFP_ALGORITHM_RES = 0;
-    public const SSHFP_ALGORITHM_RSA = 1;
+    public const int SSHFP_ALGORITHM_RES = 0;
+
+    public const int SSHFP_ALGORITHM_RSA = 1;
 
     /** The fingerprint data */
-    public const SSHFP_ALGORITHM_DSS = 2;
+    public const int SSHFP_ALGORITHM_DSS = 2;
 
     /** Algorithms */
-    public const SSHFP_ALGORITHM_ECDSA = 3;
-    public const SSHFP_ALGORITHM_ED25519 = 4;
-    public const SSHFP_FPTYPE_RES = 0;
-    public const SSHFP_FPTYPE_SHA1 = 1;
-    public const SSHFP_FPTYPE_SHA256 = 2;
+    public const int SSHFP_ALGORITHM_ECDSA   = 3;
+
+    public const int SSHFP_ALGORITHM_ED25519 = 4;
+
+    public const int SSHFP_FPTYPE_RES        = 0;
+
+    public const int SSHFP_FPTYPE_SHA1       = 1;
+
+    public const int SSHFP_FPTYPE_SHA256     = 2;
 
     /** @var int ID of algorithm */
     public int $algorithm;

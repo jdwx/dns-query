@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpClassNamingConventionInspection */
 
 
 declare( strict_types = 1 );
@@ -29,7 +29,7 @@ use JDWX\DNSQuery\Packet\Packet;
 /**
  * KX Resource Record - RFC2230 section 3.1
  *
- * This class is almost identical to MX, except that the the exchanger
+ * This class is almost identical to MX, except that the exchanger
  * domain is not compressed, it's added as a label
  *
  *   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+

@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpClassNamingConventionInspection */
 
 
 declare( strict_types = 1 );

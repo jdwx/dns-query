@@ -45,14 +45,19 @@ use JDWX\DNSQuery\Packet\Packet;
 class IPSECKEY extends RR {
 
 
-    public const GATEWAY_TYPE_NONE = 0;
-    public const GATEWAY_TYPE_IPV4 = 1;
-    public const GATEWAY_TYPE_IPV6 = 2;
-    public const GATEWAY_TYPE_DOMAIN = 3;
+    public const int GATEWAY_TYPE_NONE   = 0;
 
-    public const ALGORITHM_NONE = 0;
-    public const ALGORITHM_DSA = 1;
-    public const ALGORITHM_RSA = 2;
+    public const int GATEWAY_TYPE_IPV4   = 1;
+
+    public const int GATEWAY_TYPE_IPV6   = 2;
+
+    public const int GATEWAY_TYPE_DOMAIN = 3;
+
+    public const int ALGORITHM_NONE      = 0;
+
+    public const int ALGORITHM_DSA       = 1;
+
+    public const int ALGORITHM_RSA       = 2;
 
     /** @var int Precedence (used the same way as a preference field) */
     public int $precedence;
@@ -93,7 +98,7 @@ class IPSECKEY extends RR {
         $gatewayType = (int) array_shift( $i_rData );
         $algorithm = (int) array_shift( $i_rData );
         $gateway = trim( strtolower( trim( array_shift( $i_rData ) ) ), '.' );
-        $key = array_shift( $i_rData ) ?? "";
+        $key = array_shift( $i_rData ) ?? '';
 
         # Validate it.
         switch ( $gatewayType ) {

@@ -30,7 +30,7 @@ use JDWX\DNSQuery\Packet\Packet;
  * TYPE65534 - Private space
  *
  * Since Bind 9.8 beta, it uses a private recode as documented
- * in the Bind ARM, chapter 4, "Private-type records.
+ * in the Bind ARM, chapter 4, "Private-type records."
  * Basically they store signing process state.
  *
  */

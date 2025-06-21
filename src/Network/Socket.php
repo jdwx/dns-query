@@ -7,8 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Network;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\BaseQuery;
+use JDWX\DNSQuery\Exceptions\Exception;
 
 
 /**
@@ -37,11 +37,12 @@ use JDWX\DNSQuery\BaseQuery;
  */
 class Socket {
 
+
     /** @const TCP socket type code */
-    public const SOCK_STREAM = SOCK_STREAM;
+    public const int SOCK_STREAM = SOCK_STREAM;
 
     /** @const UDP socket type code */
-    public const SOCK_DGRAM = SOCK_DGRAM;
+    public const int SOCK_DGRAM = SOCK_DGRAM;
 
     /** @var string The last socket error encountered. */
     public string $lastError;
@@ -83,10 +84,10 @@ class Socket {
     /**
      * constructor - set the port details
      *
-     * @param int    $i_type Type of socket to use (i.e., Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
+     * @param int $i_type Type of socket to use (i.e., Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
      * @param string $i_remoteAddress IP address to connect to
-     * @param int    $i_remotePort IP port to connect to
-     * @param float  $i_timeout Timeout value (in seconds) to use for socket functions
+     * @param int $i_remotePort IP port to connect to
+     * @param float $i_timeout Timeout value (in seconds) to use for socket functions
      */
     public function __construct( int $i_type, string $i_remoteAddress, int $i_remotePort, float $i_timeout = 5.0 ) {
         $this->type = $i_type;
@@ -113,7 +114,7 @@ class Socket {
      *
      * @param ?string $i_localAddress Local IP address to bind to
      *                         or null to let the OS choose
-     * @param ?int    $i_localPort Local IP port to bind to, or null to let the
+     * @param ?int $i_localPort Local IP port to bind to, or null to let the
      *                      OS choose
      *
      * @return void
@@ -163,7 +164,7 @@ class Socket {
 
         # Create socket.
         $errno = 0;
-        $errorString = "";
+        $errorString = '';
 
         switch ( $this->type ) {
             case Socket::SOCK_STREAM:
@@ -240,7 +241,7 @@ class Socket {
      * Read a response from a DNS server
      *
      * @param int &$o_size (output) The size of the DNS packet read is passed back
-     * @param int  $i_maxSize Max data size that the caller wants
+     * @param int $i_maxSize Max data size that the caller wants
      *
      * @return bool|string Binary data from the server on success, otherwise false
      */

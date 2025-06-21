@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Data\ReturnCode;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Network\Socket;
 use JDWX\DNSQuery\Network\TCPTransport;
 use JDWX\DNSQuery\Network\TransportManager;
@@ -35,11 +37,8 @@ use JDWX\DNSQuery\RR\TSIG;
 class BaseQuery {
 
 
-    /** @const The version of the DNS library */
-    public const VERSION = '2.0.0';
-
     /** @const The default path to a resolv.conf file. */
-    public const RESOLV_CONF = '/etc/resolv.conf';
+    public const string RESOLV_CONF = '/etc/resolv.conf';
 
     /** @var null|TSIG|SIG the TSIG or SIG RR object for authentication */
     protected TSIG|SIG|null $authSignature = null;
@@ -759,12 +758,12 @@ class BaseQuery {
             }
 
             # Make sure the response code in the header is ok.
-            if ( $response->header->rCode != Lookups::RCODE_NOERROR ) {
+            if ( $response->header->rCode !== ReturnCode::NOERROR->value ) {
 
                 $this->lastException = new Exception(
 
                     "DNS request to {$ns} failed: " .
-                    Lookups::$resultCodeMessages[ $response->header->rCode ],
+                    ReturnCode::from( $response->header->rCode )->decode(),
                     $response->header->rCode,
                     null,
                     $i_request,

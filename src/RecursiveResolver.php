@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\AAAA;
@@ -31,7 +32,7 @@ class RecursiveResolver {
     /** @var array<string, Resolver> A stash of resolvers with given name server lists. */
     protected array $resolvers = [];
 
-    /** @var array<string, mixed[]> */
+    /** @var array<string, list<string>|null> */
     protected array $addressCache = [];
 
     protected bool $debug = false;
@@ -120,7 +121,7 @@ class RecursiveResolver {
 
 
     /**
-     * @return mixed[] The list of addresses for the name server.
+     * @return list<string> The list of addresses for the name server.
      *
      * When a name server is listed in the authority section but it isn't given an address in the
      * glue records, we have to start over and look up that name server separately.

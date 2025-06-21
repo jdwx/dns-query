@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Exceptions\Exception;
 use OpenSSLAsymmetricKey;
 
 
@@ -31,6 +32,8 @@ use OpenSSLAsymmetricKey;
  *
  */
 class PrivateKey {
+
+
     /** @var string Filename that was loaded; stored for reference */
     public string $filename;
 
@@ -139,7 +142,7 @@ class PrivateKey {
         }
 
         # Parse the key name.
-        if ( ! preg_match( "/K(.*)\.\+(\d{3})\+(\d*)\.private/", $keyName, $matches ) ) {
+        if ( ! preg_match( '/K(.*)\.\+(\d{3})\+(\d*)\.private/', $keyName, $matches ) ) {
             throw new Exception(
                 'file ' . $keyName . ' does not look like a private key file!',
                 Lookups::E_OPENSSL_INV_PKEY

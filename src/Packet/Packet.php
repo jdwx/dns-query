@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Packet;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Question;
 use JDWX\DNSQuery\RR\RR;
@@ -47,6 +47,7 @@ use Stringable;
  */
 class Packet implements Stringable {
 
+
     /** @var string Full binary data for this packet. */
     public string $rdata;
 
@@ -78,7 +79,7 @@ class Packet implements Stringable {
     /**
      * parses a domain label from a DNS Packet at the given offset
      *
-     * @param Packet       $packet Packet to look in for the domain name
+     * @param Packet $packet Packet to look in for the domain name
      * @param int         &$offset (input/output) Offset into the given packet object
      *
      * @return ?string The domain name or null if it's invalid or not found.
@@ -121,7 +122,6 @@ class Packet implements Stringable {
      * @return string
      */
     public static function pack( string $name ) : string {
-        $offset = 0;
         $names = explode( '.', $name );
         $compName = '';
 
@@ -131,7 +131,6 @@ class Packet implements Stringable {
             $length = strlen( $first );
 
             $compName .= pack( 'Ca*', $length, $first );
-            $offset += $length + 1;
         }
 
         $compName .= "\0";
@@ -174,7 +173,7 @@ class Packet implements Stringable {
      * This logic was based on the Net::DNS::Packet::dn_comp() function
      * by Michael Fuhr
      *
-     * @param string  $name Name to be compressed
+     * @param string $name Name to be compressed
      * @param int    &$offset Offset into the given packet object
      *
      * @return string
@@ -252,7 +251,7 @@ class Packet implements Stringable {
      * by Michael Fuhr
      *
      * @param int         &$io_offset (input/output) Offset into the given packet object
-     * @param bool         $i_escapeDotLiterals Escape periods in names
+     * @param bool $i_escapeDotLiterals Escape periods in names
      *
      * @return ?string The domain name, or null if it's invalid or not found.
      */
@@ -316,7 +315,7 @@ class Packet implements Stringable {
      *  and throws an exception on failure (contrast static::expand()).
      *
      * @param int  &$io_offset (input/output) Offset into the given Packet object
-     * @param bool  $i_escapeDotLiterals if we should escape periods in names
+     * @param bool $i_escapeDotLiterals if we should escape periods in names
      *
      * @return string the expanded domain name
      *
@@ -399,4 +398,6 @@ class Packet implements Stringable {
 
         return true;
     }
+
+
 }

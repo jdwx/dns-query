@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpClassNamingConventionInspection */
 
 
 declare( strict_types = 1 );
@@ -51,7 +51,7 @@ class MX extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'pri' => "int", 'target' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'pri' => 'int', 'target' => 'string' ] )] public function getPHPRData() : array {
         return [
             'pri' => $this->preference,
             'target' => $this->exchange,
@@ -107,4 +107,6 @@ class MX extends RR {
     protected function rrToString() : string {
         return $this->preference . ' ' . $this->cleanString( $this->exchange ) . '.';
     }
+
+
 }

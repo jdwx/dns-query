@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Cache;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 
@@ -71,7 +71,7 @@ interface ICache {
     /**
      * Add a new key/response pair to the cache
      *
-     * @param string         $i_key Key for the new response
+     * @param string $i_key Key for the new response
      * @param ResponsePacket $i_rsp Response to store in cache
      *
      * @return void

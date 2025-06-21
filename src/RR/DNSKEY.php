@@ -65,12 +65,13 @@ class DNSKEY extends RR {
      * @return int
      */
     protected function getKeyTag() : int {
-        $key = array_values( unpack( "C*", $this->rdata ) );
+        $key = array_values( unpack( 'C*', $this->rdata ) );
         $keySize = $this->rdLength;
 
         $ac = 0;
-        for ( $ii = 0 ; $ii < $keySize ; $ii++ )
+        for ( $ii = 0 ; $ii < $keySize ; $ii++ ) {
             $ac += ( $ii & 1 ) ? $key[ $ii ] : $key[ $ii ] << 8;
+        }
 
         $ac += ( $ac >> 16 ) & 0xFFFF;
         return $ac & 0xFFFF;

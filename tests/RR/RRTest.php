@@ -4,16 +4,14 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\tests\RR;
+namespace JDWX\DNSQuery\Tests\RR;
 
 
-use JDWX\DNSQuery\Exception;
-use JDWX\DNSQuery\Lookups;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\RR\RR;
 use JDWX\DNSQuery\RR\TXT;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 
 /**
@@ -213,16 +211,12 @@ final class RRTest extends TestCase {
 
 
     public function testFromStringForUnimplementedType() : void {
-        Lookups::$rrTypesByName[ 'UNIMPLEMENTED' ] = 9999; // Simulate an unimplemented type.
-        Lookups::$rrTypesIdToClass[ 9999 ] = 'Not even a little bit.';
         self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN UNIMPLEMENTED 1.2.3.4' );
     }
 
 
     public function testFromStringForWrongRRClass() : void {
-        Lookups::$rrTypesByName[ 'SAY_WHAT' ] = 9998; // Simulate a breathtakingly incompetent developer.
-        Lookups::$rrTypesIdToClass[ 9998 ] = stdClass::class;
         self::expectException( Exception::class );
         RR::fromString( 'example.com. 3600 IN SAY_WHAT 1.2.3.4' );
     }

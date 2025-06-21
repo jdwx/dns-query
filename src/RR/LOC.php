@@ -49,15 +49,15 @@ class LOC extends RR {
 
 
     # Some conversion values
-    public const CONV_SEC          = 1000;
+    public const int CONV_SEC          = 1000;
 
-    public const CONV_MIN          = 60000;
+    public const int CONV_MIN          = 60000;
 
-    public const CONV_DEG          = 3600000;
+    public const int CONV_DEG          = 3600000;
 
-    public const REFERENCE_ALT     = 10000000;
+    public const int REFERENCE_ALT     = 10000000;
 
-    public const REFERENCE_LAT_LON = 2147483648;
+    public const int REFERENCE_LAT_LON = 2147483648;
 
     /** @var int[] used for quick power-of-ten lookups */
     private static array $powerOfTen = [

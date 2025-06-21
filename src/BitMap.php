@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Data\RecordType;
+
+
 /**
  * DNS Library for handling lookups and updates.
  *
@@ -29,6 +32,8 @@ namespace JDWX\DNSQuery;
  *
  */
 class BitMap {
+
+
     /**
      * builds a RR Bit map from an array of RR type names
      *
@@ -50,9 +55,8 @@ class BitMap {
             $rr = strtoupper( $rr );
 
             # Get the type id for the RR.
-            if ( array_key_exists( $rr, Lookups::$rrTypesByName ) ) {
-
-                $type = Lookups::$rrTypesByName[ $rr ];
+            $type = RecordType::tryNameToId( $rr );
+            if ( is_int( $type ) ) {
 
                 # Skip meta types or qTypes.
                 if ( ( isset( Lookups::$rrQTypesById[ $type ] ) )
@@ -167,22 +171,16 @@ class BitMap {
 
             $bLen = strlen( $bitString );
             for ( $ii = 0 ; $ii < $bLen ; $ii++ ) {
-
                 if ( $bitString[ $ii ] == '1' ) {
-
-                    $type = $xx[ 'window' ] * 256 + $ii;
-
-                    if ( isset( Lookups::$rrTypesById[ $type ] ) ) {
-
-                        $output[] = Lookups::$rrTypesById[ $type ];
-                    } else {
-
-                        $output[] = 'TYPE' . $type;
-                    }
+                    $typeId = $xx[ 'window' ] * 256 + $ii;
+                    $typeName = RecordType::tryIdToName( $typeId ) ?? 'TYPE' . $typeId;
+                    $output[] = $typeName;
                 }
             }
         }
 
         return $output;
     }
+
+
 }

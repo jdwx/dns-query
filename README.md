@@ -18,13 +18,12 @@ You can require it directly via Composer: https://packagist.org/packages/jdwx/dn
 composer require jdwx/dns-query
 ```
 
-Or download the source from Github: https://github.com/jdwx/dns-query.git
+Or download the source from GitHub: https://github.com/jdwx/dns-query.git
 
 ## Requirements ##
 
 * PHP 8.1+
 * The PHP INI setting `mbstring.func_overload` equals 0, 1, 4, or 5.
-
 
 ## Using DNSQuery ##
 
@@ -57,7 +56,7 @@ array(1) {
 }
 ```
 
-But it allows specifying additional options, like what name server to use 
+But it allows specifying additional options, like what name server to use
 for the lookup:
 
 ```php
@@ -70,7 +69,7 @@ var_dump( $out );
 You can also specify a list of name servers or a custom resolv.conf file
 to use for the lookup. (See the examples.)
 
-For repeated queries, the resolver should be instantiated.  It provides
+For repeated queries, the resolver should be instantiated. It provides
 a compatability interface in that form as well:
 
 ```php
@@ -81,7 +80,7 @@ var_dump( $out );
 
 (Produces the same output as above.)
 
-The native query interface returns full detail about the 
+The native query interface returns full detail about the
 response from the name server contacted:
 
 ```php
@@ -196,7 +195,7 @@ tested, and not all RRs have test coverage.
 ## History ##
 
 This package was forked from Net_DNS2, which was maintained by Mike
-Pultz until 2020.  Key differences are:
+Pultz until 2020. Key differences are:
 
 * PEAR support has been removed.
 * Certain things that were previously optional (e.g., the [filter extension](https://www.php.net/manual/en/book.filter.php)) are now required.
@@ -212,9 +211,9 @@ required adherence to certain coding standards in order to support this work.
 This is therefore likely only suited for new development.
 
 The original package represents an enormous amount of work
-done over many years.  As such Mike Pultz deserves full credit for 
+done over many years. As such Mike Pultz deserves full credit for
 most of this package; most of what I am doing is window dressing and
-adapting it to meet my specific needs.  But since this is a public
+adapting it to meet my specific needs. But since this is a public
 repository, I wanted to make clear that I do not claim credit for Mike's
 original work.
 

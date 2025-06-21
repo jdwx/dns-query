@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 
@@ -45,27 +45,27 @@ class CERT extends RR {
 
 
     # Formats allowed for certificates
-    public const CERT_FORMAT_RES     = 0;
+    public const int CERT_FORMAT_RES     = 0;
 
-    public const CERT_FORMAT_PKIX    = 1;
+    public const int CERT_FORMAT_PKIX    = 1;
 
-    public const CERT_FORMAT_SPKI    = 2;
+    public const int CERT_FORMAT_SPKI    = 2;
 
-    public const CERT_FORMAT_PGP     = 3;
+    public const int CERT_FORMAT_PGP     = 3;
 
-    public const CERT_FORMAT_IPKIX   = 4;
+    public const int CERT_FORMAT_IPKIX   = 4;
 
-    public const CERT_FORMAT_ISPKI   = 5;
+    public const int CERT_FORMAT_ISPKI   = 5;
 
-    public const CERT_FORMAT_IPGP    = 6;
+    public const int CERT_FORMAT_IPGP    = 6;
 
-    public const CERT_FORMAT_ACPKIX  = 7;
+    public const int CERT_FORMAT_ACPKIX  = 7;
 
-    public const CERT_FORMAT_IACPKIX = 8;
+    public const int CERT_FORMAT_IACPKIX = 8;
 
-    public const CERT_FORMAT_URI     = 253;
+    public const int CERT_FORMAT_URI     = 253;
 
-    public const CERT_FORMAT_OID     = 254;
+    public const int CERT_FORMAT_OID     = 254;
 
     /** @var array<string, int> Map format names to IDs */
     public array $certFormatNameToId = [];

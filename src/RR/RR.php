@@ -26,7 +26,9 @@ namespace JDWX\DNSQuery\RR;
  */
 
 
-use JDWX\DNSQuery\Exception;
+use InvalidArgumentException;
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 use JetBrains\PhpStorm\ArrayShape;
@@ -106,10 +108,9 @@ abstract class RR {
                 );
             }
         } else {
-            $class = Lookups::$rrTypesClassToId[ static::class ];
-            /** @phpstan-ignore function.alreadyNarrowedType */
-            if ( is_int( $class ) ) {
-                $this->type = Lookups::$rrTypesById[ $class ];
+            $type = RecordType::tryFromClassName( static::class );
+            if ( $type instanceof RecordType ) {
+                $this->type = $type->name;
             }
 
             $this->class = 'IN';
@@ -167,12 +168,6 @@ abstract class RR {
 
             switch ( true ) {
                 case is_numeric( $value ):
-                    # This is here because of a bug in is_numeric() in certain versions of
-                    # PHP on Windows.
-                    # Unable to verify, but it doesn't hurt anything. - JDWX 2025-04-12
-                    /** @phpstan-ignore identical.alwaysFalse */
-                case ( $value === 0 ):
-
                     $ttl = (int) array_shift( $values );
                     if ( $ttl < 0 || $ttl > 2147483647 ) {
                         throw new Exception(
@@ -193,8 +188,7 @@ abstract class RR {
                     $class = strtoupper( array_shift( $values ) );
                     break;
 
-                case isset( Lookups::$rrTypesByName[ strtoupper( $value ) ] ):
-
+                case RecordType::isValidName( $value ):
                     $type = strtoupper( array_shift( $values ) );
                     break 2;
 
@@ -215,12 +209,13 @@ abstract class RR {
         }
 
         # Look up the class to use.
-        $className = Lookups::$rrTypesIdToClass[ Lookups::$rrTypesByName[ $type ] ];
-
-        if ( ! class_exists( $className ) ) {
+        try {
+            $className = RecordType::nameToClassName( $type );
+        } catch ( InvalidArgumentException $e ) {
             throw new Exception(
-                'un-implemented resource record type: ' . $type,
-                Lookups::E_RR_INVALID
+                $e->getMessage(),
+                Lookups::E_RR_INVALID,
+                i_previous: $e
             );
         }
 
@@ -299,16 +294,17 @@ abstract class RR {
         }
 
         # Lookup the class to use.
-        $class = Lookups::$rrTypesIdToClass[ $object[ 'type' ] ];
-
-        if ( ! class_exists( $class ) ) {
+        try {
+            $typeClass = RecordType::idToClassName( $object[ 'type' ] );
+        } catch ( InvalidArgumentException $e ) {
             throw new Exception(
-                'unimplemented resource record type: ' . $object[ 'type' ],
-                Lookups::E_RR_INVALID
+                $e->getMessage(),
+                Lookups::E_RR_INVALID,
+                i_previous: $e
             );
         }
 
-        $obj = new $class( $packet, $object );
+        $obj = new $typeClass( $packet, $object );
         if ( $obj instanceof RR ) {
             $packet->offset += $object[ 'rdlength' ];
         }
@@ -398,7 +394,7 @@ abstract class RR {
             # The class value is different for OPT types.
             $data .= pack(
                 'nnN',
-                Lookups::$rrTypesByName[ $this->type ],
+                RecordType::nameToId( $this->type ),
                 $this->class,
                 $this->ttl
             );
@@ -406,7 +402,7 @@ abstract class RR {
 
             $data .= pack(
                 'nnN',
-                Lookups::$rrTypesByName[ $this->type ],
+                RecordType::nameToId( $this->type ),
                 Lookups::$classesByName[ $this->class ],
                 $this->ttl
             );
@@ -463,7 +459,7 @@ abstract class RR {
      */
     public function set( Packet $i_packet, array $i_rr ) : bool {
         $this->name = $i_rr[ 'name' ];
-        $this->type = Lookups::$rrTypesById[ $i_rr[ 'type' ] ];
+        $this->type = RecordType::idToName( $i_rr[ 'type' ] );
 
         # For RR OPT (41), the class value includes the requestor's UDP payload size,
         # and not a class value

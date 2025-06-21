@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\Packet;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -51,7 +51,7 @@ class HINFO extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'cpu' => "string", 'os' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'cpu' => 'string', 'os' => 'string' ] )] public function getPHPRData() : array {
         return [
             'cpu' => $this->cpu,
             'os' => $this->os,
@@ -109,7 +109,7 @@ class HINFO extends RR {
 
     /** @inheritDoc */
     protected function rrToString() : string {
-        return static::formatString( $this->cpu ) . ' ' . $this->formatString( $this->os );
+        return static::formatString( $this->cpu ) . ' ' . self::formatString( $this->os );
     }
 
 

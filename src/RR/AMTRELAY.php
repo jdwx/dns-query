@@ -40,19 +40,21 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class AMTRELAY extends RR {
 
+
     # Type definitions that match the "type" field below
 
+
     /** @const AMTRELAY type None */
-    public const AMTRELAY_TYPE_NONE = 0;
+    public const int AMTRELAY_TYPE_NONE = 0;
 
     /** @const AMTRELAY type IPv4 */
-    public const AMTRELAY_TYPE_IPV4 = 1;
+    public const int AMTRELAY_TYPE_IPV4 = 1;
 
     /** @const AMTRELAY type IPv6 */
-    public const AMTRELAY_TYPE_IPV6 = 2;
+    public const int AMTRELAY_TYPE_IPV6 = 2;
 
     /** @const AMTRELAY type Domain Name */
-    public const AMTRELAY_TYPE_DOMAIN = 3;
+    public const int AMTRELAY_TYPE_DOMAIN = 3;
 
     /** @var int The precedence for this record */
     public int $precedence;
@@ -211,4 +213,6 @@ class AMTRELAY extends RR {
 
         return $out;
     }
+
+
 }

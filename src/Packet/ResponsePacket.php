@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Packet;
 
 
-use JDWX\DNSQuery\Exception;
+use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Question;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\AAAA;
@@ -37,6 +37,8 @@ use JDWX\DNSQuery\RR\RR;
  *
  */
 class ResponsePacket extends Packet {
+
+
     /** @var string The name servers that this response came from. */
     public string $answerFrom;
 
@@ -51,7 +53,7 @@ class ResponsePacket extends Packet {
      * Constructor - builds a new ResponsePacket object
      *
      * @param string $i_data binary DNS packet
-     * @param int    $i_size the length of the DNS packet
+     * @param int $i_size the length of the DNS packet
      *
      * @throws Exception
      */
@@ -70,14 +72,14 @@ class ResponsePacket extends Packet {
      *
      * @param ?string $i_name Name the returned addresses must be authoritative for.
      *                        If null, the name will be taken from the question section.
-     * @param bool    $i_useIPv4 If true, IPv4 addresses will be returned.
-     * @param bool    $i_useIPv6 If true, IPv6 addresses will be returned.
+     * @param bool $i_useIPv4 If true, IPv4 addresses will be returned.
+     * @param bool $i_useIPv6 If true, IPv6 addresses will be returned.
      *
      * @return string[][] List of name server names and their addresses.
      * @throws Exception
      */
     public function extractAuthoritativeAddresses( ?string $i_name = null, bool $i_useIPv4 = true,
-                                                   bool $i_useIPv6 = false ) : array {
+                                                   bool    $i_useIPv6 = false ) : array {
         $names = $this->extractAuthoritativeNameServers( $i_name );
         if ( empty( $names ) ) {
             return [];
@@ -90,10 +92,10 @@ class ResponsePacket extends Packet {
                 if ( $rr->name != $name ) {
                     continue;
                 }
-                if ( $i_useIPv4 && $rr instanceOf A ) {
+                if ( $i_useIPv4 && $rr instanceof A ) {
                     $out[ $name ][] = $rr->address;
                 }
-                if ( $i_useIPv6 && $rr instanceOf AAAA ) {
+                if ( $i_useIPv6 && $rr instanceof AAAA ) {
                     $out[ $name ][] = $rr->address;
                 }
             }
@@ -142,7 +144,7 @@ class ResponsePacket extends Packet {
      * builds a new ResponsePacket object
      *
      * @param string $i_data binary DNS packet
-     * @param int    $i_size the length of the DNS packet
+     * @param int $i_size the length of the DNS packet
      *
      * @return bool
      * @throws Exception
@@ -205,4 +207,6 @@ class ResponsePacket extends Packet {
 
         return true;
     }
+
+
 }

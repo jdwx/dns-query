@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery;
+namespace JDWX\DNSQuery\Exceptions;
 
 
 use JDWX\DNSQuery\Packet\RequestPacket;
@@ -32,7 +32,10 @@ use JDWX\DNSQuery\Packet\ResponsePacket;
  *
  */
 class Exception extends \Exception {
+
+
     private ?RequestPacket $request;
+
     private ?ResponsePacket $response;
 
 
@@ -40,16 +43,16 @@ class Exception extends \Exception {
      * Constructor - overload the constructor so we can pass in the request
      *               and response object (when it's available)
      *
-     * @param string          $i_message the exception message
-     * @param int             $i_code the exception code
-     * @param ?Exception      $i_previous the previous Exception object, if one exists
-     * @param ?RequestPacket  $i_request the RequestPacket object for this request, if available
+     * @param string $i_message the exception message
+     * @param int $i_code the exception code
+     * @param ?\Exception $i_previous the previous Exception object, if one exists
+     * @param ?RequestPacket $i_request the RequestPacket object for this request, if available
      * @param ?ResponsePacket $i_response the ResponsePacket object for this request, if available
      */
     public function __construct(
         string          $i_message = '',
         int             $i_code = 0,
-        ?Exception      $i_previous = null,
+        ?\Exception     $i_previous = null,
         ?RequestPacket  $i_request = null,
         ?ResponsePacket $i_response = null
     ) {
@@ -84,4 +87,6 @@ class Exception extends \Exception {
     public function getResponse() : ?ResponsePacket {
         return $this->response;
     }
+
+
 }

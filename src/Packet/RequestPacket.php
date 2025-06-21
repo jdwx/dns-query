@@ -7,9 +7,10 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Packet;
 
 
-use JDWX\DNSQuery\Exception;
-use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\BaseQuery;
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\Exception;
+use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Question;
 
 
@@ -35,10 +36,12 @@ use JDWX\DNSQuery\Question;
  *
  */
 class RequestPacket extends Packet {
+
+
     /**
      * Constructor - builds a new RequestPacket object
      *
-     * @param string  $i_name the domain name for the packet
+     * @param string $i_name the domain name for the packet
      * @param ?string $i_type the DNS RR type for the packet
      * @param ?string $i_class the DNS class for the packet
      *
@@ -52,7 +55,7 @@ class RequestPacket extends Packet {
     /**
      * Build a new RequestPacket object
      *
-     * @param string  $i_name Domain name for the packet
+     * @param string $i_name Domain name for the packet
      * @param ?string $i_type RR-type for the packet
      * @param ?string $i_class DNS class for the packet
      *
@@ -96,7 +99,7 @@ class RequestPacket extends Packet {
         }
 
         # Check that the type and class are valid.
-        if ( ( ! isset( Lookups::$rrTypesByName[ $i_type ] ) )
+        if ( ( ! RecordType::isValidName( $i_type ) )
             || ( ! isset( Lookups::$classesByName[ $i_class ] ) )
         ) {
             throw new Exception(
