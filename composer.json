@@ -37,7 +37,7 @@
     "ext-sockets": "*",
     "ext-ctype": "*",
     "jdwx/array-cache": "^1.0",
-    "jdwx/strict": "^1.0.17"
+    "jdwx/strict": "dev-main"
   },
   "require-dev": {
     "phpunit/phpunit": "^10",
