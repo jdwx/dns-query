@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\BaseQuery;
+use JDWX\DNSQuery\Binary;
 use JDWX\DNSQuery\Packet\Packet;
 
 
@@ -135,7 +136,7 @@ class TKEY extends RR {
             $this->otherSize = strlen( $this->otherData );
 
             # Add the algorithm without compression.
-            $data = Packet::pack( $this->algorithm );
+            $data = Binary::packNameUncompressed( $this->algorithm );
 
             # Pack in the inception, expiration, mode, error and key size.
             /** @noinspection SpellCheckingInspection */

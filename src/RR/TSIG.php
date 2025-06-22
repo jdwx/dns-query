@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\RR;
 
 
+use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
@@ -162,15 +164,14 @@ class TSIG extends RR {
             $sigData = $newPacket->get();
 
             # Add the name without compressing.
-            $sigData .= Packet::pack( $this->name );
+            $sigData .= Binary::packNameUncompressed( $this->name );
 
             # Add the class and TTL.
-            $sigData .= pack(
-                'nN', Lookups::$classesByName[ $this->class ], $this->ttl
-            );
+            $sigData .= RecordClass::fromName( $this->class )->toBinary();
+            $sigData .= Binary::pack32BitInt( $this->ttl );
 
             # Add the algorithm name without compression.
-            $sigData .= Packet::pack( strtolower( $this->algorithm ) );
+            $sigData .= Binary::packNameUncompressed( strtolower( $this->algorithm ) );
 
             #  Add the rest of the values.
             /** @noinspection SpellCheckingInspection */
@@ -190,7 +191,7 @@ class TSIG extends RR {
             $this->macSize = strlen( $this->mac );
 
             # Compress the algorithm.
-            $data = Packet::pack( strtolower( $this->algorithm ) );
+            $data = Binary::packNameUncompressed( strtolower( $this->algorithm ) );
 
             # Pack the time, fudge and mac size.
             $data .= pack(

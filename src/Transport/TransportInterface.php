@@ -4,16 +4,16 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Client;
+namespace JDWX\DNSQuery\Transport;
 
 
 use JDWX\DNSQuery\Message\Message;
 
 
-interface ClientInterface {
+interface TransportInterface {
 
 
-    public function query( Message $i_request ) : Message;
+    public function receiveRequest() : Message;
 
 
     public function receiveResponse() : Message;
@@ -22,5 +22,7 @@ interface ClientInterface {
     public function sendRequest( Message $i_request ) : void;
 
 
-}
+    public function sendResponse( Message $i_response ) : void;
 
+
+}

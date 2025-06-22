@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Binary;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
 use JDWX\DNSQuery\RR\ALL;
 use JDWX\DNSQuery\RR\RR;
@@ -218,25 +219,8 @@ enum RecordType: int {
     }
 
 
-    public static function consume( string $i_bin, int &$i_offset ) : self {
-        $x = self::tryConsume( $i_bin, $i_offset );
-        if ( $x instanceof self ) {
-            return $x;
-        }
-        throw new RecordTypeException(
-            'RecordType::consume could not find a matching type.'
-        );
-    }
-
-
-    public static function fromBinary( string $i_bin ) : self {
-        $x = self::tryFromBinary( $i_bin );
-        if ( $x instanceof self ) {
-            return $x;
-        }
-        throw new RecordTypeException(
-            'RecordType::fromBinary could not find a matching type.'
-        );
+    public static function consume( string $i_bin, int &$io_offset ) : self {
+        return self::from( Binary::consume16BitInt( $i_bin, $io_offset ) );
     }
 
 
@@ -302,6 +286,17 @@ enum RecordType: int {
     }
 
 
+    public static function normalize( int|string|self $i_value ) : self {
+        if ( is_int( $i_value ) ) {
+            return self::from( $i_value );
+        }
+        if ( is_string( $i_value ) ) {
+            return self::fromName( $i_value );
+        }
+        return $i_value;
+    }
+
+
     /**
      * @param int $i_id PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
      * @return string The corresponding class name (e.g., 'JDWX\DNSQuery\RR\A', 'JDWX\DNSQuery\RR\CNAME', etc.)
@@ -355,9 +350,7 @@ enum RecordType: int {
 
 
     public static function tryConsume( string $i_bin, int &$i_offset ) : ?self {
-        $st = substr( $i_bin, $i_offset, 2 );
-        $i_offset += 2;
-        return self::tryFromBinary( $st );
+        return self::tryFrom( Binary::consume16BitInt( $i_bin, $i_offset ) );
     }
 
 

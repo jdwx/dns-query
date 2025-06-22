@@ -27,6 +27,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use InvalidArgumentException;
+use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
@@ -68,6 +69,9 @@ use JetBrains\PhpStorm\ArrayShape;
  *
  */
 abstract class RR {
+
+
+    public const int DEFAULT_TTL = 86400;
 
 
     /** @var string The name portion of the resource record */
@@ -114,7 +118,7 @@ abstract class RR {
             }
 
             $this->class = 'IN';
-            $this->ttl = 86400;
+            $this->ttl = static::DEFAULT_TTL;
         }
     }
 
@@ -147,7 +151,7 @@ abstract class RR {
 
         $type = '';
         $class = '';
-        $ttl = 86400;
+        $ttl = static::DEFAULT_TTL;
 
         # Split the line by spaces.
         preg_match_all( '/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"|\\S+/', $line, $m );
@@ -177,7 +181,7 @@ abstract class RR {
                     }
                     break;
 
-                case isset( Lookups::$classesByName[ strtoupper( $value ) ] ):
+                case RecordClass::isValidName( $value ):
 
                     if ( ! empty( $class ) ) {
                         throw new Exception(
@@ -242,6 +246,23 @@ abstract class RR {
         }
 
         return $obj;
+    }
+
+
+    /**
+     * @param array<int|string, mixed> $i_rData RR-specific data
+     * @suppress PhanTypeInstantiateAbstractStatic
+     */
+    public static function make( string $i_stName, int|string|RecordClass $i_class = RecordClass::IN,
+                                 ?int   $i_ttl = null, array $i_rData = [] ) : RR {
+        /** @phpstan-ignore new.static */
+        $rr = new static();
+        $rr->name = $i_stName;
+        $rr->type = RecordType::fromClassName( static::class )->name;
+        $rr->class = RecordClass::normalize( $i_class )->name;
+        $rr->ttl = $i_ttl ?? static::DEFAULT_TTL;
+        $rr->rrFromString( $i_rData );
+        return $rr;
     }
 
 
@@ -403,7 +424,7 @@ abstract class RR {
             $data .= pack(
                 'nnN',
                 RecordType::nameToId( $this->type ),
-                Lookups::$classesByName[ $this->class ],
+                RecordClass::nameToId( $this->class ),
                 $this->ttl
             );
         }
@@ -466,7 +487,7 @@ abstract class RR {
         if ( $this->type == 'OPT' ) {
             $this->class = (string) $i_rr[ 'class' ];
         } else {
-            $this->class = Lookups::$classesById[ $i_rr[ 'class' ] ];
+            $this->class = RecordClass::idToName( $i_rr[ 'class' ] );
         }
 
         $this->ttl = $i_rr[ 'ttl' ];

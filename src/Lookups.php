@@ -34,7 +34,6 @@ use JDWX\DNSQuery\Exceptions\Exception;
 // build the reverse lookup tables; this is just so we don't have to
 // have duplicate static content lying around.
 //
-Lookups::$classesById = array_flip( Lookups::$classesByName );
 Lookups::$algorithmNameToID = array_flip( Lookups::$algorithmIdToName );
 Lookups::$digestNameToId = array_flip( Lookups::$digestIdToName );
 Lookups::$rrQTypesById = array_flip( Lookups::$rrQTypesByName );
@@ -80,22 +79,6 @@ class Lookups {
 
     /** @const OPCODE DSO (RFC 8490) */
     public const int OPCODE_DSO = 6;
-
-
-    /** @const RR Class IN (RFC 1035) */
-    public const int RR_CLASS_IN = 1;
-
-    /** @const RR Class CH (RFC 1035) */
-    public const int RR_CLASS_CH = 3;
-
-    /** @const RR Class HS (RFC 1035) */
-    public const int RR_CLASS_HS = 4;
-
-    /** @const RR Class NONE (RFC 2136) */
-    public const int RR_CLASS_NONE = 254;
-
-    /** @const RR Class ANY (RFC 1035) */
-    public const int RR_CLASS_ANY = 255;
 
 
     # Internal error codes returned by the exceptions class
@@ -314,19 +297,6 @@ class Lookups {
         'TKEY' => 249,    # RFC 2930
         'TSIG' => 250,     # RFC 2845
     ];
-
-    /** @var array<int, string> Map RR class IDs to names */
-    public static array $classesById = [];
-
-    /** @var array<string, int> Map RR class names to IDs */
-    public static array $classesByName = [
-        'IN' => self::RR_CLASS_IN,        # RFC 1035
-        'CH' => self::RR_CLASS_CH,        # RFC 1035
-        'HS' => self::RR_CLASS_HS,        # RFC 1035
-        'NONE' => self::RR_CLASS_NONE,    # RFC 2136
-        'ANY' => self::RR_CLASS_ANY,       # RFC 1035
-    ];
-
 
     /** @var array<int, string> Map opcodes to short text tags. */
     public static array $opcodeTags = [

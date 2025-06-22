@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Packet;
 
 
 use JDWX\DNSQuery\BaseQuery;
+use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
@@ -99,9 +100,7 @@ class RequestPacket extends Packet {
         }
 
         # Check that the type and class are valid.
-        if ( ( ! RecordType::isValidName( $i_type ) )
-            || ( ! isset( Lookups::$classesByName[ $i_class ] ) )
-        ) {
+        if ( ! RecordType::isValidName( $i_type ) || ! RecordClass::isValidName( $i_class ) ) {
             throw new Exception(
                 'invalid type (' . $i_type . ') or class (' . $i_class . ') specified.',
                 Lookups::E_PACKET_INVALID

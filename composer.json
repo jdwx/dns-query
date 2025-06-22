@@ -6,7 +6,7 @@
     }
   },
   "type": "library",
-  "description": "Native PHP DNS Resolver and Updater Library (PHP 8.1+)",
+  "description": "Native PHP DNS Resolver and Updater Library (PHP 8.3+)",
   "keywords": [
     "dns",
     "network"
@@ -18,23 +18,26 @@
     "source": "https://github.com/jdwx/dns-query"
   },
   "authors": [
-	{
-		"name": "Jeff W",
+    {
+      "name": "Jeff W",
       "homepage": "https://github.com/jdwx/"
-	},
+    },
     {
       "name": "Mike Pultz",
       "email": "mike@mikepultz.com",
       "homepage": "https://mikepultz.com/"
     }
   ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
     "php": ">=8.3",
     "ext-filter": "*",
     "ext-openssl": "*",
     "ext-sockets": "*",
     "ext-ctype": "*",
-    "jdwx/array-cache": "^1.0"
+    "jdwx/array-cache": "^1.0",
+    "jdwx/strict": "^1.0.17"
   },
   "require-dev": {
     "phpunit/phpunit": "^10",

@@ -32,7 +32,7 @@ class RecursiveResolver {
     /** @var array<string, Resolver> A stash of resolvers with given name server lists. */
     protected array $resolvers = [];
 
-    /** @var array<string, list<string>|null> */
+    /** @var array<string, list<string>> */
     protected array $addressCache = [];
 
     protected bool $debug = false;

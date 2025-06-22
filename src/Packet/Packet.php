@@ -118,8 +118,9 @@ class Packet implements Stringable {
      * perform any compression.
      *
      * @param string $name the name to be compressed
-     *
      * @return string
+     * @deprecated use Binary::packNameUncompressed() instead.
+     *
      */
     public static function pack( string $name ) : string {
         $names = explode( '.', $name );
