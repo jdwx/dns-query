@@ -15,6 +15,16 @@ enum QR: int {
     case RESPONSE = 1;
 
 
+    public static function fromBool( bool $bool ) : self {
+        return $bool ? self::RESPONSE : self::QUERY;
+    }
+
+
+    public static function fromFlagWord( int $binary ) : self {
+        return self::from( ( $binary >> 15 ) & 0x1 );
+    }
+
+
     public static function fromName( string $name ) : QR {
         $qr = self::tryFromName( $name );
         if ( $qr instanceof self ) {
@@ -34,7 +44,10 @@ enum QR: int {
     }
 
 
-    public static function normalize( int|string|QR $i_qr ) : QR {
+    public static function normalize( bool|int|string|QR $i_qr ) : QR {
+        if ( is_bool( $i_qr ) ) {
+            $i_qr = self::fromBool( $i_qr );
+        }
         if ( is_int( $i_qr ) ) {
             $i_qr = self::from( $i_qr );
         }
@@ -52,6 +65,11 @@ enum QR: int {
             'RESPONSE' => self::RESPONSE,
             default => null,
         };
+    }
+
+
+    public function toFlagWord() : int {
+        return $this->value ? 32768 : 0;
     }
 
 

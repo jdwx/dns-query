@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
-use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Exceptions\Exception;
 
 
@@ -59,62 +58,6 @@ class Lookups {
 
     /** @const No error. */
     public const int E_NONE = 0;
-
-    /** @const Format error */
-    public const int E_DNS_FORMERR = ReturnCode::FORMERR->value;
-
-    /** @const Server failure */
-    public const int E_DNS_SERVFAIL = ReturnCode::SERVFAIL->value;
-
-    /** @const No such domain */
-    public const int E_DNS_NXDOMAIN = ReturnCode::NXDOMAIN->value;
-
-    /** @const Not implemented. */
-    public const int E_DNS_NOTIMP = ReturnCode::NOTIMP->value;
-
-    /** @const Refused */
-    public const int E_DNS_REFUSED = ReturnCode::REFUSED->value;
-
-    /** @const Name exists when it should not */
-    public const int E_DNS_YXDOMAIN = ReturnCode::YXDOMAIN->value;
-
-    /** @const RRset exists when it should not */
-    public const int E_DNS_YXRRSET = ReturnCode::YXRRSET->value;
-
-    /** @const RRset does not exist when it should */
-    public const int E_DNS_NXRRSET = ReturnCode::NXRRSET->value;
-
-    /** @const Not authoritative */
-    public const int E_DNS_NOTAUTH = ReturnCode::NOTAUTH->value;
-
-    /** @const Prerequisite zone not within update zone */
-    public const int E_DNS_NOTZONE = ReturnCode::NOTZONE->value;
-
-    # 11-15 reserved
-
-    /** @const Bad signature */
-    public const int E_DNS_BADSIG = ReturnCode::BADSIG->value;
-
-    /** @const Bad key value */
-    public const int E_DNS_BADKEY = ReturnCode::BADKEY->value;
-
-    /** @const Bad time value */
-    public const int E_DNS_BADTIME = ReturnCode::BADTIME->value;
-
-    /** @const Bad mode value */
-    public const int E_DNS_BADMODE = ReturnCode::BADMODE->value;
-
-    /** @const Bad name value */
-    public const int E_DNS_BADNAME = ReturnCode::BADNAME->value;
-
-    /** @const Bad algorithm value */
-    public const int E_DNS_BADALG = ReturnCode::BADALG->value;
-
-    /** @const Bad truncation */
-    public const int E_DNS_BADTRUNC = ReturnCode::BADTRUNC->value;
-
-    /** @const Bad cookie */
-    public const int E_DNS_BADCOOKIE = ReturnCode::BADCOOKIE->value;
 
     # Other error conditions
 

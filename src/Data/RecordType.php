@@ -229,6 +229,15 @@ enum RecordType: int {
     }
 
 
+    public static function fromBinary( string $i_bin ) : self {
+        $x = self::tryFromBinary( $i_bin );
+        if ( $x instanceof self ) {
+            return $x;
+        }
+        throw new RecordTypeException( 'Invalid binary data for RecordType' );
+    }
+
+
     public static function fromClassName( string $i_stClassName ) : self {
         $x = self::tryFromClassName( $i_stClassName );
         if ( $x instanceof self ) {
@@ -263,7 +272,7 @@ enum RecordType: int {
 
 
     public static function idToName( int $i_id ) : string {
-        return self::tryFrom( $i_id )?->name
+        return self::tryFrom( $i_id )->name
             ?? throw new RecordTypeException( "Unknown record type ID: {$i_id}" );
     }
 

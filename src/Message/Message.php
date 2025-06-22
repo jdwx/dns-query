@@ -7,32 +7,38 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
+use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\QR;
+use JDWX\DNSQuery\Data\RA;
+use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
+use JDWX\DNSQuery\Data\TC;
+use JDWX\DNSQuery\Data\ZBits;
+use JDWX\DNSQuery\RR\OPT;
 use JDWX\DNSQuery\RR\RR;
 
 
 class Message implements \Stringable {
 
 
-    public int $id;
+    public int $id = 0;
 
-    public QR $qr;
+    public QR $qr = QR::QUERY;
 
     public OpCode $opcode = OpCode::QUERY;
 
-    public bool $aa = false;
+    public AA $aa = AA::NON_AUTHORITATIVE;
 
-    public bool $tc = false;
+    public TC $tc = TC::NOT_TRUNCATED;
 
-    public bool $rd = true;
+    public RD $rd = RD::RECURSION_DESIRED;
 
-    public bool $ra = false;
+    public RA $ra = RA::RECURSION_NOT_AVAILABLE;
 
-    public int $z = 0;
+    public ZBits $z;
 
     public ReturnCode $returnCode = ReturnCode::NOERROR;
 
@@ -48,23 +54,28 @@ class Message implements \Stringable {
     /** @var list<RR> */
     public array $additional = [];
 
+    /** @var list<OPT> */
+    public array $opt = [];
 
-    public function __construct( int|QR $i_qr, public ?int $i_id = null ) {
-        $this->qr = $i_qr->normalize( $i_qr );
-        $this->id = $i_id ?? random_int( 0, 65535 );
+
+    public function __construct() {
+        $this->z = new ZBits();
     }
 
 
     public static function request( string                 $domain, int|string|RecordType $type = RecordType::ANY,
                                     int|string|RecordClass $class = RecordClass::IN ) : self {
-        $msg = new self( QR::QUERY );
+        $msg = new self();
+        $msg->setRandomId();
         $msg->question[] = new Question( $domain, $type, $class );
         return $msg;
     }
 
 
     public static function response( Message $i_request ) : self {
-        $msg = new self( QR::RESPONSE, $i_request->id );
+        $msg = new self();
+        $msg->qr = QR::RESPONSE;
+        $msg->id = $i_request->id;
         $msg->question = $i_request->question;
         $msg->rd = $i_request->rd;
         return $msg;
@@ -77,15 +88,25 @@ class Message implements \Stringable {
             . ', status: ' . $this->returnCode->name
             . ', id: ' . $this->id . "\n";
         $st .= ';; flags: ' . ( $this->qr === QR::RESPONSE ? 'qr ' : '' )
-            . ( $this->aa ? 'aa ' : '' )
-            . ( $this->tc ? 'tc ' : '' )
-            . ( $this->rd ? 'rd ' : '' )
-            . ( $this->ra ? 'ra ' : '' )
-            . '; z: ' . $this->z . ' '
+            . trim( $this->aa->toFlag()
+                . $this->tc->toFlag()
+                . $this->rd->toFlag()
+                . $this->ra->toFlag()
+            )
+            . '; z: ' . $this->z
             . '; QUERY: ' . count( $this->question )
             . ', ANSWER: ' . count( $this->answer )
             . ', AUTHORITY: ' . count( $this->authority )
             . ', ADDITIONAL: ' . count( $this->additional ) . "\n\n";
+
+        if ( count( $this->opt ) > 0 ) {
+            /** @noinspection SpellCheckingInspection */
+            $st .= ";; OPT PSEUDOSECTION:\n";
+            foreach ( $this->opt as $opt ) {
+                $st .= ';' . $opt . "\n";
+            }
+            $st .= "\n";
+        }
 
         if ( count( $this->question ) > 0 ) {
             $st .= ";; QUESTION SECTION:\n";
@@ -120,6 +141,35 @@ class Message implements \Stringable {
         }
 
         return $st;
+    }
+
+
+    public function getFlagWord() : int {
+        return $this->qr->toFlagWord()
+            | $this->opcode->toFlagWord()
+            | $this->aa->toFlagWord()
+            | $this->tc->toFlagWord()
+            | $this->rd->toFlagWord()
+            | $this->ra->toFlagWord()
+            | $this->z->toFlagWord()
+            | $this->returnCode->toFlagWord();
+    }
+
+
+    public function setFlagWord( int $i_iWord ) : void {
+        $this->qr = QR::fromFlagWord( $i_iWord );
+        $this->opcode = OpCode::fromFlagWord( $i_iWord );
+        $this->aa = AA::fromFlagWord( $i_iWord );
+        $this->tc = TC::fromFlagWord( $i_iWord );
+        $this->rd = RD::fromFlagWord( $i_iWord );
+        $this->ra = RA::fromFlagWord( $i_iWord );
+        $this->z = ZBits::fromFlagWord( $i_iWord );
+        $this->returnCode = ReturnCode::fromFlagWord( $i_iWord );
+    }
+
+
+    public function setRandomId() : void {
+        $this->id = random_int( 0, 65535 );
     }
 
 

@@ -27,6 +27,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use InvalidArgumentException;
+use JDWX\DNSQuery\Binary;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -120,6 +121,29 @@ abstract class RR {
             $this->class = 'IN';
             $this->ttl = static::DEFAULT_TTL;
         }
+    }
+
+
+    public static function fromBinary( string $i_stData, int &$io_iOffset ) : RR {
+        $stName = Binary::consumeName( $i_stData, $io_iOffset );
+        $type = RecordType::consume( $i_stData, $io_iOffset );
+        $class = RecordClass::consume( $i_stData, $io_iOffset );
+        $ttl = Binary::consume32BitInt( $i_stData, $io_iOffset );
+        $rdLength = Binary::consume16BitInt( $i_stData, $io_iOffset );
+        $uRDataOffset = $io_iOffset;
+        $rdata = Binary::consume( $i_stData, $io_iOffset, $rdLength );
+
+        $stClass = $type->toClassName();
+        $rr = new $stClass();
+        assert( $rr instanceof RR );
+        $rr->name = $stName;
+        $rr->type = $type->name;
+        $rr->class = $class->name;
+        $rr->ttl = $ttl;
+        $rr->rdLength = $rdLength;
+        $rr->rdata = $rdata;
+        $rr->rrFromBinary( $i_stData, $uRDataOffset, $rdLength );
+        return $rr;
     }
 
 
@@ -468,6 +492,12 @@ abstract class RR {
     }
 
 
+    /** @param array<string, int> $io_rLabelMap */
+    public function rrToBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
+        return chr( 4 ) . 'nope';
+    }
+
+
     /**
      * builds a new RR object
      *
@@ -495,6 +525,18 @@ abstract class RR {
         $this->rdata = substr( $i_packet->rdata, $i_packet->offset, $i_rr[ 'rdlength' ] );
 
         return $this->rrSet( $i_packet );
+    }
+
+
+    /** @param array<string, int> $io_rLabelMap */
+    public function toBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
+        $type = RecordType::fromName( $this->type );
+        $class = RecordClass::fromName( $this->class );
+        $st = Binary::packName( $this->name, $io_rLabelMap, $i_uOffset )
+            . $type->toBinary()
+            . $class->toBinary()
+            . Binary::pack32BitInt( $this->ttl );
+        return $st . $this->rrToBinary( $io_rLabelMap, $i_uOffset + strlen( $st ) );
     }
 
 
@@ -551,6 +593,11 @@ abstract class RR {
         }
 
         return $data;
+    }
+
+
+    protected function rrFromBinary( string $i_stData, int $i_rDataOffset, int $i_rdLength ) : void {
+        # Can't actually do anything here yet.
     }
 
 

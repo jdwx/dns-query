@@ -20,7 +20,7 @@ interface TransportCodecInterface {
     public function decode( string $i_packet ) : Message;
 
 
-    public function encode( Message $i_message ) : string;
+    public function encode( Message $i_msg ) : string;
 
 
 }

@@ -33,6 +33,15 @@ enum RecordClass: int {
     }
 
 
+    public static function fromBinary( string $i_stBinary ) : self {
+        $x = self::tryFromBinary( $i_stBinary );
+        if ( $x instanceof self ) {
+            return $x;
+        }
+        throw new RecordClassException( 'Invalid binary data for RecordClass' );
+    }
+
+
     public static function fromName( string $i_stName ) : self {
         $x = self::tryFromName( $i_stName );
         if ( $x instanceof self ) {

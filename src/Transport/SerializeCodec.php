@@ -18,8 +18,8 @@ class SerializeCodec implements TransportCodecInterface {
     }
 
 
-    public function encode( Message $i_message ) : string {
-        return serialize( $i_message );
+    public function encode( Message $i_msg ) : string {
+        return serialize( $i_msg );
     }
 
 

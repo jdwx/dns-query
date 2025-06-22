@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Data;
 use JDWX\DNSQuery\Exceptions\ReturnCodeException;
 
 
+/** @suppress PhanInvalidConstantExpression */
 enum ReturnCode: int {
 
 
@@ -84,6 +85,11 @@ enum ReturnCode: int {
     ];
 
 
+    public static function fromFlagWord( int $binary ) : self {
+        return self::from( $binary & 0x0F );
+    }
+
+
     public static function fromName( string $i_stName ) : self {
         $x = self::tryFromName( $i_stName );
         if ( $x instanceof self ) {
@@ -122,6 +128,11 @@ enum ReturnCode: int {
 
     public function decode() : string {
         return self::MESSAGES[ $this->value ] ?? "Return code {$this->name} ({$this->value})";
+    }
+
+
+    public function toFlagWord() : int {
+        return $this->value & 0x0F;
     }
 
 

@@ -26,6 +26,11 @@ enum OpCode: int {
     case DSO    = 6; // DNS Stateful Operations (DSO) RFC 8490
 
 
+    public static function fromFlagWord( int $binary ) : self {
+        return self::from( ( $binary >> 11 ) & 0x0F );
+    }
+
+
     /**
      * Convert an opcode name to its enum value. This is case-insensitive.
      * Throws an exception if the name is not valid.
@@ -139,6 +144,11 @@ enum OpCode: int {
             return null;
         }
         return $uOpCode;
+    }
+
+
+    public function toFlagWord() : int {
+        return ( $this->value & 0x0F ) << 11;
     }
 
 
