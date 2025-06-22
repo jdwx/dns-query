@@ -22,7 +22,7 @@ Or download the source from GitHub: https://github.com/jdwx/dns-query.git
 
 ## Requirements ##
 
-* PHP 8.1+
+* PHP 8.3+
 * The PHP INI setting `mbstring.func_overload` equals 0, 1, 4, or 5.
 
 ## Using DNSQuery ##
