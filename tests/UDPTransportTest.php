@@ -11,12 +11,14 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Network\UDPTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use ReflectionObject;
 
 
 /** Test the UDPTransport class. */
+#[CoversClass( UDPTransport::class )]
 final class UDPTransportTest extends TestCase {
 
 

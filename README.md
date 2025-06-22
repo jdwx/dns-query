@@ -182,9 +182,21 @@ class JDWX\DNSQuery\Packet\ResponsePacket#13 (12) {
 }
 ```
 
-## Documentation
+## Updating from 2.x
 
-Documentation is being developed [here](https://github.com/jdwx/dns-query/wiki).
+The API has changed significantly from the 2.x series. The Lookup class has been phased out. The class constants and static array properties there have been moved to separate enums in the JDWX\DNSQuery\Data namespace. They are roughly equivalent. E.g., update
+`Lookup::OPCODE_QUERY` to `OpCode::QUERY->value`. The new code works directly with the enums.
+
+These enums have methods to convert to/from the string and integer representations
+used in DNS packets. E.g.:
+
+* `OpCode::from( 0 )` to get an OpCode from an int.
+* `$opCode->value` to get the int from an OpCode.
+* `OpCode::fromName( 'QUERY' )` to get an OpCode from a string.
+* `$opCode->name` to get the string from an OpCode.
+* `OpCode::idToName( 0 )` to get the string name directly from an int. (Replaces Lookup::$opcodeTags.)
+* `OpCode::nameToId( 'QUERY' )` to get the int directly from a string.
+* `OpCode::normalize( $value )` takes an int, string, or OpCode and returns the corresponding OpCode.
 
 ## Stability
 

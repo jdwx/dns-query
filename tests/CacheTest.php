@@ -12,11 +12,13 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Resolver;
 use JDWX\DNSQuery\RR\MX;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\InvalidArgumentException;
 
 
 /** Test the Cache class. */
+#[CoversClass( Cache::class )]
 final class CacheTest extends TestCase {
 
 

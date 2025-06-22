@@ -12,10 +12,12 @@ use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RecursiveResolver;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\CNAME;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
 /** Test the recursive resolver. */
+#[CoversClass( RecursiveResolver::class )]
 final class RecursiveResolverTest extends TestCase {
 
 

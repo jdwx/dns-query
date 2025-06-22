@@ -29,6 +29,7 @@ use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\RR;
 use JDWX\DNSQuery\RR\TSIG;
 use JDWX\DNSQuery\Updater;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
  * Test class to test the parsing code
  *
  */
+#[CoversClass( RR::class )]
 final class LegacyParserTest extends TestCase {
 
 

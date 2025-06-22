@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Exceptions\ReturnCodeException;
+
+
 enum ReturnCode: int {
 
 
@@ -38,47 +41,87 @@ enum ReturnCode: int {
 
     case BADSIG = 16; # RFC 2845
 
-    public const int BADVERS = 16; # RFC 6891
+    public const self BADVERS = self::BADSIG; # RFC 6891
 
-    case BADKEY    = 17; # RFC 2845
+    case BADKEY                   = 17; # RFC 2845
 
-    case BADTIME   = 18; # RFC 2845
+    case BADTIME                  = 18; # RFC 2845
 
-    case BADMODE   = 19; # RFC 2930
+    case BADMODE                  = 19; # RFC 2930
 
-    case BADNAME   = 20; # RFC 2930
+    case BADNAME                  = 20; # RFC 2930
 
-    case BADALG    = 21; # RFC 2930
+    case BADALG                   = 21; # RFC 2930
 
-    case BADTRUNC  = 22; # RFC 4635
+    case BADTRUNC                 = 22; # RFC 4635
 
-    case BADCOOKIE = 23; # RFC 7873
+    case BADCOOKIE                = 23; # RFC 7873
+
+    case ZZZ_TEST_ONLY_DO_NOT_USE = 999_999_999; # Internal use only
+
+    private const array MESSAGES = [
+        self::NOERROR->value => 'The request completed successfully.',
+        self::FORMERR->value => 'The name server was unable to interpret the query.',
+        self::SERVFAIL->value => 'The name server was unable to process this query due to a problem with the name server.',
+        self::NXDOMAIN->value => 'The domain name referenced in the query does not exist.',
+        self::NOTIMP->value => 'The name server does not support the requested kind of query.',
+        self::REFUSED->value => 'The name server refuses to perform the specified operation for policy reasons.',
+        self::YXDOMAIN->value => 'Name Exists when it should not.',
+        self::YXRRSET->value => 'RR Set Exists when it should not.',
+        self::NXRRSET->value => 'RR Set that should exist does not.',
+        self::NOTAUTH->value => 'Server Not Authoritative for zone.',
+        self::NOTZONE->value => 'Name not contained in zone.',
+
+        self::BADSIG->value => 'TSIG Signature Failure.',
+        self::BADKEY->value => 'Key not recognized.',
+        self::BADTIME->value => 'Signature out of time window.',
+        self::BADMODE->value => 'Bad TKEY Mode.',
+        self::BADNAME->value => 'Duplicate key name.',
+        self::BADALG->value => 'Algorithm not supported.',
+        self::BADTRUNC->value => 'Bad truncation.',
+        self::DSOTYPENI->value => 'DSO-TYPE-NI (DNSSEC OK) not implemented.',
+        self::BADCOOKIE->value => 'Bad DNS Cookie.',
+    ];
+
+
+    public static function fromName( string $i_stName ) : self {
+        $x = self::tryFromName( $i_stName );
+        if ( $x instanceof self ) {
+            return $x;
+        }
+        throw new ReturnCodeException( "Invalid return code name: {$i_stName}" );
+    }
+
+
+    public static function normalize( int|string|ReturnCode $i_returnCode ) : self {
+        if ( is_int( $i_returnCode ) ) {
+            return self::tryFrom( $i_returnCode ) ?? throw new ReturnCodeException( "Invalid return code ID: {$i_returnCode}" );
+        }
+        if ( is_string( $i_returnCode ) ) {
+            return self::fromName( $i_returnCode );
+        }
+        return $i_returnCode;
+    }
+
+
+    public static function tryFromName( string $i_stName ) : ?self {
+        $i_stName = strtoupper( trim( $i_stName ) );
+        if ( 'BADVERS' === $i_stName ) {
+            return self::BADVERS;
+        }
+        static $cache = [];
+        if ( empty( $cache ) ) {
+            foreach ( self::cases() as $case ) {
+                $cache[ $case->name ] = $case;
+            }
+        }
+
+        return $cache[ $i_stName ] ?? null;
+    }
 
 
     public function decode() : string {
-        return match ( $this ) {
-            self::NOERROR => 'The request completed successfully.',
-            self::FORMERR => 'The name server was unable to interpret the query.',
-            self::SERVFAIL => 'The name server was unable to process this query due to a problem with the name server.',
-            self::NXDOMAIN => 'The domain name referenced in the query does not exist.',
-            self::NOTIMP => 'The name server does not support the requested kind of query.',
-            self::REFUSED => 'The name server refuses to perform the specified operation for policy reasons.',
-            self::YXDOMAIN => 'Name Exists when it should not.',
-            self::YXRRSET => 'RR Set Exists when it should not.',
-            self::NXRRSET => 'RR Set that should exist does not.',
-            self::NOTAUTH => 'Server Not Authoritative for zone.',
-            self::NOTZONE => 'Name not contained in zone.',
-
-            self::BADSIG => 'TSIG Signature Failure.',
-            self::BADKEY => 'Key not recognized.',
-            self::BADTIME => 'Signature out of time window.',
-            self::BADMODE => 'Bad TKEY Mode.',
-            self::BADNAME => 'Duplicate key name.',
-            self::BADALG => 'Algorithm not supported.',
-            self::BADTRUNC => 'Bad truncation.',
-            self::DSOTYPENI => 'DSO-TYPE-NI (DNSSEC OK) not implemented.',
-            self::BADCOOKIE => 'Bad DNS Cookie.',
-        };
+        return self::MESSAGES[ $this->value ] ?? "Return code {$this->name} ({$this->value})";
     }
 
 

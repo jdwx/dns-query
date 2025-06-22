@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
+use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
@@ -14,14 +15,14 @@ use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\RR\RR;
 
 
-class Message {
+class Message implements \Stringable {
 
 
     public int $id;
 
     public QR $qr;
 
-    public int $opcode = 0;
+    public OpCode $opcode = OpCode::QUERY;
 
     public bool $aa = false;
 
@@ -65,7 +66,60 @@ class Message {
     public static function response( Message $i_request ) : self {
         $msg = new self( QR::RESPONSE, $i_request->id );
         $msg->question = $i_request->question;
+        $msg->rd = $i_request->rd;
         return $msg;
+    }
+
+
+    public function __toString() : string {
+        $st = ';; ' . ( $this->qr === QR::QUERY ? 'Query' : 'Query Response' ) . "\n";
+        $st .= ';; ->>HEADER<<- opcode: ' . $this->opcode->name
+            . ', status: ' . $this->returnCode->name
+            . ', id: ' . $this->id . "\n";
+        $st .= ';; flags: ' . ( $this->qr === QR::RESPONSE ? 'qr ' : '' )
+            . ( $this->aa ? 'aa ' : '' )
+            . ( $this->tc ? 'tc ' : '' )
+            . ( $this->rd ? 'rd ' : '' )
+            . ( $this->ra ? 'ra ' : '' )
+            . '; z: ' . $this->z . ' '
+            . '; QUERY: ' . count( $this->question )
+            . ', ANSWER: ' . count( $this->answer )
+            . ', AUTHORITY: ' . count( $this->authority )
+            . ', ADDITIONAL: ' . count( $this->additional ) . "\n\n";
+
+        if ( count( $this->question ) > 0 ) {
+            $st .= ";; QUESTION SECTION:\n";
+            foreach ( $this->question as $q ) {
+                $st .= ';' . $q . "\n";
+            }
+            $st .= "\n";
+        }
+
+        if ( count( $this->answer ) > 0 ) {
+            $st .= ";; ANSWER SECTION:\n";
+            foreach ( $this->answer as $rr ) {
+                $st .= $rr . "\n";
+            }
+            $st .= "\n";
+        }
+
+        if ( count( $this->authority ) > 0 ) {
+            $st .= ";; AUTHORITY SECTION:\n";
+            foreach ( $this->authority as $rr ) {
+                $st .= $rr . "\n";
+            }
+            $st .= "\n";
+        }
+
+        if ( count( $this->additional ) > 0 ) {
+            $st .= ";; ADDITIONAL SECTION:\n";
+            foreach ( $this->additional as $rr ) {
+                $st .= $rr . "\n";
+            }
+            $st .= "\n";
+        }
+
+        return $st;
     }
 
 

@@ -209,60 +209,67 @@ enum RecordType: int {
     case TYPE65534 = 65534;  # Private Bind record
 
 
-    public static function classNameToId( string $i_className ) : int {
-        return self::fromClassName( $i_className )->value;
+    case ZZZ_TEST_ONLY_DO_NOT_USE = 999_999_999; # Internal use only
+
+
+    public static function classNameToId( string $i_stClassName ) : int {
+        return self::fromClassName( $i_stClassName )->value;
     }
 
 
-    public static function classNameToName( string $i_className ) : string {
-        return self::fromClassName( $i_className )->name;
+    public static function classNameToName( string $i_stClassName ) : string {
+        return self::fromClassName( $i_stClassName )->name;
     }
 
 
     public static function consume( string $i_bin, int &$io_offset ) : self {
-        return self::from( Binary::consume16BitInt( $i_bin, $io_offset ) );
+        $id = Binary::consume16BitInt( $i_bin, $io_offset );
+        return self::tryFrom( $id )
+            ?? throw new RecordTypeException( "Invalid record type ID in binary data: {$id}" );
     }
 
 
-    public static function fromClassName( string $i_name ) : self {
-        $x = self::tryFromClassName( $i_name );
+    public static function fromClassName( string $i_stClassName ) : self {
+        $x = self::tryFromClassName( $i_stClassName );
         if ( $x instanceof self ) {
             return $x;
         }
-        throw new RecordTypeException( "Unknown record class: {$i_name}" );
+        throw new RecordTypeException( "Unknown record class: {$i_stClassName}" );
     }
 
 
-    public static function fromName( string $i_name ) : self {
-        $x = self::tryFromName( $i_name );
+    public static function fromName( string $i_stName ) : self {
+        $x = self::tryFromName( $i_stName );
         if ( $x instanceof self ) {
             return $x;
         }
-        throw new RecordTypeException( "Unknown record type: {$i_name}" );
+        throw new RecordTypeException( "Unknown record type: {$i_stName}" );
     }
 
 
-    public static function fromPhpId( int $i_id ) : self {
-        $x = self::tryFromPhpId( $i_id );
+    public static function fromPhpId( int $i_phpId ) : self {
+        $x = self::tryFromPhpId( $i_phpId );
         if ( $x instanceof self ) {
             return $x;
         }
-        throw new RecordTypeException( "Unknown PHP DNS type: {$i_id}" );
+        throw new RecordTypeException( "Unknown PHP DNS type: {$i_phpId}" );
     }
 
 
     public static function idToClassName( int $i_id ) : string {
-        return self::from( $i_id )->toClassName();
+        return self::tryFrom( $i_id )?->toClassName()
+            ?? throw new RecordTypeException( "Unknown record type ID: {$i_id}" );
     }
 
 
     public static function idToName( int $i_id ) : string {
-        return self::from( $i_id )->name;
+        return self::tryFrom( $i_id )?->name
+            ?? throw new RecordTypeException( "Unknown record type ID: {$i_id}" );
     }
 
 
-    public static function isValidClassName( string $i_className ) : bool {
-        return self::tryFromClassName( $i_className ) !== null;
+    public static function isValidClassName( string $i_stClassName ) : bool {
+        return self::tryFromClassName( $i_stClassName ) !== null;
     }
 
 
@@ -271,86 +278,87 @@ enum RecordType: int {
     }
 
 
-    public static function isValidName( string $i_name ) : bool {
-        return self::tryFromName( $i_name ) !== null;
+    public static function isValidName( string $i_stName ) : bool {
+        return self::tryFromName( $i_stName ) !== null;
     }
 
 
-    public static function nameToClassName( string $i_name ) : string {
-        return self::fromName( $i_name )->toClassName();
+    public static function nameToClassName( string $i_stName ) : string {
+        return self::fromName( $i_stName )->toClassName();
     }
 
 
-    public static function nameToId( string $i_name ) : int {
-        return self::fromName( $i_name )->value;
+    public static function nameToId( string $i_stName ) : int {
+        return self::fromName( $i_stName )->value;
     }
 
 
-    public static function normalize( int|string|self $i_value ) : self {
-        if ( is_int( $i_value ) ) {
-            return self::from( $i_value );
+    public static function normalize( int|string|self $i_recordType ) : self {
+        if ( is_int( $i_recordType ) ) {
+            return self::tryFrom( $i_recordType )
+                ?? throw new RecordTypeException( "Invalid record type ID: {$i_recordType}" );
         }
-        if ( is_string( $i_value ) ) {
-            return self::fromName( $i_value );
+        if ( is_string( $i_recordType ) ) {
+            return self::fromName( $i_recordType );
         }
-        return $i_value;
+        return $i_recordType;
     }
 
 
     /**
-     * @param int $i_id PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
+     * @param int $i_phpId PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
      * @return string The corresponding class name (e.g., 'JDWX\DNSQuery\RR\A', 'JDWX\DNSQuery\RR\CNAME', etc.)
      * @throws RecordTypeException
      */
-    public static function phpIdToClassName( int $i_id ) : string {
-        $className = self::tryPhpIdToClassName( $i_id );
+    public static function phpIdToClassName( int $i_phpId ) : string {
+        $className = self::tryPhpIdToClassName( $i_phpId );
         if ( is_string( $className ) ) {
             return $className;
         }
-        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_id}" );
+        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_phpId}" );
     }
 
 
     /**
-     * @param int $i_id PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
+     * @param int $i_phpId PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
      * @return int The corresponding RecordType ID
      * @throws RecordTypeException
      */
-    public static function phpIdToId( int $i_id ) : int {
-        $id = self::tryPhpIdToId( $i_id );
+    public static function phpIdToId( int $i_phpId ) : int {
+        $id = self::tryPhpIdToId( $i_phpId );
         if ( is_int( $id ) ) {
             return $id;
         }
-        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_id}" );
+        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_phpId}" );
     }
 
 
     /**
-     * @param int $i_id PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
+     * @param int $i_phpId PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
      * @return string The corresponding RecordType name (e.g., 'A', 'CNAME', etc.)
      * @throws RecordTypeException
      */
-    public static function phpIdToName( int $i_id ) : string {
-        $name = self::tryPhpIdToName( $i_id );
+    public static function phpIdToName( int $i_phpId ) : string {
+        $name = self::tryPhpIdToName( $i_phpId );
         if ( is_string( $name ) ) {
             return $name;
         }
-        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_id}" );
+        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_phpId}" );
     }
 
 
-    public static function tryClassNameToId( string $i_className ) : ?int {
-        return self::tryFromClassName( $i_className )?->value;
+    public static function tryClassNameToId( string $i_stClassName ) : ?int {
+        return self::tryFromClassName( $i_stClassName )?->value;
     }
 
 
-    public static function tryClassNameToName( string $i_className ) : ?string {
-        return self::tryFromClassName( $i_className )?->name;
+    public static function tryClassNameToName( string $i_stClassName ) : ?string {
+        return self::tryFromClassName( $i_stClassName )?->name;
     }
 
 
-    public static function tryConsume( string $i_bin, int &$i_offset ) : ?self {
-        return self::tryFrom( Binary::consume16BitInt( $i_bin, $i_offset ) );
+    public static function tryConsume( string $i_bin, int &$i_uOffset ) : ?self {
+        return self::tryFrom( Binary::consume16BitInt( $i_bin, $i_uOffset ) );
     }
 
 
@@ -365,37 +373,46 @@ enum RecordType: int {
     }
 
 
-    public static function tryFromClassName( string $i_name ) : ?self {
-        if ( ALL::class === $i_name ) {
+    public static function tryFromClassName( string $i_stClassName ) : ?self {
+        if ( ALL::class === $i_stClassName ) {
             return self::ANY;
         }
-        if ( ! is_a( $i_name, RR::class, true ) ) {
-            throw new RecordTypeException( "Unknown record class: {$i_name}" );
+        if ( ! is_a( $i_stClassName, RR::class, true ) ) {
+            return null;
         }
-        $r = explode( '\\', $i_name );
-        $i_name = array_pop( $r );
-        return self::tryFromName( $i_name );
+        $r = explode( '\\', $i_stClassName );
+        $i_stClassName = array_pop( $r );
+        return self::tryFromName( $i_stClassName );
     }
 
 
-    public static function tryFromName( string $i_name ) : ?self {
-        if ( '*' === $i_name ) {
+    /**
+     * @param string $i_stName
+     * @param bool $i_bDropCache For testing only; set to true to drop the internal cache
+     * @return self|null
+     */
+    public static function tryFromName( string $i_stName, bool $i_bDropCache = false ) : ?self {
+        $i_stName = strtoupper( trim( $i_stName ) );
+        if ( '*' === $i_stName || 'ALL' === $i_stName ) {
             return self::ANY;
         }
 
         static $cache = [];
+        if ( $i_bDropCache ) {
+            $cache = [];
+        }
         if ( empty( $cache ) ) {
             foreach ( self::cases() as $case ) {
                 $cache[ $case->name ] = $case;
             }
         }
 
-        return $cache[ strtoupper( $i_name ) ] ?? null;
+        return $cache[ $i_stName ] ?? null;
     }
 
 
-    public static function tryFromPhpId( int $i_id ) : ?self {
-        return match ( $i_id ) {
+    public static function tryFromPhpId( int $i_phpId ) : ?self {
+        return match ( $i_phpId ) {
             DNS_A => self::A,
             DNS_CNAME => self::CNAME,
             DNS_HINFO => self::HINFO,
@@ -424,35 +441,35 @@ enum RecordType: int {
     }
 
 
-    public static function tryNameToClassName( string $i_name ) : ?string {
-        return self::tryFromName( $i_name )?->toClassName();
+    public static function tryNameToClassName( string $i_stName ) : ?string {
+        return self::tryFromName( $i_stName )?->toClassName();
     }
 
 
-    public static function tryNameToId( string $i_name ) : ?int {
-        return self::tryFromName( $i_name )?->value;
+    public static function tryNameToId( string $i_stName ) : ?int {
+        return self::tryFromName( $i_stName )?->value;
     }
 
 
-    public static function tryPhpIdToClassName( int $i_id ) : ?string {
-        if ( DNS_ALL === $i_id ) {
+    public static function tryPhpIdToClassName( int $i_phpId ) : ?string {
+        if ( DNS_ALL === $i_phpId ) {
             return ALL::class;
         }
-        $type = self::tryFromPhpId( $i_id );
+        $type = self::tryFromPhpId( $i_phpId );
         return $type?->toClassName() ?? null;
     }
 
 
-    public static function tryPhpIdToId( int $i_id ) : ?int {
-        return self::tryFromPhpId( $i_id )?->value;
+    public static function tryPhpIdToId( int $i_phpId ) : ?int {
+        return self::tryFromPhpId( $i_phpId )?->value;
     }
 
 
-    public static function tryPhpIdToName( int $i_id ) : ?string {
-        if ( DNS_ALL === $i_id ) {
-            return 'ALL';
+    public static function tryPhpIdToName( int $i_phpId ) : ?string {
+        if ( DNS_ALL === $i_phpId ) {
+            return 'ANY';
         }
-        return self::tryFromPhpId( $i_id )?->name;
+        return self::tryFromPhpId( $i_phpId )?->name;
     }
 
 
@@ -462,9 +479,6 @@ enum RecordType: int {
 
 
     public function toClassName() : string {
-        if ( $this === self::ANY ) {
-            return RR::class;
-        }
         $className = 'JDWX\\DNSQuery\\RR\\' . $this->name;
         if ( class_exists( $className ) ) {
             return $className;

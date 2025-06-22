@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Packet;
 
 
+use JDWX\DNSQuery\Data\OpCode;
+use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
@@ -132,7 +134,7 @@ class Header {
      * @return    string
      */
     public function __toString() : string {
-        $output = ';; ->>HEADER<<- opcode: ' . Lookups::$opcodeTags[ $this->opcode ]
+        $output = ';; ->>HEADER<<- opcode: ' . OpCode::idToName( $this->opcode )
             . ', status: ' . ReturnCode::from( $this->rCode )->name
             . ', id: ' . $this->id . "\n";
         $output .= ';; flags: ';
@@ -232,8 +234,8 @@ class Header {
     public function setDefaultQuery() : void {
 
         $this->id = Lookups::nextPacketId();  # TODO: should be random
-        $this->qr = Lookups::QR_QUERY;
-        $this->opcode = Lookups::OPCODE_QUERY;
+        $this->qr = QR::QUERY->value;
+        $this->opcode = OpCode::QUERY->value;
         $this->aa = 0;
         $this->tc = 0;
         $this->rd = 1;

@@ -27,7 +27,9 @@ enum RecordClass: int {
 
 
     public static function consume( string $i_stData, int &$io_iOffset ) : self {
-        return self::from( Binary::consume16BitInt( $i_stData, $io_iOffset ) );
+        $id = Binary::consume16BitInt( $i_stData, $io_iOffset );
+        return self::tryFrom( $id )
+            ?? throw new RecordClassException( "Invalid record class ID in binary data: {$id}" );
     }
 
 
@@ -70,7 +72,7 @@ enum RecordClass: int {
 
     public static function normalize( int|string|self $i_value ) : self {
         if ( is_int( $i_value ) ) {
-            return self::from( $i_value );
+            return self::tryFrom( $i_value ) ?? throw new RecordClassException( "Invalid record class ID: {$i_value}" );
         }
         if ( is_string( $i_value ) ) {
             return self::fromName( $i_value );

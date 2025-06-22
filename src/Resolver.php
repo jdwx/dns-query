@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery;
 
 use JDWX\DNSQuery\Cache\Cache;
 use JDWX\DNSQuery\Cache\ICache;
+use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
@@ -166,7 +167,7 @@ class Resolver extends BaseQuery {
         $packet->header->qdCount = 0;
 
         # Set the opcode to IQUERY.
-        $packet->header->opcode = Lookups::OPCODE_IQUERY;
+        $packet->header->opcode = OpCode::IQUERY->value;
 
         # Add the given RR as the answer.
         $packet->answer[] = $rr;

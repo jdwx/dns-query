@@ -25,7 +25,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
     # Pseudo-server
     $request = $pseudo->receiveRequest();
-    var_dump( $request );
+    echo $request;
     $response = Message::response( $request );
     $response->answer[] = JDWX\DNSQuery\RR\A::make(
         $request->question[ 0 ]->stName,
@@ -35,6 +35,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
     # Client receives response
     $response = $client->receiveResponse();
-    var_dump( $response );
+    echo $response;
 
 } )();

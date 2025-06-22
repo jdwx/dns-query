@@ -10,10 +10,12 @@ namespace JDWX\DNSQuery\Tests;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Network\Socket;
 use JDWX\DNSQuery\Network\TransportManager;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
 /** Test the TransportManager class. */
+#[CoversClass( TransportManager::class )]
 final class TransportManagerTest extends TestCase {
 
 

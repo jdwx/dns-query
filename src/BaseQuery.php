@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Network\Socket;
@@ -742,7 +743,7 @@ class BaseQuery {
             }
 
             # Make sure the response is actually a response. (0 = query, 1 = response)
-            if ( $response->header->qr != Lookups::QR_RESPONSE ) {
+            if ( $response->header->qr !== QR::RESPONSE->value ) {
 
                 $this->lastException = new Exception(
 

@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Tests;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Resolver;
 use JDWX\DNSQuery\RR\OPT;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
@@ -17,6 +18,7 @@ use PHPUnit\Framework\TestCase;
  *
  * TODO: Expand this dramatically.
  */
+#[CoversClass( Resolver::class )]
 final class DNSSECTest extends TestCase {
 
 

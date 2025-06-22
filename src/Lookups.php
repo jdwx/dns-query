@@ -55,32 +55,6 @@ class Lookups {
     public const int DNS_MAX_UDP_SIZE = 512;
 
 
-    /** @const QR Query (RFC 1035) */
-    public const int QR_QUERY = 0;
-
-    /** @const QR Response (RFC 1035) */
-    public const int QR_RESPONSE = 1;
-
-
-    /** @const OPCODE Query (RFC 1035) */
-    public const int OPCODE_QUERY = 0;
-
-    /** @const OPCODE Inverse Query (RFC 1035, RFC 3425) */
-    public const int OPCODE_IQUERY = 1;
-
-    /** @const OPCODE Server Status Request (RFC 1035) */
-    public const int OPCODE_STATUS = 2;
-
-    /** @const OPCODE Notify (RFC 1996) */
-    public const int OPCODE_NOTIFY = 4;
-
-    /** @const OPCODE Update (RFC 2136) */
-    public const int OPCODE_UPDATE = 5;
-
-    /** @const OPCODE DSO (RFC 8490) */
-    public const int OPCODE_DSO = 6;
-
-
     # Internal error codes returned by the exceptions class
 
     /** @const No error. */
@@ -296,26 +270,6 @@ class Lookups {
         'OPT' => 41,      # RFC 2671
         'TKEY' => 249,    # RFC 2930
         'TSIG' => 250,     # RFC 2845
-    ];
-
-    /** @var array<int, string> Map opcodes to short text tags. */
-    public static array $opcodeTags = [
-        self::OPCODE_QUERY => 'QUERY',
-        self::OPCODE_IQUERY => 'IQUERY',
-        self::OPCODE_STATUS => 'STATUS',
-        3 => 'OPCODE3',
-        self::OPCODE_NOTIFY => 'NOTIFY',
-        self::OPCODE_UPDATE => 'UPDATE',
-        6 => 'OPCODE6',
-        7 => 'OPCODE7',
-        8 => 'OPCODE8',
-        9 => 'OPCODE9',
-        10 => 'OPCODE10',
-        11 => 'OPCODE11',
-        12 => 'OPCODE12',
-        13 => 'OPCODE13',
-        14 => 'OPCODE14',
-        15 => 'OPCODE15',
     ];
 
     /** @var array<string, int> Map DNSSEC algorithm names to IDs */

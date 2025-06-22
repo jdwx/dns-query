@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
@@ -71,7 +72,7 @@ class Updater extends BaseQuery {
         );
 
         # Make sure the opcode on the packet is set to UPDATE.
-        $this->packet->header->opcode = Lookups::OPCODE_UPDATE;
+        $this->packet->header->opcode = OpCode::UPDATE->value;
     }
 
 

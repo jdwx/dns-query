@@ -10,10 +10,12 @@ namespace JDWX\DNSQuery\Tests;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Network\TCPTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
 /** Additional coverage tests for the TCPTransport class. */
+#[CoversClass( TCPTransport::class )]
 final class TCPTransportTest extends TestCase {
 
 

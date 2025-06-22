@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests;
 
 
+use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\ResponsePacket;
@@ -14,10 +15,12 @@ use JDWX\DNSQuery\Resolver;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\CNAME;
 use JDWX\DNSQuery\RR\MX;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
 /** Test the Resolver class. */
+#[CoversClass( Resolver::class )]
 final class ResolverTest extends TestCase {
 
 
@@ -25,7 +28,7 @@ final class ResolverTest extends TestCase {
     public static function googleMXResponseCheck( ?ResponsePacket $rsp ) : void {
 
         self::assertInstanceOf( ResponsePacket::class, $rsp );
-        self::assertSame( Lookups::QR_RESPONSE, $rsp->header->qr );
+        self::assertSame( QR::RESPONSE->value, $rsp->header->qr );
         self::assertCount( 1, $rsp->question );
         self::assertCount( 1, $rsp->answer );
 

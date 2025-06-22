@@ -9,10 +9,12 @@ namespace JDWX\DNSQuery\Tests;
 
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\Header;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
 /** Test the Header class. */
+#[CoversClass( Header::class )]
 final class HeaderTest extends TestCase {
 
 

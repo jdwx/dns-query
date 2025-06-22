@@ -8,10 +8,12 @@ namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\NamedRoot;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
 /** Test the NamedRoot class. */
+#[CoversClass( NamedRoot::class )]
 final class NamedRootTest extends TestCase {
 
 

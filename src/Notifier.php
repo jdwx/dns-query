@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
@@ -69,7 +70,7 @@ class Notifier extends BaseQuery {
         );
 
         # Make sure the opcode on the packet is set to NOTIFY.
-        $this->packet->header->opcode = Lookups::OPCODE_NOTIFY;
+        $this->packet->header->opcode = OpCode::NOTIFY->value;
     }
 
 
