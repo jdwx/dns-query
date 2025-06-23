@@ -4,9 +4,10 @@
 declare( strict_types = 1 );
 
 
+use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Transport\IpTransportCodec;
 use JDWX\DNSQuery\Transport\PseudowireTransport;
-use JDWX\DNSQuery\Transport\SerializeCodec;
 
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -17,15 +18,20 @@ require __DIR__ . '/../vendor/autoload.php';
     # This is aspirational code right now, describing how I want this module to work,
     # not how it actually works.
 
+    $codec = new IpTransportCodec();
+    $pseudo = new PseudowireTransport( $codec );
+
     # Client sends request
-    $request = Message::request( 'example.com' );
-    $pseudo = new PseudowireTransport( new SerializeCodec() );
+    $request = Message::request( 'example.com', 'A' );
+    echo HexDump::dump( $codec->encode( $request ) );
+
     $client = new JDWX\DNSQuery\Client\Client( $pseudo );
     $client->sendRequest( $request );
 
     # Pseudo-server
     $request = $pseudo->receiveRequest();
     echo $request;
+
     $response = Message::response( $request );
     $response->answer[] = JDWX\DNSQuery\RR\A::make(
         $request->question[ 0 ]->stName,
