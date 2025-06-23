@@ -15,8 +15,16 @@ use JDWX\DNSQuery\Data\RecordType;
 class Question implements \Stringable {
 
 
-    public function __construct( public string      $stName, public RecordType $type,
-                                 public RecordClass $class ) {}
+    public RecordType $type;
+
+    public RecordClass $class;
+
+
+    public function __construct( public string          $stName, int|string|RecordType $type,
+                                 int|string|RecordClass $class ) {
+        $this->type = RecordType::normalize( $type );
+        $this->class = RecordClass::normalize( $class );
+    }
 
 
     public static function fromBinary( string $binary, int &$io_uOffset ) : self {

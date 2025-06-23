@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Transport;
+namespace JDWX\DNSQuery\Codecs;
 
 
 use JDWX\DNSQuery\Binary;
@@ -14,21 +14,20 @@ use JDWX\DNSQuery\RR\OPT;
 use JDWX\DNSQuery\RR\RR;
 
 
-class IpTransportCodec implements TransportCodecInterface {
+class RFC1035Codec implements TransportCodecInterface {
 
 
     public function decode( string $i_packet ) : Message {
         $msg = new Message();
 
-        $msg->id = Binary::unpack16BitInt( $i_packet );
-        $msg->setFlagWord( Binary::unpack16BitInt( $i_packet, 2 ) );
+        $uOffset = 0;
+        $msg->id = Binary::consume16BitInt( $i_packet, $uOffset );
+        $msg->setFlagWord( Binary::consume16BitInt( $i_packet, $uOffset ) );
 
-        $qCount = Binary::unpack16BitInt( $i_packet, 4 );
-        $aCount = Binary::unpack16BitInt( $i_packet, 6 );
-        $auCount = Binary::unpack16BitInt( $i_packet, 8 );
-        $adCount = Binary::unpack16BitInt( $i_packet, 10 );
-
-        $uOffset = 12;
+        $qCount = Binary::consume16BitInt( $i_packet, $uOffset );
+        $aCount = Binary::consume16BitInt( $i_packet, $uOffset );
+        $auCount = Binary::consume16BitInt( $i_packet, $uOffset );
+        $adCount = Binary::consume16BitInt( $i_packet, $uOffset );
 
         for ( $ii = 0 ; $ii < $qCount ; ++$ii ) {
             $msg->question[] = Question::fromBinary( $i_packet, $uOffset );
@@ -69,6 +68,18 @@ class IpTransportCodec implements TransportCodecInterface {
         }
 
         foreach ( $i_msg->answer as $rr ) {
+            $st .= $rr->toBinary( $rLabelMap, strlen( $st ) );
+        }
+
+        foreach ( $i_msg->authority as $rr ) {
+            $st .= $rr->toBinary( $rLabelMap, strlen( $st ) );
+        }
+
+        foreach ( $i_msg->additional as $rr ) {
+            $st .= $rr->toBinary( $rLabelMap, strlen( $st ) );
+        }
+
+        foreach ( $i_msg->opt as $rr ) {
             $st .= $rr->toBinary( $rLabelMap, strlen( $st ) );
         }
 

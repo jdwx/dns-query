@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Transport;
+namespace JDWX\DNSQuery\Codecs;
 
 
 use JDWX\DNSQuery\Message\Message;

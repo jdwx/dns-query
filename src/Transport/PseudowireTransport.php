@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
+use JDWX\DNSQuery\Codecs\TransportCodecInterface;
 use JDWX\DNSQuery\Message\Message;
 
 

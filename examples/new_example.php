@@ -4,9 +4,9 @@
 declare( strict_types = 1 );
 
 
+use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Transport\IpTransportCodec;
 use JDWX\DNSQuery\Transport\PseudowireTransport;
 
 
@@ -18,7 +18,7 @@ require __DIR__ . '/../vendor/autoload.php';
     # This is aspirational code right now, describing how I want this module to work,
     # not how it actually works.
 
-    $codec = new IpTransportCodec();
+    $codec = new RFC1035Codec();
     $pseudo = new PseudowireTransport( $codec );
 
     # Client sends request

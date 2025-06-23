@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
+use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Lookups;
 use JDWX\Strict\OK;
 use Socket;
@@ -43,7 +44,7 @@ class IpTransport extends AbstractTransport {
      */
     public function __construct( int  $i_type, string $i_nameserver, int $i_port = 53, ?string $i_localAddress = null,
                                  ?int $i_localPort = null, int $i_maxSize = Lookups::DNS_MAX_UDP_SIZE ) {
-        parent::__construct( new IpTransportCodec() );
+        parent::__construct( new RFC1035Codec() );
         $this->nameServer = $i_nameserver;
         $this->port = $i_port;
         $this->type = $i_type;
