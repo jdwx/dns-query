@@ -223,7 +223,7 @@ enum RecordType: int {
 
 
     public static function consume( string $i_bin, int &$io_offset ) : self {
-        $id = Binary::consume16BitInt( $i_bin, $io_offset );
+        $id = Binary::consumeUINT16( $i_bin, $io_offset );
         return self::tryFrom( $id )
             ?? throw new RecordTypeException( "Invalid record type ID in binary data: {$id}" );
     }
@@ -367,7 +367,7 @@ enum RecordType: int {
 
 
     public static function tryConsume( string $i_bin, int &$i_uOffset ) : ?self {
-        return self::tryFrom( Binary::consume16BitInt( $i_bin, $i_uOffset ) );
+        return self::tryFrom( Binary::consumeUINT16( $i_bin, $i_uOffset ) );
     }
 
 

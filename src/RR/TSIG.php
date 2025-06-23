@@ -168,7 +168,7 @@ class TSIG extends RR {
 
             # Add the class and TTL.
             $sigData .= RecordClass::fromName( $this->class )->toBinary();
-            $sigData .= Binary::pack32BitInt( $this->ttl );
+            $sigData .= Binary::packUINT32( $this->ttl );
 
             # Add the algorithm name without compression.
             $sigData .= Binary::packNameUncompressed( strtolower( $this->algorithm ) );

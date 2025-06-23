@@ -27,7 +27,7 @@ enum RecordClass: int {
 
 
     public static function consume( string $i_stData, int &$io_iOffset ) : self {
-        $id = Binary::consume16BitInt( $i_stData, $io_iOffset );
+        $id = Binary::consumeUINT16( $i_stData, $io_iOffset );
         return self::tryFrom( $id )
             ?? throw new RecordClassException( "Invalid record class ID in binary data: {$id}" );
     }
@@ -91,7 +91,7 @@ enum RecordClass: int {
 
 
     public static function tryConsume( string $i_stData, int &$io_iOffset ) : ?self {
-        return self::tryFrom( Binary::consume16BitInt( $i_stData, $io_iOffset ) );
+        return self::tryFrom( Binary::consumeUINT16( $i_stData, $io_iOffset ) );
     }
 
 

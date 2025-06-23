@@ -128,8 +128,8 @@ abstract class RR {
         $stName = Binary::consumeName( $i_stData, $io_iOffset );
         $type = RecordType::consume( $i_stData, $io_iOffset );
         $class = RecordClass::consume( $i_stData, $io_iOffset );
-        $ttl = Binary::consume32BitInt( $i_stData, $io_iOffset );
-        $rdLength = Binary::consume16BitInt( $i_stData, $io_iOffset );
+        $ttl = Binary::consumeUINT32( $i_stData, $io_iOffset );
+        $rdLength = Binary::consumeUINT16( $i_stData, $io_iOffset );
         $uRDataOffset = $io_iOffset;
         $rdata = Binary::consume( $i_stData, $io_iOffset, $rdLength );
 
@@ -535,7 +535,7 @@ abstract class RR {
         $st = Binary::packName( $this->name, $io_rLabelMap, $i_uOffset )
             . $type->toBinary()
             . $class->toBinary()
-            . Binary::pack32BitInt( $this->ttl );
+            . Binary::packUINT32( $this->ttl );
         return $st . $this->rrToBinary( $io_rLabelMap, $i_uOffset + strlen( $st ) );
     }
 

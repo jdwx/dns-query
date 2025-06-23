@@ -21,13 +21,13 @@ class RFC1035Codec implements TransportCodecInterface {
         $msg = new Message();
 
         $uOffset = 0;
-        $msg->id = Binary::consume16BitInt( $i_packet, $uOffset );
-        $msg->setFlagWord( Binary::consume16BitInt( $i_packet, $uOffset ) );
+        $msg->id = Binary::consumeUINT16( $i_packet, $uOffset );
+        $msg->setFlagWord( Binary::consumeUINT16( $i_packet, $uOffset ) );
 
-        $qCount = Binary::consume16BitInt( $i_packet, $uOffset );
-        $aCount = Binary::consume16BitInt( $i_packet, $uOffset );
-        $auCount = Binary::consume16BitInt( $i_packet, $uOffset );
-        $adCount = Binary::consume16BitInt( $i_packet, $uOffset );
+        $qCount = Binary::consumeUINT16( $i_packet, $uOffset );
+        $aCount = Binary::consumeUINT16( $i_packet, $uOffset );
+        $auCount = Binary::consumeUINT16( $i_packet, $uOffset );
+        $adCount = Binary::consumeUINT16( $i_packet, $uOffset );
 
         for ( $ii = 0 ; $ii < $qCount ; ++$ii ) {
             $msg->question[] = Question::fromBinary( $i_packet, $uOffset );
@@ -54,12 +54,12 @@ class RFC1035Codec implements TransportCodecInterface {
 
 
     public function encode( Message $i_msg ) : string {
-        $st = Binary::pack16BitInt( $i_msg->id )
-            . Binary::pack16BitInt( $i_msg->getFlagWord() )
-            . Binary::pack16BitInt( count( $i_msg->question ) )
-            . Binary::pack16BitInt( count( $i_msg->answer ) )
-            . Binary::pack16BitInt( count( $i_msg->authority ) )
-            . Binary::pack16BitInt( count( $i_msg->additional ) + count( $i_msg->opt ) );
+        $st = Binary::packUINT16( $i_msg->id )
+            . Binary::packUINT16( $i_msg->getFlagWord() )
+            . Binary::packUINT16( count( $i_msg->question ) )
+            . Binary::packUINT16( count( $i_msg->answer ) )
+            . Binary::packUINT16( count( $i_msg->authority ) )
+            . Binary::packUINT16( count( $i_msg->additional ) + count( $i_msg->opt ) );
 
         $rLabelMap = [];
 

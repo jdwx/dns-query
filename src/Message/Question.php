@@ -29,8 +29,8 @@ class Question implements \Stringable {
 
     public static function fromBinary( string $binary, int &$io_uOffset ) : self {
         $stName = Binary::consumeName( $binary, $io_uOffset );
-        $type = RecordType::from( Binary::consume16BitInt( $binary, $io_uOffset ) );
-        $class = RecordClass::from( Binary::consume16BitInt( $binary, $io_uOffset ) );
+        $type = RecordType::from( Binary::consumeUINT16( $binary, $io_uOffset ) );
+        $class = RecordClass::from( Binary::consumeUINT16( $binary, $io_uOffset ) );
         return new self( $stName, $type, $class );
     }
 
