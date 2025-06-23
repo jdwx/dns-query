@@ -43,6 +43,25 @@ final class RecordClassTest extends TestCase {
     }
 
 
+    public function testFromBinary() : void {
+        $data = OK::pack( 'n', 1 );
+        self::assertSame( RecordClass::IN, RecordClass::fromBinary( $data ) );
+    }
+
+
+    public function testFromBinaryForInvalidLength() : void {
+        self::expectException( RecordClassException::class );
+        RecordClass::fromBinary( 'a' );
+    }
+
+
+    public function testFromBinaryForInvalidValue() : void {
+        $data = pack( 'n', 999 );
+        self::expectException( RecordClassException::class );
+        RecordClass::fromBinary( $data );
+    }
+
+
     public function testFromNameForEmpty() : void {
         self::expectException( RecordClassException::class );
         RecordClass::fromName( '' );

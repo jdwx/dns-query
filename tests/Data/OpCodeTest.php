@@ -16,6 +16,24 @@ use PHPUnit\Framework\TestCase;
 class OpCodeTest extends TestCase {
 
 
+    public function testFromFlagWord() : void {
+        self::assertSame( OpCode::QUERY, OpCode::fromFlagWord( 0x0000 ) );
+        self::assertSame( OpCode::IQUERY, OpCode::fromFlagWord( 0x0800 ) );
+        self::assertSame( OpCode::STATUS, OpCode::fromFlagWord( 0x1000 ) );
+        self::assertSame( OpCode::NOTIFY, OpCode::fromFlagWord( 0xA000 ) );
+        self::assertSame( OpCode::UPDATE, OpCode::fromFlagWord( 0xA800 ) );
+        self::assertSame( OpCode::DSO, OpCode::fromFlagWord( 0x3000 ) );
+        self::assertSame( OpCode::QUERY, OpCode::fromFlagWord( 0x07FF ) );
+        self::assertSame( OpCode::IQUERY, OpCode::fromFlagWord( 0x0FFF ) );
+        self::assertSame( OpCode::STATUS, OpCode::fromFlagWord( 0x17FF ) );
+        self::assertSame( OpCode::NOTIFY, OpCode::fromFlagWord( 0x27FF ) );
+        self::assertSame( OpCode::UPDATE, OpCode::fromFlagWord( 0x2FFF ) );
+        self::assertSame( OpCode::DSO, OpCode::fromFlagWord( 0x37FF ) );
+        self::expectException( \InvalidArgumentException::class );
+        OpCode::fromFlagWord( 0x4000 );
+    }
+
+
     public function testFromName() : void {
         self::assertSame( OpCode::QUERY, OpCode::fromName( 'QUERY' ) );
         self::assertSame( OpCode::IQUERY, OpCode::fromName( 'IQuery' ) );
@@ -85,6 +103,16 @@ class OpCodeTest extends TestCase {
         self::assertSame( OpCode::QUERY, OpCode::normalize( OpCode::QUERY ) );
         self::expectException( \InvalidArgumentException::class );
         OpCode::normalize( 'FOO' );
+    }
+
+
+    public function testToFlagWord() : void {
+        self::assertSame( 0x0000, OpCode::QUERY->toFlagWord() );
+        self::assertSame( 0x0800, OpCode::IQUERY->toFlagWord() );
+        self::assertSame( 0x1000, OpCode::STATUS->toFlagWord() );
+        self::assertSame( 0x2000, OpCode::NOTIFY->toFlagWord() );
+        self::assertSame( 0x2800, OpCode::UPDATE->toFlagWord() );
+        self::assertSame( 0x3000, OpCode::DSO->toFlagWord() );
     }
 
 

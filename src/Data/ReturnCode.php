@@ -85,8 +85,10 @@ enum ReturnCode: int {
     ];
 
 
-    public static function fromFlagWord( int $binary ) : self {
-        return self::from( $binary & 0x0F );
+    public static function fromFlagWord( int $i_flagWord ) : self {
+        $i_flagWord = $i_flagWord & 0x0F;
+        return self::tryFrom( $i_flagWord )
+            ?? throw new ReturnCodeException( "Invalid return code ID in flag word: {$i_flagWord}" );
     }
 
 

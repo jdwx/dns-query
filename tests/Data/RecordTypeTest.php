@@ -69,6 +69,27 @@ final class RecordTypeTest extends TestCase {
     }
 
 
+    public function testFromBinary() : void {
+        $data = pack( 'n', RecordType::A->value );
+        self::assertSame( RecordType::A, RecordType::fromBinary( $data ) );
+        $data = pack( 'n', RecordType::CNAME->value );
+        self::assertSame( RecordType::CNAME, RecordType::fromBinary( $data ) );
+    }
+
+
+    public function testFromBinaryForInvalidLength() : void {
+        self::expectException( RecordTypeException::class );
+        RecordType::fromBinary( 'a' );
+    }
+
+
+    public function testFromBinaryForInvalidValue() : void {
+        $data = pack( 'n', 9999 );
+        self::expectException( RecordTypeException::class );
+        RecordType::fromBinary( $data );
+    }
+
+
     public function testFromClassName() : void {
         self::assertSame( RecordType::A, RecordType::fromClassName( A::class ) );
         self::assertSame( RecordType::ANY, RecordType::fromClassName( ALL::class ) );

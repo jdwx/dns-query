@@ -23,6 +23,14 @@ final class ReturnCodeTest extends TestCase {
     }
 
 
+    public function testFromFlagWord() : void {
+        self::assertSame( ReturnCode::NOERROR, ReturnCode::fromFlagWord( 0 ) );
+        self::assertSame( ReturnCode::FORMERR, ReturnCode::fromFlagWord( 1 ) );
+        self::expectException( ReturnCodeException::class );
+        ReturnCode::fromFlagWord( 9999 );
+    }
+
+
     public function testFromName() : void {
         self::assertSame( ReturnCode::NOERROR, ReturnCode::fromName( 'NOERROR' ) );
         self::assertSame( ReturnCode::SERVFAIL, ReturnCode::fromName( 'ServFail' ) );
@@ -38,6 +46,13 @@ final class ReturnCodeTest extends TestCase {
         self::assertSame( ReturnCode::NOERROR, ReturnCode::normalize( ReturnCode::NOERROR ) );
         self::expectException( ReturnCodeException::class );
         ReturnCode::normalize( 'Foo' );
+    }
+
+
+    public function testToFlagWord() : void {
+        self::assertSame( 0, ReturnCode::NOERROR->toFlagWord() );
+        self::assertSame( 2, ReturnCode::SERVFAIL->toFlagWord() );
+        self::assertSame( 3, ReturnCode::NXDOMAIN->toFlagWord() );
     }
 
 

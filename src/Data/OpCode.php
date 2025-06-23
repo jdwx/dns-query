@@ -26,8 +26,10 @@ enum OpCode: int {
     case DSO    = 6; // DNS Stateful Operations (DSO) RFC 8490
 
 
-    public static function fromFlagWord( int $binary ) : self {
-        return self::from( ( $binary >> 11 ) & 0x0F );
+    public static function fromFlagWord( int $i_flagWord ) : self {
+        $uOpCode = ( $i_flagWord >> 11 ) & 0x0F;
+        return self::tryFrom( $uOpCode )
+            ?? throw new \InvalidArgumentException( "Unknown opcode in flag word: {$uOpCode}" );
     }
 
 
