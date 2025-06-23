@@ -72,7 +72,7 @@ class IpTransportCodec implements TransportCodecInterface {
             $st .= $rr->toBinary( $rLabelMap, strlen( $st ) );
         }
 
-        return 'request';
+        return $st;
     }
 
 
