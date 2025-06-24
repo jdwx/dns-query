@@ -28,6 +28,28 @@ final class BinaryTest extends TestCase {
     }
 
 
+    public function testConsumeName() : void {
+        $st = "\x03Foo\x07Bar.Baz\x03Qux\0\x04Quux\xc0\x04";
+        $uOffset = 0;
+        self::assertSame( 'Foo.Bar.Baz.Qux', Binary::consumeName( $st, $uOffset ) );
+        self::assertSame( 'Quux.Bar.Baz.Qux', Binary::consumeName( $st, $uOffset ) );
+        self::expectException( \OutOfBoundsException::class );
+        Binary::consumeNameArray( $st, $uOffset );
+    }
+
+
+    public function testConsumeNameArray() : void {
+        $st = "\x03Foo\x07Bar.Baz\x03Qux\0\x04Quux\xc0\x04";
+        $uOffset = 0;
+        $r = Binary::consumeNameArray( $st, $uOffset );
+        self::assertSame( [ 'Foo', 'Bar.Baz', 'Qux' ], $r );
+        $r = Binary::consumeNameArray( $st, $uOffset );
+        self::assertSame( [ 'Quux', 'Bar.Baz', 'Qux' ], $r );
+        self::expectException( \OutOfBoundsException::class );
+        Binary::consumeNameArray( $st, $uOffset );
+    }
+
+
     public function testConsumeNameLabel() : void {
         $st = "\x04test\xc0\x0c\x00";
         $uOffset = 0;
@@ -62,6 +84,36 @@ final class BinaryTest extends TestCase {
     }
 
 
+    public function testExpandNamePointer() : void {
+        $st = "\x03Foo\x06BarBaz\x03Qux\0\x04Quux\xc0\x04";
+        $r = Binary::expandNamePointer( $st, 0 );
+        self::assertSame( [ 'Foo', 'BarBaz', 'Qux' ], $r );
+        $r = Binary::expandNamePointer( $st, 4 );
+        self::assertSame( [ 'BarBaz', 'Qux' ], $r );
+        $r = Binary::expandNamePointer( $st, 11 );
+        self::assertSame( [ 'Qux' ], $r );
+        $r = Binary::expandNamePointer( $st, 16 );
+        self::assertSame( 4, ord( $st[ 16 ] ) );
+        self::assertSame( [ 'Quux', 'BarBaz', 'Qux' ], $r );
+        self::expectException( \OutOfBoundsException::class );
+        Binary::expandNamePointer( $st, 100 );
+    }
+
+
+    public function testExpandNamePointerForLoop() : void {
+        $st = "\x03Foo\x06BarBaz\x03Qux\0\x04Quux\xc0\x10"; // Pointer points to itself
+        self::expectException( \InvalidArgumentException::class );
+        Binary::expandNamePointer( $st, 16 );
+    }
+
+
+    public function testExpandNamePointerForLoop2() : void {
+        $st = "\x03Foo\xC0\x00"; // Pointer points to start
+        self::expectException( \InvalidArgumentException::class );
+        Binary::expandNamePointer( $st, 0 );
+    }
+
+
     public function testPackLabel() : void {
         self::assertSame( "\x04test", Binary::packLabel( 'test' ) );
         self::expectException( \LengthException::class );
@@ -75,10 +127,25 @@ final class BinaryTest extends TestCase {
     }
 
 
+    public function testPackName() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $st = Binary::packName( 'Foo.BarBaz.Qux', $rLabelMap, $uOffset );
+        self::assertSame( "\x03Foo\x06BarBaz\x03Qux\0", $st );
+        $uOffset += strlen( $st );
+        $st = Binary::packName( 'Quux.BarBaz.Qux', $rLabelMap, $uOffset );
+        self::assertSame( "\x04Quux\xc0\x04", $st );
+        $uOffset += strlen( $st );
+        self::assertSame( [ 'Foo.BarBaz.Qux' => 0, 'BarBaz.Qux' => 4, 'Qux' => 11, 'Quux.BarBaz.Qux' => 16 ], $rLabelMap );
+        self::expectException( \LengthException::class );
+        Binary::packName( str_repeat( 'a', 64 ) . '.com', $rLabelMap, $uOffset );
+    }
+
+
     public function testPackNameUncompressed() : void {
         self::assertSame( "\x03Foo\x06BarBaz\x03Qux\0", Binary::packNameUncompressed( 'Foo.BarBaz.Qux' ) );
         $r = [ 'BarBaz.Qux' => 0x123 ];
-        self::assertSame( "\x03Foo\xc1\x23", Binary::packName( 'Foo.BarBaz.Qux', $r, 0 ) );
+        self::assertSame( "\x03Foo\xc1\x23", Binary::packNameUncompressed( 'Foo.BarBaz.Qux', $r ) );
         self::expectException( \LengthException::class );
         Binary::packNameUncompressed( str_repeat( 'a', 64 ) . '.com' );
     }

@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use InvalidArgumentException;
 use JDWX\Strict\OK;
 use JDWX\Strict\TypeIs;
 
@@ -23,21 +24,36 @@ final class Binary {
     }
 
 
+    /**
+     * Be a little careful with this function. It is theoretically legal for a name to
+     * contain dots that are part of a label, not label separators. This function
+     * will lose that distinction. However, in practice, this is unlikely to be a problem.
+     */
     public static function consumeName( string $i_stData, int &$io_uOffset ) : string {
+        return implode( '.', self::consumeNameArray( $i_stData, $io_uOffset ) );
+    }
+
+
+    /**
+     * @param string $i_stData
+     * @param int $io_uOffset
+     * @return list<string>
+     */
+    public static function consumeNameArray( string $i_stData, int &$io_uOffset ) : array {
         # Names can be encoded as a series of labels, or as a pointer to a previously defined name, or
         # a combination of both.
-        $stOut = '';
+        $rOut = [];
         while ( true ) {
             $stLabel = self::consumeNameLabel( $i_stData, $io_uOffset );
             if ( chr( 0 ) === $stLabel ) {
-                return $stOut;
+                return $rOut;
             }
             $uPointer = self::unpackPointer( $stLabel );
             if ( is_int( $uPointer ) ) {
-                return $stOut . self::expandNamePointer( $i_stData, $uPointer );
+                return array_merge( $rOut, self::expandNamePointer( $i_stData, $uPointer ) );
             }
 
-            $stOut .= substr( $stLabel, 1 );
+            $rOut[] = substr( $stLabel, 1 );
         }
     }
 
@@ -61,18 +77,26 @@ final class Binary {
     }
 
 
-    public static function expandNamePointer( string $i_stData, int $i_uOffset ) : string {
-        $stOut = '';
+    /**
+     * @param array<int, true> $x_rLoopDetection Internal use only. Prevents infinite loops.
+     * @return list<string> Array of labels
+     */
+    public static function expandNamePointer( string $i_stData, int $i_uOffset, array $x_rLoopDetection = [] ) : array {
+        if ( isset( $x_rLoopDetection[ $i_uOffset ] ) ) {
+            throw new InvalidArgumentException( "Detected loop in name pointer at offset {$i_uOffset}." );
+        }
+        $x_rLoopDetection[ $i_uOffset ] = true;
+        $rOut = [];
         while ( true ) {
             $stLabel = self::unpackNameLabel( $i_stData, $i_uOffset );
             if ( chr( 0 ) === $stLabel ) {
-                return $stOut;
+                return $rOut;
             }
             $uPointer = self::unpackPointer( $stLabel );
             if ( is_int( $uPointer ) ) {
-                return $stOut . self::expandNamePointer( $i_stData, $uPointer );
+                return array_merge( $rOut, self::expandNamePointer( $i_stData, $uPointer, $x_rLoopDetection ) );
             }
-            $stOut .= substr( $stLabel, 1 );
+            $rOut[] = substr( $stLabel, 1 );
             $i_uOffset += strlen( $stLabel );
         }
     }
