@@ -33,6 +33,7 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -376,8 +377,7 @@ abstract class RR {
      * @return string
      */
     public function __toString() {
-        return $this->name . '. ' . $this->ttl . ' ' . $this->class .
-            ' ' . $this->type . ' ' . $this->rrToString();
+        return $this->name . '. ' . $this->ttl . ' ' . $this->class . ' ' . $this->type . ' ' . $this->rrToString();
     }
 
 
@@ -492,12 +492,6 @@ abstract class RR {
     }
 
 
-    /** @param array<string, int> $io_rLabelMap */
-    public function rrToBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
-        return chr( 4 ) . 'nope';
-    }
-
-
     /**
      * builds a new RR object
      *
@@ -536,7 +530,8 @@ abstract class RR {
             . $type->toBinary()
             . $class->toBinary()
             . Binary::packUINT32( $this->ttl );
-        return $st . $this->rrToBinary( $io_rLabelMap, $i_uOffset + strlen( $st ) );
+        $stRData = $this->rrToBinary( $io_rLabelMap, $i_uOffset + strlen( $st ) );
+        return $st . Binary::packUINT16( strlen( $stRData ) ) . $stRData;
     }
 
 
@@ -597,7 +592,8 @@ abstract class RR {
 
 
     protected function rrFromBinary( string $i_stData, int $i_rDataOffset, int $i_rdLength ) : void {
-        # Can't actually do anything here yet.
+        $packet = new Packet();
+        $this->rrSet( $packet );
     }
 
 
@@ -653,6 +649,13 @@ abstract class RR {
      * @throws Exception
      */
     abstract protected function rrSet( Packet $i_packet ) : bool;
+
+
+    /** @param array<string, int> $io_rLabelMap */
+    protected function rrToBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
+        $packet = new Packet();
+        return TypeIs::string( $this->rrGet( $packet ) );
+    }
 
 
     /**

@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\Exceptions\TypeException;
+use JDWX\Strict\OK;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -72,27 +74,27 @@ class A extends RR {
     /** @inheritDoc */
     protected function rrGet( Packet $i_packet ) : ?string {
         $i_packet->offset += 4;
-        return inet_pton( $this->address );
+        $r = [];
+        return self::rrToBinary( $r, 0 );
     }
 
 
     /** @inheritDoc */
     protected function rrSet( Packet $i_packet ) : bool {
         if ( $this->rdLength > 0 ) {
-
-            $this->address = inet_ntop( $this->rdata );
-            /**
-             * PhpStan doesn't know that inet_ntop() will return false if the
-             * address is invalid.
-             * @phpstan-ignore notIdentical.alwaysTrue
-             */
-            if ( $this->address !== false ) {
-
+            try {
+                $this->address = OK::inet_ntop( $this->rdata );
                 return true;
+            } catch ( TypeException ) {
             }
         }
 
         return false;
+    }
+
+
+    protected function rrToBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
+        return OK::inet_pton( $this->address );
     }
 
 

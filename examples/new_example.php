@@ -23,7 +23,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
     # Client sends request
     $request = Message::request( 'example.com', 'A' );
-    echo HexDump::dump( $codec->encode( $request ) );
+    echo HexDump::dump( $codec->encode( $request ) ), "\n";
 
     $client = new JDWX\DNSQuery\Client\Client( $pseudo );
     $client->sendRequest( $request );
@@ -37,6 +37,8 @@ require __DIR__ . '/../vendor/autoload.php';
         $request->question[ 0 ]->stName,
         i_rData: [ '127.0.0.1' ],
     );
+    echo $response;
+    echo HexDump::dump( $codec->encode( $response ) ), "\n";
     $pseudo->sendResponse( $response );
 
     # Client receives response

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -78,7 +79,8 @@ class AAAA extends RR {
     /** @inheritDoc */
     protected function rrGet( Packet $i_packet ) : ?string {
         $i_packet->offset += 16;
-        return inet_pton( $this->address );
+        $r = [];
+        return self::rrToBinary( $r, 0 );
     }
 
 
@@ -97,6 +99,11 @@ class AAAA extends RR {
         }
 
         return false;
+    }
+
+
+    protected function rrToBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
+        return OK::inet_pton( $this->address );
     }
 
 
