@@ -14,7 +14,7 @@ use JDWX\DNSQuery\Message\Message;
  * Encoders are used to convert between Request/Response objects and
  * data suitable to be sent over the wire.
  */
-interface TransportCodecInterface {
+interface CodecInterface {
 
 
     public function decode( string $i_packet ) : Message;

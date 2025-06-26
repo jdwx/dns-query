@@ -80,7 +80,7 @@ class TransportManager implements Countable {
             return $transport;
         }
         return match ( $i_type ) {
-            Socket::SOCK_DGRAM => new UDPTransport( $i_nameserver, $i_port, $this->localAddress,
+            Socket::SOCK_DGRAM => new UdpTransport( $i_nameserver, $i_port, $this->localAddress,
                 $this->localPort, $this->timeout ),
             Socket::SOCK_STREAM => new TCPTransport( $i_nameserver, $i_port, $this->localAddress,
                 $this->localPort, $this->timeout ),

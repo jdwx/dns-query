@@ -13,7 +13,7 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Network\Socket;
 use JDWX\DNSQuery\Network\TCPTransport;
 use JDWX\DNSQuery\Network\TransportManager;
-use JDWX\DNSQuery\Network\UDPTransport;
+use JDWX\DNSQuery\Network\UdpTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\RR;
@@ -857,7 +857,7 @@ class BaseQuery {
     private function sendUDPRequest( string $i_ns, string $i_data ) : ResponsePacket {
         $udp = $this->transportManager->acquire( Socket::SOCK_DGRAM, $i_ns, $this->dnsPort );
         # TODO: We should be using $udp->sendRequest() instead.
-        assert( $udp instanceof UDPTransport );
+        assert( $udp instanceof UdpTransport );
         $udp->sendData( $i_data );
         $rsp = $udp->receiveResponse();
         $this->transportManager->release( $udp );

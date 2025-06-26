@@ -9,8 +9,7 @@ namespace JDWX\DNSQuery\Transport;
 
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Lookups;
-use JDWX\Strict\OK;
-use Socket;
+use JDWX\Socket\Socket;
 
 
 class IpTransport extends AbstractTransport {
@@ -50,20 +49,30 @@ class IpTransport extends AbstractTransport {
         $this->type = $i_type;
         $this->maxSize = $i_maxSize;
         $uFamily = str_contains( $i_nameserver, ':' ) ? AF_INET6 : AF_INET;
-        $this->socket = socket_create( $this->type, $uFamily, 0 );
+        $this->socket = Socket::create( $uFamily, $this->type );
         if ( is_string( $i_localAddress ) || is_int( $i_localPort ) ) {
-            OK::socket_bind( $this->socket, $i_localAddress ?? ( $uFamily === AF_INET ? '0.0.0.0' : '::' ), $i_localPort ?? 0 );
+            $stAddress = $i_localAddress ?? ( $uFamily === AF_INET ? '0.0.0.0' : '::' );
+            $uPort = $i_localPort ?? 0;
+            $this->socket->bind( $stAddress, $uPort );
         }
     }
 
 
-    protected function receivePacket() : string {
-        return 'packet';
+    protected function receivePacket( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?string {
+        $data = '';
+        if ( ! $this->socket->selectForRead( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds ) ) {
+            return null;
+        }
+        $this->socket->recvFrom( $data, $this->maxSize, 0, $this->nameServer, $this->port );
+        return $data;
     }
 
 
     protected function sendPacket( string $packet ) : void {
-        # Sure, I definitely sent it.
+        $u = $this->socket->sendTo( $packet, strlen( $packet ), $this->nameServer, $this->port );
+        if ( $u !== strlen( $packet ) ) {
+            throw new \RuntimeException( 'Failed to send the entire packet.' );
+        }
     }
 
 

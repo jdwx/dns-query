@@ -13,10 +13,9 @@ use JDWX\DNSQuery\Lookups;
 class UdpTransport extends IpTransport {
 
 
-    public function __construct( string $i_nameserver, int $i_port = 53, ?string $i_localAddress = null,
-                                 ?int   $i_localPort = null,
-                                 int    $i_maxSize = Lookups::DNS_MAX_UDP_SIZE ) {
-        parent::__construct( SOCK_DGRAM, $i_nameserver, $i_port, $i_localAddress, $i_localPort, $i_maxSize );
+    public function __construct( string $i_stNameServerAddress, int $i_uPort = 53, ?string $i_stLocalAddress = null,
+                                 ?int   $i_nuLocalPort = null, int $i_uMaxSize = Lookups::DNS_MAX_UDP_SIZE ) {
+        parent::__construct( SOCK_DGRAM, $i_stNameServerAddress, $i_uPort, $i_stLocalAddress, $i_nuLocalPort, $i_uMaxSize );
     }
 
 

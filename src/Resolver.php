@@ -7,8 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
-use JDWX\DNSQuery\Cache\Cache;
-use JDWX\DNSQuery\Cache\ICache;
+use JDWX\DNSQuery\Cache\MessageCache;
+use JDWX\DNSQuery\Cache\MessageCacheInterface;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -18,7 +18,6 @@ use JDWX\DNSQuery\RR\OPT;
 use JDWX\DNSQuery\RR\RR;
 use JDWX\DNSQuery\RR\SIG;
 use JDWX\DNSQuery\RR\TSIG;
-use Psr\SimpleCache\CacheInterface;
 
 
 /**
@@ -56,8 +55,8 @@ class Resolver extends BaseQuery {
     /** @var bool Use strict query mode (suppress CNAME-only answers) */
     public bool $strictQueryMode = false;
 
-    /** @var ?ICache A caching implementation, if one is desired. */
-    protected ICache|null $cache = null;
+    /** @var ?MessageCacheInterface A caching implementation, if one is desired. */
+    protected MessageCacheInterface|null $cache = null;
 
 
     /**
@@ -321,10 +320,10 @@ class Resolver extends BaseQuery {
     /**
      * Adds a caching implementation to the resolver object.
      *
-     * @param ICache $i_cache The caching implementation to use
+     * @param MessageCacheInterface $i_cache The caching implementation to use
      * @return static Fluent setter
      */
-    public function setCache( ICache $i_cache ) : static {
+    public function setCache( MessageCacheInterface $i_cache ) : static {
         $this->cache = $i_cache;
         return $this;
     }
@@ -336,7 +335,7 @@ class Resolver extends BaseQuery {
      * @return static Fluent setter
      */
     public function setCacheDefault() : static {
-        $cache = new Cache();
+        $cache = new MessageCache();
         return $this->setCache( $cache );
     }
 
@@ -344,12 +343,12 @@ class Resolver extends BaseQuery {
     /**
      * Adds a default caching implementation using a provided PSR-16 cache.
      *
-     * @param CacheInterface $i_cacheInterface The PSR-16 cache implementation to use
+     * @param MessageCacheInterface $i_cacheInterface The PSR-16 cache implementation to use
      *
      * @return static Fluent setter
      */
-    public function setCacheInterface( CacheInterface $i_cacheInterface ) : static {
-        $cache = new Cache( $i_cacheInterface );
+    public function setCacheInterface( MessageCacheInterface $i_cacheInterface ) : static {
+        $cache = new MessageCache( $i_cacheInterface );
         return $this->setCache( $cache );
     }
 

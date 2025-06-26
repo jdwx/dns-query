@@ -13,7 +13,7 @@ use JDWX\DNSQuery\Packet\ResponsePacket;
 
 
 /** UDP transport for DNS packets */
-class UDPTransport extends IPTransport {
+class UdpTransport extends IPTransport {
 
 
     /**

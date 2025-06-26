@@ -9,7 +9,7 @@ namespace JDWX\DNSQuery\Tests;
 
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Network\UDPTransport;
+use JDWX\DNSQuery\Network\UdpTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -17,9 +17,8 @@ use ReflectionException;
 use ReflectionObject;
 
 
-/** Test the UDPTransport class. */
-#[CoversClass( UDPTransport::class )]
-final class UDPTransportTest extends TestCase {
+#[CoversClass( UdpTransport::class )]
+final class UdpTransportTest extends TestCase {
 
 
     /**
@@ -27,7 +26,7 @@ final class UDPTransportTest extends TestCase {
      */
     public function testUDPTransport() : void {
         $req = new RequestPacket( 'google.com', 'MX' );
-        $udp = new UDPTransport( '1.1.1.1' );
+        $udp = new UdpTransport( '1.1.1.1' );
         $udp->sendRequest( $req );
         $rsp = $udp->receiveResponse();
         self::assertSame( $req->header->id, $rsp->header->id );
@@ -41,7 +40,7 @@ final class UDPTransportTest extends TestCase {
     public function testUDPTransportReuse() : void {
 
         $req = new RequestPacket( 'google.com', 'A' );
-        $udp = new UDPTransport( '1.1.1.1' );
+        $udp = new UdpTransport( '1.1.1.1' );
         $udp->sendRequest( $req );
         $rsp = $udp->receiveResponse();
         self::assertSame( $req->header->id, $rsp->header->id );
@@ -58,7 +57,7 @@ final class UDPTransportTest extends TestCase {
     /** @suppress PhanNoopNew */
     public function testUDPTransportSocketOpenError() : void {
         $this->expectException( Exception::class );
-        new UDPTransport( 'foo.bar.baz' );
+        new UdpTransport( 'foo.bar.baz' );
     }
 
 
@@ -68,7 +67,7 @@ final class UDPTransportTest extends TestCase {
      */
     public function testUDPTransportSocketReadError() : void {
         $req = new RequestPacket( 'google.com', 'MX' );
-        $udp = new UDPTransport( '1.1.1.1' );
+        $udp = new UdpTransport( '1.1.1.1' );
         $udp->sendRequest( $req );
 
         ## Hack in and shut down socket reads.
@@ -95,7 +94,7 @@ final class UDPTransportTest extends TestCase {
         socket_bind( $socket, '127.0.0.1', $port );
 
         $req = new RequestPacket( 'google.com', 'MX' );
-        $udp = new UDPTransport( '127.0.0.1', $port );
+        $udp = new UdpTransport( '127.0.0.1', $port );
         $udp->sendRequest( $req );
         socket_recvfrom( $socket, $buf, Lookups::DNS_MAX_UDP_SIZE, 0, $clientIP, $clientPort );
         socket_sendto( $socket, 'Nope!', 5, 0, $clientIP, $clientPort );
@@ -116,7 +115,7 @@ final class UDPTransportTest extends TestCase {
             ->setConstructorArgs( [ 'google.com', 'MX' ] )
             ->getMock();
         // $req = new RequestPacket( 'google.com', 'MX' );
-        $udp = new UDPTransport( '1.1.1.1' );
+        $udp = new UdpTransport( '1.1.1.1' );
         $this->expectException( Exception::class );
         $udp->sendRequest( $req );
     }
@@ -128,7 +127,7 @@ final class UDPTransportTest extends TestCase {
     public function testUDPTransportSpecificPort() : void {
         $port = random_int( 2048, 65535 );
         $req = new RequestPacket( 'google.com', 'MX' );
-        $udp = new UDPTransport( '1.1.1.1', i_localHost: '0.0.0.0', i_localPort: $port );
+        $udp = new UdpTransport( '1.1.1.1', i_localHost: '0.0.0.0', i_localPort: $port );
         $udp->sendRequest( $req );
         $rsp = $udp->receiveResponse();
         ResolverTest::googleMXResponseCheck( $rsp );

@@ -13,10 +13,10 @@ use JDWX\DNSQuery\Message\Message;
 interface TransportInterface {
 
 
-    public function receiveRequest() : Message;
+    public function receiveRequest( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message;
 
 
-    public function receiveResponse() : Message;
+    public function receiveResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message;
 
 
     public function sendRequest( Message $i_request ) : void;

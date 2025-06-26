@@ -7,32 +7,32 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Cache;
 
 
+use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Packet\RequestPacket;
-use JDWX\DNSQuery\Packet\ResponsePacket;
+use JDWX\DNSQuery\Message\Message;
 
 
 /** The interface for response packet caching. */
-interface ICache {
+interface MessageCacheInterface {
 
 
     /** Create cache hash key for a request packet.
      *
-     * @param RequestPacket $i_rsp Request packet to hash
+     * @param Message $i_msg Request message to hash
      *
      * @return string The hashed key
      */
-    public static function hashRequest( RequestPacket $i_rsp ) : string;
+    public static function hashRequest( Message $i_msg ) : string;
 
 
     /**
      * Determine if an RR type is cacheable by this implementation.
      *
-     * @param string $i_type The RR type string (e.g. "A" or "OPT")
+     * @param int|string|RecordType $i_type The RR type string (e.g. "A" or "OPT")
      *
      * @return bool True if the RR type is cacheable, otherwise false
      */
-    public static function isTypeCacheable( string $i_type ) : bool;
+    public static function isTypeCacheable( int|string|RecordType $i_type ) : bool;
 
 
     /**
@@ -40,9 +40,9 @@ interface ICache {
      *
      * @param string $i_key Key to look up in the cache
      *
-     * @return ?ResponsePacket The cached response if found, otherwise null
+     * @return ?Message The cached response if found, otherwise null
      */
-    public function get( string $i_key ) : ?ResponsePacket;
+    public function get( string $i_key ) : ?Message;
 
 
     /**
@@ -50,11 +50,11 @@ interface ICache {
      *
      * @param string $i_key Key to look up in the local cache
      *
-     * @return ResponsePacket The cached response
+     * @return Message The cached response
      *
      * @throws Exception If the key is not found
      */
-    public function getEx( string $i_key ) : ResponsePacket;
+    public function getEx( string $i_key ) : Message;
 
 
     /**
@@ -72,11 +72,11 @@ interface ICache {
      * Add a new key/response pair to the cache
      *
      * @param string $i_key Key for the new response
-     * @param ResponsePacket $i_rsp Response to store in cache
+     * @param Message $i_msg Response to store in cache
      *
      * @return void
      */
-    public function put( string $i_key, ResponsePacket $i_rsp ) : void;
+    public function put( string $i_key, Message $i_msg ) : void;
 
 
 }

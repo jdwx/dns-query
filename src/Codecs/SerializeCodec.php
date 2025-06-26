@@ -10,7 +10,7 @@ namespace JDWX\DNSQuery\Codecs;
 use JDWX\DNSQuery\Message\Message;
 
 
-class SerializeCodec implements TransportCodecInterface {
+class SerializeCodec implements CodecInterface {
 
 
     public function decode( string $i_packet ) : Message {

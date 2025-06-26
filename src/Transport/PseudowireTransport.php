@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-use JDWX\DNSQuery\Codecs\TransportCodecInterface;
+use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Message\Message;
 
 
@@ -21,10 +21,10 @@ class PseudowireTransport implements TransportInterface {
     private array $rResponses = [];
 
 
-    public function __construct( private readonly TransportCodecInterface $codec ) {}
+    public function __construct( private readonly CodecInterface $codec ) {}
 
 
-    public function receiveRequest() : Message {
+    public function receiveRequest( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : Message {
         if ( empty( $this->rRequests ) ) {
             throw new \RuntimeException( 'No requests available.' );
         }
@@ -32,11 +32,10 @@ class PseudowireTransport implements TransportInterface {
     }
 
 
-    public function receiveResponse() : Message {
+    public function receiveResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : Message {
         if ( empty( $this->rResponses ) ) {
             throw new \RuntimeException( 'No responses available.' );
         }
-
         return $this->codec->decode( array_shift( $this->rResponses ) );
     }
 

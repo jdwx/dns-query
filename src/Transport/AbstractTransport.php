@@ -7,41 +7,55 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-use JDWX\DNSQuery\Codecs\TransportCodecInterface;
+use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Message\Message;
 
 
 abstract class AbstractTransport implements TransportInterface {
 
 
-    public function __construct( private readonly TransportCodecInterface $encoder ) {}
+    use UnifiedTransportTrait;
 
 
-    public function receiveRequest() : Message {
-        $packet = $this->receivePacket();
-        return $this->encoder->decode( $packet );
+    public function __construct( private readonly CodecInterface $codec ) {}
+
+
+    public function receiveRequest( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
+        return $this->receiveMessage( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
     }
 
 
-    public function receiveResponse() : Message {
-        $packet = $this->receivePacket();
-        return $this->encoder->decode( $packet );
+    public function receiveResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
+        return $this->receiveMessage( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
     }
 
 
     public function sendRequest( Message $i_request ) : void {
-        $packet = $this->encoder->encode( $i_request );
-        $this->sendPacket( $packet );
+        $this->sendMessage( $i_request );
     }
 
 
     public function sendResponse( Message $i_response ) : void {
-        $packet = $this->encoder->encode( $i_response );
-        $this->sendPacket( $packet );
+        $this->sendMessage( $i_response );
     }
 
 
-    abstract protected function receivePacket() : string;
+    protected function receiveMessage( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
+        $packet = $this->receivePacket( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
+        if ( ! is_string( $packet ) ) {
+            return null;
+        }
+        return $this->codec->decode( $packet );
+    }
+
+
+    abstract protected function receivePacket( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?string;
+
+
+    protected function sendMessage( Message $i_msg ) : void {
+        $packet = $this->codec->encode( $i_msg );
+        $this->sendPacket( $packet );
+    }
 
 
     abstract protected function sendPacket( string $packet ) : void;

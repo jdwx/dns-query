@@ -14,7 +14,7 @@ use JDWX\DNSQuery\RR\OPT;
 use JDWX\DNSQuery\RR\RR;
 
 
-class RFC1035Codec implements TransportCodecInterface {
+class RFC1035Codec implements CodecInterface {
 
 
     public function decode( string $i_packet ) : Message {

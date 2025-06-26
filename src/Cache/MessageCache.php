@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Cache;
 
 
 use JDWX\ArrayCache\ArrayCache;
-use JDWX\DNSQuery\Packet\ResponsePacket;
+use JDWX\DNSQuery\Message\Message;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -16,7 +16,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 /** Implements a caching interface for response packets using a PSR-6/PSR-16 cache interface
  * as the backend.
  */
-class Cache extends BaseCache implements ICache {
+class MessageCache extends AbstractCache implements MessageCacheInterface {
 
 
     /** @var CacheInterface The backend for storing cached data. */
@@ -39,7 +39,7 @@ class Cache extends BaseCache implements ICache {
     /**
      * @throws InvalidArgumentException
      */
-    public function get( string $i_key ) : ?ResponsePacket {
+    public function get( string $i_key ) : ?Message {
         return $this->cache->get( $i_key );
     }
 
@@ -55,8 +55,21 @@ class Cache extends BaseCache implements ICache {
     /**
      * @throws InvalidArgumentException
      */
-    protected function putWithTTL( string $i_key, ResponsePacket $i_rsp, int $i_ttl ) : void {
-        $this->cache->set( $i_key, $i_rsp, $i_ttl );
+    protected function putWithTTL( string $i_key, Message $i_msg, int $i_ttl ) : void {
+        # Clear the data to avoid storing large objects
+        foreach ( $i_msg->answer as $rr ) {
+            $rr->rdata = '';
+            $rr->rdLength = 0;
+        }
+        foreach ( $i_msg->authority as $rr ) {
+            $rr->rdata = '';
+            $rr->rdLength = 0;
+        }
+        foreach ( $i_msg->additional as $rr ) {
+            $rr->rdata = '';
+            $rr->rdLength = 0;
+        }
+        $this->cache->set( $i_key, $i_msg, $i_ttl );
     }
 
 
