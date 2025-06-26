@@ -37,6 +37,7 @@
     "ext-sockets": "*",
     "ext-ctype": "*",
     "jdwx/array-cache": "^1.0",
+	"jdwx/socket": "dev-main",
     "jdwx/strict": "dev-main"
   },
   "require-dev": {
