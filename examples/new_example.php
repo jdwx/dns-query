@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Transport\PseudowireTransport;
+use JDWX\DNSQuery\Transport\UdpTransport;
 
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -19,17 +19,20 @@ require __DIR__ . '/../vendor/autoload.php';
     # not how it actually works.
 
     $codec = new RFC1035Codec();
-    $pseudo = new PseudowireTransport( $codec );
+    // $xpt = new PseudowireTransport( $codec );
+    $xpt = new UdpTransport( '1.1.1.1' );
 
     # Client sends request
     $request = Message::request( 'example.com', 'A' );
     echo HexDump::dump( $codec->encode( $request ) ), "\n";
+    echo $request;
 
-    $client = new JDWX\DNSQuery\Client\Client( $pseudo );
+    $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt );
     $client->sendRequest( $request );
 
+    /*
     # Pseudo-server
-    $request = $pseudo->receiveRequest();
+    $request = $xpt->receiveRequest();
     echo $request;
 
     $response = Message::response( $request );
@@ -39,10 +42,12 @@ require __DIR__ . '/../vendor/autoload.php';
     );
     echo $response;
     echo HexDump::dump( $codec->encode( $response ) ), "\n";
-    $pseudo->sendResponse( $response );
+    $xpt->sendResponse( $response );
+    */
 
     # Client receives response
     $response = $client->receiveResponse();
+    echo HexDump::dump( $codec->encode( $response ) ), "\n";
     echo $response;
 
 } )();
