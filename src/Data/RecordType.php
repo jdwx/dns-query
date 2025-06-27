@@ -482,6 +482,12 @@ enum RecordType: int {
     }
 
 
+    public function is( int|string|self $i_value ) : bool {
+        $i_value = self::normalize( $i_value );
+        return $this === $i_value;
+    }
+
+
     public function toBinary() : string {
         return pack( 'n', $this->value );
     }

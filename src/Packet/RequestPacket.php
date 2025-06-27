@@ -11,8 +11,8 @@ use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
+use JDWX\DNSQuery\LegacyQuestion;
 use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Question;
 
 
 /**
@@ -76,7 +76,7 @@ class RequestPacket extends Packet {
         $this->header = new Header();
 
         # Add a new question.
-        $question = new Question();
+        $question = new LegacyQuestion();
 
         # Allow queries directly to . for the root name servers.
         if ( $i_name != '.' ) {

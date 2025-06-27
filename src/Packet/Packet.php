@@ -8,8 +8,8 @@ namespace JDWX\DNSQuery\Packet;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
+use JDWX\DNSQuery\LegacyQuestion;
 use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Question;
 use JDWX\DNSQuery\RR\RR;
 use Stringable;
 
@@ -60,7 +60,7 @@ class Packet implements Stringable {
     /** @var Header object with the DNS packet header */
     public Header $header;
 
-    /** @var Question[] used as "zone" for updates per RFC2136 */
+    /** @var LegacyQuestion[] used as "zone" for updates per RFC2136 */
     public array $question = [];
 
     /** @var RR[] Answers used as "prerequisite" for updates per RFC2136 */

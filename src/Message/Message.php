@@ -63,13 +63,17 @@ class Message implements \Stringable {
     }
 
 
-    public static function request( string                 $domain, int|string|RecordType $type = RecordType::ANY,
+    public static function request( string|Question        $domain,
+                                    int|string|RecordType  $type = RecordType::ANY,
                                     int|string|RecordClass $class = RecordClass::IN ) : self {
-        $type = RecordType::normalize( $type );
-        $class = RecordClass::normalize( $class );
         $msg = new self();
         $msg->setRandomId();
-        $msg->question[] = new Question( $domain, $type, $class );
+        if ( ! $domain instanceof Question ) {
+            $type = RecordType::normalize( $type );
+            $class = RecordClass::normalize( $class );
+            $domain = new Question( $domain, $type, $class );
+        }
+        $msg->question[] = $domain;
         return $msg;
     }
 

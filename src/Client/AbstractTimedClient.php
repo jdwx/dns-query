@@ -54,7 +54,7 @@ abstract class AbstractTimedClient extends AbstractClient {
             if ( is_null( $msg ) ) {
                 return null;
             }
-            if ( is_int( $i_id ) && $msg->id === $i_id ) {
+            if ( ! is_int( $i_id ) || $msg->id === $i_id ) {
                 return $msg;
             }
             $this->rLookAside[ $msg->id ] = $msg;

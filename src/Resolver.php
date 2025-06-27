@@ -18,6 +18,7 @@ use JDWX\DNSQuery\RR\OPT;
 use JDWX\DNSQuery\RR\RR;
 use JDWX\DNSQuery\RR\SIG;
 use JDWX\DNSQuery\RR\TSIG;
+use Psr\SimpleCache\CacheInterface;
 
 
 /**
@@ -246,22 +247,6 @@ class Resolver extends BaseQuery {
             $packet->header->cd = 1;
         }
 
-        $packetHash = null;
-
-        # Don't use the cache for zone transfers
-        if ( $this->cache && $this->cache::isTypeCacheable( $i_type ) ) {
-            # If caching is turned on, check then hash the question, and
-            # do a cache lookup.
-
-            # Hash the key and check for it in the cache.
-            $packetHash = $this->cache::hashRequest( $packet );
-            $xx = $this->cache->get( $packetHash );
-            if ( $xx ) {
-                # Return the cached packet.
-                return $xx;
-            }
-        }
-
         # Set the RD (recursion desired) bit to 1 / 0 depending on the config
         # setting.
         $packet->header->rd = $this->recurse ? 1 : 0;
@@ -306,13 +291,6 @@ class Resolver extends BaseQuery {
             }
         }
 
-        # Cache the response object if allowable.
-        # $packet_hash is only set here if caching is turned on, allowable,
-        # and the record wasn't already cached.
-        if ( is_string( $packetHash ) ) {
-            $this->cache->put( $packetHash, $response );
-        }
-
         return $response;
     }
 
@@ -343,11 +321,11 @@ class Resolver extends BaseQuery {
     /**
      * Adds a default caching implementation using a provided PSR-16 cache.
      *
-     * @param MessageCacheInterface $i_cacheInterface The PSR-16 cache implementation to use
+     * @param CacheInterface $i_cacheInterface The PSR-16 cache implementation to use
      *
      * @return static Fluent setter
      */
-    public function setCacheInterface( MessageCacheInterface $i_cacheInterface ) : static {
+    public function setCacheInterface( CacheInterface $i_cacheInterface ) : static {
         $cache = new MessageCache( $i_cacheInterface );
         return $this->setCache( $cache );
     }

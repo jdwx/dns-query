@@ -50,7 +50,7 @@ use JDWX\DNSQuery\Packet\Packet;
  *    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  *
  */
-class Question {
+class LegacyQuestion {
 
 
     /** @var string The name portion of the question
@@ -168,7 +168,7 @@ class Question {
                 Lookups::E_QUESTION_INVALID
             );
         }
-        
+
         # Store it.
         $this->qType = $type->name;
         $this->qClass = $class->name;

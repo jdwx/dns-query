@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Packet;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Question;
+use JDWX\DNSQuery\LegacyQuestion;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\AAAA;
 use JDWX\DNSQuery\RR\NS;
@@ -175,7 +175,7 @@ class ResponsePacket extends Packet {
 
         # Parse the questions.
         for ( $ii = 0 ; $ii < $this->header->qdCount ; ++$ii ) {
-            $this->question[ $ii ] = new Question( $this );
+            $this->question[ $ii ] = new LegacyQuestion( $this );
         }
 
         # Parse the answers.

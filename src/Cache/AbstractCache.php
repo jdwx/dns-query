@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Cache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\Question;
 
 
 /** Contains the caching functionality that is independent of what type of cache is being
@@ -36,37 +37,33 @@ abstract class AbstractCache implements MessageCacheInterface {
      *
      * @return int TTL for the response packet in seconds
      */
-    public static function calculateTTL( Message $i_msg ) : int {
-        $ttl = 86400 * 365;
+    public static function calculateTTL( Message $i_msg, int $i_uDefaultMaxTTL = 86400 * 365 ) : int {
+        $uTTL = $i_uDefaultMaxTTL;
         foreach ( $i_msg->answer as $rr ) {
-            if ( $rr->ttl < $ttl ) {
-                $ttl = $rr->ttl;
+            if ( $rr->ttl < $uTTL ) {
+                $uTTL = $rr->ttl;
             }
         }
 
         foreach ( $i_msg->authority as $rr ) {
-            if ( $rr->ttl < $ttl ) {
-                $ttl = $rr->ttl;
+            if ( $rr->ttl < $uTTL ) {
+                $uTTL = $rr->ttl;
             }
         }
 
         foreach ( $i_msg->additional as $rr ) {
-            if ( $rr->ttl < $ttl ) {
-                $ttl = $rr->ttl;
+            if ( $rr->ttl < $uTTL ) {
+                $uTTL = $rr->ttl;
             }
         }
 
-        return $ttl;
+        return $uTTL;
     }
 
 
     /** @inheritDoc */
-    public static function hashRequest( Message $i_msg ) : string {
-        $st = '';
-        foreach ( $i_msg->question as $q ) {
-            $st .= "{$q->stName}|{$q->type->value}|{$q->class->value}&";
-        }
-        return hash( 'sha256', $st );
+    public static function hash( Message|Question $i_msg ) : string {
+        return hash( 'sha256', static::preHash( $i_msg ) );
     }
 
 
@@ -77,6 +74,18 @@ abstract class AbstractCache implements MessageCacheInterface {
             RecordType::AXFR, RecordType::OPT => false,
             default => true,
         };
+    }
+
+
+    protected static function preHash( Message|Question $i_target ) : string {
+        if ( $i_target instanceof Question ) {
+            return "{$i_target->stName}|{$i_target->type->value}|{$i_target->class->value}&";
+        }
+        $st = '';
+        foreach ( $i_target->question as $q ) {
+            $st .= static::preHash( $q );
+        }
+        return $st;
     }
 
 

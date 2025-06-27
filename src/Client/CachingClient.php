@@ -52,7 +52,7 @@ class CachingClient extends AbstractClient {
 
 
     public function sendRequest( Message $i_request ) : void {
-        $this->rIDMap[ $i_request->id ] = $this->stLastKey = $this->cache::hashRequest( $i_request );
+        $this->rIDMap[ $i_request->id ] = $this->stLastKey = $this->cache::hash( $i_request );
         $this->clientBackend->sendRequest( $i_request );
         // TODO: Implement sendRequest() method.
     }

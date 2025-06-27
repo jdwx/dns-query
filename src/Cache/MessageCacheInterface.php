@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Cache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\Question;
 
 
 /** The interface for response packet caching. */
@@ -18,11 +19,11 @@ interface MessageCacheInterface {
 
     /** Create cache hash key for a request packet.
      *
-     * @param Message $i_msg Request message to hash
+     * @param Message|Question $i_msg Request message to hash
      *
      * @return string The hashed key
      */
-    public static function hashRequest( Message $i_msg ) : string;
+    public static function hash( Message|Question $i_msg ) : string;
 
 
     /**
