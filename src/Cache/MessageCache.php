@@ -56,19 +56,6 @@ class MessageCache extends AbstractCache implements MessageCacheInterface {
      * @throws InvalidArgumentException
      */
     protected function putWithTTL( string $i_key, Message $i_msg, int $i_ttl ) : void {
-        # Clear the data to avoid storing large objects
-        foreach ( $i_msg->answer as $rr ) {
-            $rr->rdata = '';
-            $rr->rdLength = 0;
-        }
-        foreach ( $i_msg->authority as $rr ) {
-            $rr->rdata = '';
-            $rr->rdLength = 0;
-        }
-        foreach ( $i_msg->additional as $rr ) {
-            $rr->rdata = '';
-            $rr->rdLength = 0;
-        }
         $this->cache->set( $i_key, $i_msg, $i_ttl );
     }
 

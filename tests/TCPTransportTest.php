@@ -12,6 +12,7 @@ use JDWX\DNSQuery\Network\TCPTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Socket;
 
 
 /** Additional coverage tests for the TCPTransport class. */
@@ -44,6 +45,7 @@ final class TCPTransportTest extends TestCase {
         $udp = new TCPTransport( '127.0.0.1', $port );
 
         $socketClient = socket_accept( $socket );
+        assert( $socketClient instanceof Socket );
 
         $udp->sendRequest( $req );
         socket_recv( $socketClient, $buf, 1024, 0 );

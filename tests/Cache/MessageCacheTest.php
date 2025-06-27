@@ -4,12 +4,12 @@
 declare( strict_types = 1 );
 
 
-namespace Cache;
+namespace JDWX\DNSQuery\Tests\Cache;
 
 
 use JDWX\DNSQuery\Cache\MessageCache;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\RR\MX;
+use JDWX\DNSQuery\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -25,10 +25,7 @@ final class MessageCacheTest extends TestCase {
 
         $req = Message::request( 'example.com', 'MX', 'IN' );
         $rsp = Message::response( $req );
-        $mx = new MX();
-        $mx->name = 'example.com';
-        $mx->exchange = 'smtp.example.com';
-        $mx->preference = 10;
+        $mx = ResourceRecord::fromString( 'example.com 3600 IN MX 10 smtp.example.com' );
         $rsp->answer[] = $mx;
 
         $cache->put( 'foo', $rsp );
@@ -36,8 +33,8 @@ final class MessageCacheTest extends TestCase {
         self::assertTrue( $cache->has( 'foo' ) );
         $xx = $cache->get( 'foo' );
         $ans = $xx->answer[ 0 ];
-        assert( $ans instanceof MX );
-        self::assertEquals( 'smtp.example.com', $ans->exchange );
+        self::assertTrue( $ans->isType( 'MX' ) );
+        self::assertEquals( [ 'smtp', 'example', 'com' ], $ans[ 'exchange' ] );
     }
 
 

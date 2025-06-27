@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace Cache;
+namespace JDWX\DNSQuery\Tests\Cache;
 
 
 use JDWX\ArrayCache\ArrayCache;
@@ -14,9 +14,7 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\Question;
-use JDWX\DNSQuery\RR\A;
-use JDWX\DNSQuery\RR\MX;
-use JDWX\DNSQuery\RR\NS;
+use JDWX\DNSQuery\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -29,28 +27,25 @@ final class AbstractCacheTest extends TestCase {
         $msg = Message::request( 'example.com', 'A', 'IN' );
         self::assertSame( 12345, AbstractCache::calculateTTL( $msg, 12345 ) );
 
-        $rrAnswer = new MX();
-        $rrAnswer->ttl = 3600;
+        $rrAnswer = ResourceRecord::fromString( 'foo 3600 IN MX 10 bar' );
         $msg->answer[] = $rrAnswer;
         self::assertSame( 3600, AbstractCache::calculateTTL( $msg, 12345 ) );
 
-        $rrAuthority = new NS();
-        $rrAuthority->ttl = 3500;
+        $rrAuthority = ResourceRecord::fromString( 'foo 3500 IN NS bar.baz.' );
         $msg->authority[] = $rrAuthority;
         self::assertSame( 3500, AbstractCache::calculateTTL( $msg, 12345 ) );
 
-        $rrAdditional = new A();
-        $rrAdditional->ttl = 3400;
+        $rrAdditional = ResourceRecord::fromString( 'foo 3400 IN A 1.2.3.4' );
         $msg->additional[] = $rrAdditional;
         self::assertSame( 3400, AbstractCache::calculateTTL( $msg, 12345 ) );
 
-        $rrAnswer->ttl = 3300;
+        $rrAnswer->setTTL( 3300 );
         self::assertSame( 3300, AbstractCache::calculateTTL( $msg, 12345 ) );
 
-        $rrAuthority->ttl = 3200;
+        $rrAuthority->setTTL( 3200 );
         self::assertSame( 3200, AbstractCache::calculateTTL( $msg, 12345 ) );
 
-        $rrAdditional->ttl = 0;
+        $rrAdditional->setTTL( 0 );
         self::assertSame( 0, AbstractCache::calculateTTL( $msg, 12345 ) );
 
     }

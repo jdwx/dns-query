@@ -40,21 +40,15 @@ abstract class AbstractCache implements MessageCacheInterface {
     public static function calculateTTL( Message $i_msg, int $i_uDefaultMaxTTL = 86400 * 365 ) : int {
         $uTTL = $i_uDefaultMaxTTL;
         foreach ( $i_msg->answer as $rr ) {
-            if ( $rr->ttl < $uTTL ) {
-                $uTTL = $rr->ttl;
-            }
+            $uTTL = min( $uTTL, $rr->ttl() );
         }
 
         foreach ( $i_msg->authority as $rr ) {
-            if ( $rr->ttl < $uTTL ) {
-                $uTTL = $rr->ttl;
-            }
+            $uTTL = min( $uTTL, $rr->ttl() );
         }
 
         foreach ( $i_msg->additional as $rr ) {
-            if ( $rr->ttl < $uTTL ) {
-                $uTTL = $rr->ttl;
-            }
+            $uTTL = min( $uTTL, $rr->ttl() );
         }
 
         return $uTTL;
@@ -108,9 +102,9 @@ abstract class AbstractCache implements MessageCacheInterface {
     /**
      * Store a response in the cache with a precalculated time-to-live (TTL).
      *
-     * @param string $i_key Key for the new response
+     * @param string  $i_key Key for the new response
      * @param Message $i_msg Response to cache
-     * @param int $i_ttl TTL in seconds to cache this response
+     * @param int     $i_ttl TTL in seconds to cache this response
      *
      * @return void
      */

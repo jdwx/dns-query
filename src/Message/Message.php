@@ -17,11 +17,11 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Data\TC;
 use JDWX\DNSQuery\Data\ZBits;
-use JDWX\DNSQuery\RR\OPT;
-use JDWX\DNSQuery\RR\RR;
+use JDWX\DNSQuery\ResourceRecord;
+use Stringable;
 
 
-class Message implements \Stringable {
+class Message implements Stringable {
 
 
     public int $id = 0;
@@ -45,16 +45,16 @@ class Message implements \Stringable {
     /** @var list<Question> */
     public array $question = [];
 
-    /** @var list<RR> */
+    /** @var list<ResourceRecord> */
     public array $answer = [];
 
-    /** @var list<RR> */
+    /** @var list<ResourceRecord> */
     public array $authority = [];
 
-    /** @var list<RR> */
+    /** @var list<ResourceRecord> */
     public array $additional = [];
 
-    /** @var list<OPT> */
+    /** @var list<ResourceRecord> */
     public array $opt = [];
 
 

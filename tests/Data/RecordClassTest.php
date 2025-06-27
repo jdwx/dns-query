@@ -98,6 +98,16 @@ final class RecordClassTest extends TestCase {
     }
 
 
+    public function testIs() : void {
+        self::assertTrue( RecordClass::IN->is( RecordClass::IN ) );
+        self::assertFalse( RecordClass::IN->is( RecordClass::CH ) );
+        self::assertTrue( RecordClass::IN->is( 1 ) );
+        self::assertFalse( RecordClass::IN->is( 3 ) );
+        self::assertTrue( RecordClass::IN->is( 'IN' ) );
+        self::assertFalse( RecordClass::IN->is( 'CH' ) );
+    }
+
+
     public function testIsValidId() : void {
         self::assertTrue( RecordClass::isValidId( 1 ) );
         self::assertFalse( RecordClass::isValidId( 999 ) );

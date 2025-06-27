@@ -9,8 +9,12 @@ namespace JDWX\DNSQuery\Transport;
 
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Message\Message;
+use RuntimeException;
 
 
+/**
+ * Simple transport useful for testing and emulation.
+ */
 class PseudowireTransport implements TransportInterface {
 
 
@@ -26,7 +30,7 @@ class PseudowireTransport implements TransportInterface {
 
     public function receiveRequest( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : Message {
         if ( empty( $this->rRequests ) ) {
-            throw new \RuntimeException( 'No requests available.' );
+            throw new RuntimeException( 'No requests available.' );
         }
         return $this->codec->decode( array_shift( $this->rRequests ) );
     }
@@ -34,7 +38,7 @@ class PseudowireTransport implements TransportInterface {
 
     public function receiveResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : Message {
         if ( empty( $this->rResponses ) ) {
-            throw new \RuntimeException( 'No responses available.' );
+            throw new RuntimeException( 'No responses available.' );
         }
         return $this->codec->decode( array_shift( $this->rResponses ) );
     }

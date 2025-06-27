@@ -7,27 +7,37 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use InvalidArgumentException;
 use JDWX\DNSQuery\DomainName;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\Strict\TypeIs;
+use LogicException;
 
 
-enum RDataType {
+enum RDataType : int {
 
 
-    case DomainName;
+    case DomainName = 0;
 
-    case IPv4Address;
+    case IPv4Address = 1;
 
-    case IPv6Address;
+    case IPv6Address = 2;
 
-    case CharacterString;
+    case CharacterString = 3;
 
-    case CharacterStringList;
+    case CharacterStringList = 4;
 
-    case UINT16;
+    case UINT16 = 5;
 
-    case UINT32;
+    case UINT32 = 6;
+
+
+    public static function normalize( int|RDataType $i_type ) : RDataType {
+        if ( $i_type instanceof RDataType ) {
+            return $i_type;
+        }
+        return RDataType::from( $i_type );
+    }
 
 
     protected static function escapeString( string $i_value ) : string {
@@ -72,14 +82,14 @@ enum RDataType {
             case self::IPv4Address:
                 $st = filter_var( $i_stValue, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
                 if ( false === $st ) {
-                    throw new \InvalidArgumentException( "Invalid IPv4 address: $i_stValue" );
+                    throw new InvalidArgumentException( "Invalid IPv4 address: {$i_stValue}" );
                 }
                 return $st;
 
             case self::IPv6Address:
                 $st = filter_var( $i_stValue, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 );
                 if ( false === $st ) {
-                    throw new \InvalidArgumentException( "Invalid IPv6 address: $i_stValue" );
+                    throw new InvalidArgumentException( "Invalid IPv6 address: {$i_stValue}" );
                 }
                 return $st;
 
@@ -87,7 +97,7 @@ enum RDataType {
                 return $i_stValue;
 
             case self::CharacterStringList:
-                return [ $i_stValue ];
+                throw new LogicException( 'Cannot parse CharacterStringList directly.' );
 
             case self::UINT16:
                 $uValue = filter_var( $i_stValue, FILTER_VALIDATE_INT, [
@@ -97,7 +107,7 @@ enum RDataType {
                     ],
                 ] );
                 if ( false === $uValue ) {
-                    throw new \InvalidArgumentException( "Invalid UINT16 value: $i_stValue" );
+                    throw new InvalidArgumentException( "Invalid UINT16 value: $i_stValue" );
                 }
                 return $uValue;
 
@@ -109,13 +119,15 @@ enum RDataType {
                     ],
                 ] );
                 if ( false === $uValue ) {
-                    throw new \InvalidArgumentException( "Invalid UINT32 value: $i_stValue" );
+                    throw new InvalidArgumentException( "Invalid UINT32 value: $i_stValue" );
                 }
                 return $uValue;
 
         }
+        // @codeCoverageIgnoreStart
         /** @phpstan-ignore deadCode.unreachable */
-        throw new \LogicException( "Unhandled RDataType: {$this->name}" );
+        throw new LogicException( "Unhandled RDataType: {$this->name}" );
+        // @codeCoverageIgnoreEnd
     }
 
 

@@ -189,6 +189,16 @@ final class RecordTypeTest extends TestCase {
     }
 
 
+    public function testIs() : void {
+        self::assertTrue( RecordType::A->is( RecordType::A->value ) );
+        self::assertFalse( RecordType::A->is( RecordType::CNAME->value ) );
+        self::assertTrue( RecordType::A->is( RecordType::A ) );
+        self::assertFalse( RecordType::A->is( RecordType::CNAME ) );
+        self::assertTrue( RecordType::A->is( 1 ) );
+        self::assertFalse( RecordType::A->is( 3 ) );
+    }
+
+
     public function testIsValidClassName() : void {
         self::assertTrue( RecordType::isValidClassName( A::class ) );
         self::assertFalse( RecordType::isValidClassName( $this::class ) );

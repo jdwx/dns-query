@@ -7,7 +7,12 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Exceptions\RecordException;
+
+
 /**
+ * Stores information about the RData contents of various DNS record types.
+ *
  * @suppress PhanInvalidConstantExpression
  * @suppress PhanCommentObjectInClassConstantType
  */
@@ -15,16 +20,28 @@ final class RDataMaps {
 
 
     /** @var array<int, array<string, RDataType>> */
-    public const array MAP_LIST = [
+    private const array MAP_LIST = [
         RecordType::A->value => [ 'address' => RDataType::IPv4Address ],
         RecordType::MX->value => [
             'preference' => RDataType::UINT16,
             'exchange' => RDataType::DomainName,
         ],
+        RecordType::NS->value => [ 'nsdname' => RDataType::DomainName ],
         RecordType::TXT->value => [
             'text' => RDataType::CharacterStringList,
         ],
     ];
+
+
+    /** @return array<string, RDataType> */
+    public static function map( int|string|RecordType $i_type ) : array {
+        $i_type = RecordType::normalize( $i_type );
+        $value = $i_type->value;
+        if ( ! isset( self::MAP_LIST[ $value ] ) ) {
+            throw new RecordException( "No RData map for record type {$i_type->name}" );
+        }
+        return self::MAP_LIST[ $i_type->value ];
+    }
 
 
 }
