@@ -47,6 +47,21 @@ final class HexDump {
     }
 
 
+    public static function escape( string $i_stData ) : string {
+        $stHex = '';
+        $uMaxLen = strlen( $i_stData );
+        for ( $ii = 0 ; $ii < $uMaxLen ; ++$ii ) {
+            $ch = $i_stData[ $ii ];
+            if ( ctype_print( $ch ) ) {
+                $stHex .= $ch;
+                continue;
+            }
+            $stHex .= sprintf( '\\x%02X', ord( $ch ) );
+        }
+        return $stHex;
+    }
+
+
     public static function fromTcpDump( string $i_stDump ) : string {
         $stHex = '';
         foreach ( OK::preg_split( '/[\r\n]/', $i_stDump ) as $stLine ) {
