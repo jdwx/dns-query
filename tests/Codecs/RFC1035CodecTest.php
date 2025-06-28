@@ -9,11 +9,15 @@ namespace JDWX\DNSQuery\Tests\Codecs;
 
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\OpCode;
+use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\HexDump;
+use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\Question;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\OptRecord;
 use JDWX\DNSQuery\RDataValue;
+use JDWX\DNSQuery\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -300,6 +304,112 @@ final class RFC1035CodecTest extends TestCase {
     }
 
 
+    public function testDecodeResourceRecordForOPT() : void {
+        // OPT record: name=root, type=OPT(41), payload size=1232, flags=0, RCODE=0
+        $st = "\x00" // Root domain name
+            . "\x00\x29" // Type OPT (41)
+            . "\x04\xd0" // UDP payload size 1232
+            . "\x00" // Extended RCODE
+            . "\x00" // Version
+            . "\x00\x00" // Flags
+            . "\x00\x0c" // RDLength (12 bytes)
+            . "\x00\x0a" // Option code 10 (COOKIE)
+            . "\x00\x08" // Option length 8
+            . "\x01\x02\x03\x04\x05\x06\x07\x08"; // Cookie data
+
+        $uOffset = 0;
+        $rr = RFC1035Codec::decodeResourceRecord( $st, $uOffset );
+
+        self::assertInstanceOf( OptRecord::class, $rr );
+        assert( $rr instanceof OptRecord );
+
+        self::assertSame( [], $rr->getName() ); // Root domain
+        self::assertSame( 'OPT', $rr->type() );
+        self::assertSame( 1232, $rr->payloadSize() );
+        self::assertSame( 0, $rr->version() );
+
+        $options = $rr[ 'options' ];
+        self::assertCount( 1, $options );
+        self::assertSame( 10, $options[ 0 ]->code ); // COOKIE
+        self::assertSame( "\x01\x02\x03\x04\x05\x06\x07\x08", $options[ 0 ]->data );
+    }
+
+
+    public function testEncode() : void {
+        $codec = new RFC1035Codec();
+        $msg = new Message();
+        $msg->id = 0x1234;
+        $msg->opcode = OpCode::QUERY;
+        $msg->rd = RD::RECURSION_DESIRED;
+        $msg->question[] = new Question( 'test', 'A', 'IN' );
+
+        // Add an answer record
+        $msg->answer[] = new ResourceRecord(
+            'test',
+            'A',
+            'IN',
+            300,
+            [ 'address' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ) ]
+        );
+
+        $st = $codec->encode( $msg );
+
+        // Header
+        self::assertStringStartsWith( "\x12\x34", $st ); // ID
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x01\x00", $st ); // Flags (RD=1)
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Question Count
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Answer Count
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x00", $st ); // Authority Count
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x00", $st ); // Additional Count
+        $st = substr( $st, 2 );
+
+        // Question
+        self::assertStringStartsWith( "\x04test\x00", $st ); // Question Name
+        $st = substr( $st, 6 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Type A
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Class IN
+        $st = substr( $st, 2 );
+
+        // Answer
+        self::assertStringStartsWith( "\x04test\x00", $st ); // Name (uncompressed)
+        $st = substr( $st, 6 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Type A
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Class IN
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x00\x01\x2c", $st ); // TTL 300
+        $st = substr( $st, 4 );
+        self::assertStringStartsWith( "\x00\x04", $st ); // RDLength
+        $st = substr( $st, 2 );
+        self::assertSame( "\x01\x02\x03\x04", $st ); // IP address
+    }
+
+
+    public function testEncodeRData() : void {
+        $rDataMap = [
+            'foo' => RDataType::CharacterString,
+            'bar' => RDataType::UINT16,
+            'baz' => RDataType::IPv4Address,
+        ];
+        $rData = [
+            'foo' => new RDataValue( RDataType::CharacterString, 'Test' ),
+            'bar' => new RDataValue( RDataType::UINT16, 0x1234 ),
+            'baz' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ),
+        ];
+        $rLabelMap = [];
+        $uOffset = 10;
+        $st = RFC1035Codec::encodeRData( $rDataMap, $rLabelMap, $uOffset, $rData );
+        self::assertSame( "\x04Test\x12\x34\x01\x02\x03\x04", $st );
+        self::assertSame( 21, $uOffset ); // 10 + 5 + 2 + 4
+    }
+
+
     public function testEncodeRDataCharacterStringList() : void {
         $strings = [ 'Foo', 'Bar', 'Baz', 'Quux' ];
         $st = RFC1035Codec::encodeRDataCharacterStringList( $strings );
@@ -398,32 +508,65 @@ final class RFC1035CodecTest extends TestCase {
     }
 
 
-    /*
-    public function testEncodeForRequest() : void {
-        $codec = new RFC1035Codec();
-        $msg = new Message();
-        $msg->id = 0x1234;
-        $msg->opcode = OpCode::QUERY;
-        $msg->question[] = new Question( 'test', 'A', 'IN' );
-        $st = $codec->encode( $msg );
-        self::assertStringStartsWith( "\x12\x34", $st ); # ID
-        $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x01\x00", $st ); # Flags
-        $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x00\x01", $st ); # Question Count
-        $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x00\x00\x00\x00\x00\x00", $st );
-        $st = substr( $st, 6 );
-
-        self::assertStringStartsWith( "\x04test\x00", $st ); # Question Name
-        $st = substr( $st, 6 );
-        self::assertStringStartsWith( "\x00\x01", $st ); # Type A
-        $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x00\x01", $st ); # Class IN
-        $st = substr( $st, 2 );
-        self::assertSame( '', $st ); # End of message
+    public function testEncodeRDataValueForUINT16() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::UINT16, 0x1234 );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x12\x34", $st );
     }
-    */
+
+
+    public function testEncodeRDataValueForUINT32() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::UINT32, 0x12345678 );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x12\x34\x56\x78", $st );
+    }
+
+
+    public function testEncodeResourceRecord() : void {
+        $rr = new ResourceRecord(
+            [ 'example', 'com' ],
+            'A',
+            'IN',
+            300,
+            [ 'address' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ) ]
+        );
+        $rLabelMap = [];
+        $uOffset = 12;
+        $st = RFC1035Codec::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
+
+        // Name: example.com
+        self::assertStringStartsWith( "\x07example\x03com\x00", $st );
+        $st = substr( $st, 13 );
+
+        // Type: A (1)
+        self::assertStringStartsWith( "\x00\x01", $st );
+        $st = substr( $st, 2 );
+
+        // Class: IN (1)
+        self::assertStringStartsWith( "\x00\x01", $st );
+        $st = substr( $st, 2 );
+
+        // TTL: 300
+        self::assertStringStartsWith( "\x00\x00\x01\x2c", $st );
+        $st = substr( $st, 4 );
+
+        // RDLength: 4
+        self::assertStringStartsWith( "\x00\x04", $st );
+        $st = substr( $st, 2 );
+
+        // RData: 1.2.3.4
+        self::assertSame( "\x01\x02\x03\x04", $st );
+
+        // Check label map - keys are hashes, so we check count and values
+        self::assertCount( 2, $rLabelMap );
+        $offsets = array_values( $rLabelMap );
+        self::assertContains( 12, $offsets ); // Offset for 'example.com'
+        self::assertContains( 20, $offsets ); // Offset for 'com'
+    }
 
 
 }

@@ -165,8 +165,8 @@ class RFC1035Codec implements CodecInterface {
             RDataType::IPv6Address => Binary::packIPv6( $i_rdv->value ),
             RDataType::Option => self::encodeRDataOption( $i_rdv->value ),
             RDataType::OptionList => self::encodeRDataOptionList( $i_rdv->value ),
-            RDataType::UINT16 => Binary::packUINT16( 0 ),
-            RDataType::UINT32 => Binary::packUINT32( 0 ),
+            RDataType::UINT16 => Binary::packUINT16( $i_rdv->value ),
+            RDataType::UINT32 => Binary::packUINT32( $i_rdv->value ),
             default => throw new RecordException( 'Unhandled RDataType for encode: ' . $i_rdv->type->name ),
         };
     }
