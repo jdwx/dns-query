@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery;
 
 
 use ArrayAccess;
+use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordClass;
@@ -25,13 +26,20 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
 
     /**
      * @param array<string, RDataType>|RecordType $rDataMap
-     * @param array<string, RDataValue> $rData
+     * @param array<string, RDataValue>           $rData
      */
     public function __construct( array|RecordType $rDataMap, protected array $rData = [] ) {
         if ( $rDataMap instanceof RecordType ) {
             $rDataMap = RDataMaps::map( $rDataMap );
         }
         $this->rDataMap = $rDataMap;
+
+        foreach ( array_keys( $this->rDataMap ) as $stKey ) {
+            if ( ! isset( $rData[ $stKey ] ) ) {
+                throw new InvalidArgumentException( "Missing required RData key: {$stKey}" );
+            }
+            $this->setRDataValueAlreadyChecked( $stKey, $rData[ $stKey ] );
+        }
     }
 
 
@@ -79,7 +87,8 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
     }
 
 
-    public function offsetSet( mixed $offset, mixed $value ) : void {}
+    public function offsetSet( mixed $offset, mixed $value ) : void {
+    }
 
 
     public function offsetUnset( mixed $offset ) : void {
@@ -105,6 +114,18 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
 
     public function type() : string {
         return $this->getType()->name;
+    }
+
+
+    protected function setRDataValueAlreadyChecked( string $i_stName, mixed $i_value ) : void {
+        if ( ! $i_value instanceof RDataValue ) {
+            $i_value = new RDataValue( $this->rDataMap[ $i_stName ], $i_value );
+        } elseif ( $i_value->type !== $this->rDataMap[ $i_stName ] ) {
+            throw new InvalidArgumentException(
+                "RData type mismatch for {$i_stName}: wanted {$this->rDataMap[$i_stName]->name}, got {$i_value->type->name}"
+            );
+        }
+        $this->rData[ $i_stName ] = $i_value;
     }
 
 

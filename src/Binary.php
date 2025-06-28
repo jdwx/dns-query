@@ -19,25 +19,25 @@ use OutOfRangeException;
 final class Binary {
 
 
-    public static function consume( string $i_stData, int &$io_iOffset, int $i_Length ) : string {
-        $st = self::tryConsume( $i_stData, $io_iOffset, $i_Length );
-        if ( strlen( $st ) !== $i_Length ) {
-            throw new OutOfBoundsException( "Failed to consume {$i_Length} bytes from data." );
+    public static function consume( string $i_stData, int &$io_uOffset, int $i_uLength ) : string {
+        $st = self::tryConsume( $i_stData, $io_uOffset, $i_uLength );
+        if ( strlen( $st ) !== $i_uLength ) {
+            throw new OutOfBoundsException( "Failed to consume {$i_uLength} bytes from data at {$io_uOffset}." );
         }
         return $st;
     }
 
 
-    public static function consumeIPv4( string $i_stData, int &$io_iOffset ) : string {
-        $st = self::unpackIPv4( $i_stData, $io_iOffset );
-        $io_iOffset += 4;
+    public static function consumeIPv4( string $i_stData, int &$io_uOffset ) : string {
+        $st = self::unpackIPv4( $i_stData, $io_uOffset );
+        $io_uOffset += 4;
         return $st;
     }
 
 
-    public static function consumeIPv6( string $i_stData, int &$io_iOffset ) : string {
-        $st = self::unpackIPv6( $i_stData, $io_iOffset );
-        $io_iOffset += 16;
+    public static function consumeIPv6( string $i_stData, int &$io_uOffset ) : string {
+        $st = self::unpackIPv6( $i_stData, $io_uOffset );
+        $io_uOffset += 16;
         return $st;
     }
 
@@ -90,14 +90,14 @@ final class Binary {
     }
 
 
-    public static function consumeUINT16( string $i_stData, int &$io_iOffset ) : int {
-        $st = self::consume( $i_stData, $io_iOffset, 2 );
+    public static function consumeUINT16( string $i_stData, int &$io_uOffset ) : int {
+        $st = self::consume( $i_stData, $io_uOffset, 2 );
         return self::unpackUINT16( $st );
     }
 
 
-    public static function consumeUINT32( string $i_stData, int &$io_iOffset ) : int {
-        $st = self::consume( $i_stData, $io_iOffset, 4 );
+    public static function consumeUINT32( string $i_stData, int &$io_uOffset ) : int {
+        $st = self::consume( $i_stData, $io_uOffset, 4 );
         return self::unpackUINT32( $st );
     }
 
@@ -235,13 +235,13 @@ final class Binary {
     }
 
 
-    public static function packUINT16( int $i_iValue ) : string {
-        return OK::pack( 'n', $i_iValue );
+    public static function packUINT16( int $i_uValue ) : string {
+        return OK::pack( 'n', $i_uValue );
     }
 
 
-    public static function packUINT32( int $i_iValue ) : string {
-        return OK::pack( 'N', $i_iValue );
+    public static function packUINT32( int $i_uValue ) : string {
+        return OK::pack( 'N', $i_uValue );
     }
 
 
@@ -271,13 +271,13 @@ final class Binary {
      * Consume a string, incrementing the offset by the length of the consumed string.
      *
      * @param string $i_stData
-     * @param int    $io_iOffset
-     * @param int    $i_Length
+     * @param int    $io_uOffset
+     * @param int    $i_uLength
      * @return string
      */
-    public static function tryConsume( string $i_stData, int &$io_iOffset, int $i_Length ) : string {
-        $st = substr( $i_stData, $io_iOffset, $i_Length );
-        $io_iOffset += strlen( $st );
+    public static function tryConsume( string $i_stData, int &$io_uOffset, int $i_uLength ) : string {
+        $st = substr( $i_stData, $io_uOffset, $i_uLength );
+        $io_uOffset += strlen( $st );
         return $st;
     }
 

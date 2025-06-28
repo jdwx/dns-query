@@ -49,6 +49,14 @@ final class ReturnCodeTest extends TestCase {
     }
 
 
+    public function testToFlagTTL() : void {
+        self::assertSame( 0, ReturnCode::NOERROR->toFlagTTL() );
+        self::assertSame( 0, ReturnCode::SERVFAIL->toFlagTTL() );
+        self::assertSame( 0x1000000, ReturnCode::BADKEY->toFlagTTL() );
+        self::assertSame( 0x1000000, ReturnCode::BADTIME->toFlagTTL() );
+    }
+
+
     public function testToFlagWord() : void {
         self::assertSame( 0, ReturnCode::NOERROR->toFlagWord() );
         self::assertSame( 2, ReturnCode::SERVFAIL->toFlagWord() );

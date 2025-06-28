@@ -10,17 +10,183 @@ namespace JDWX\DNSQuery\Codecs;
 use JDWX\DNSQuery\Binary;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
-use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\Question;
+use JDWX\DNSQuery\Option;
+use JDWX\DNSQuery\OptRecord;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecordInterface;
 
 
 class RFC1035Codec implements CodecInterface {
+
+
+    public static function decodeRData( array $rMap, string $i_packet, int &$io_offset,
+                                        int   $i_uEndOfRData ) : array {
+        $rData = [];
+
+        /** @noinspection PhpLoopCanBeConvertedToArrayMapInspection */
+        foreach ( $rMap as $stName => $rDataType ) {
+            $rData[ $stName ] = self::decodeRDataValue( $rDataType, $i_packet, $io_offset, $i_uEndOfRData );
+        }
+        assert( $io_offset === $i_uEndOfRData,
+            "Offset after reading RData ({$io_offset}) does not equal end of RData ({$i_uEndOfRData})."
+        );
+        return $rData;
+    }
+
+
+    /** @return list<string> */
+    public static function decodeRDataCharacterStringList( string $i_stPacket, int &$io_uOffset,
+                                                           int    $i_uEndOfRData ) : array {
+        $rOut = [];
+        while ( $io_uOffset < $i_uEndOfRData ) {
+            $rOut[] = Binary::consumeLabel( $i_stPacket, $io_uOffset );
+        }
+        return $rOut;
+    }
+
+
+    public static function decodeRDataOption( string $i_stOption, int &$io_uOffset ) : Option {
+        $uCode = Binary::consumeUINT16( $i_stOption, $io_uOffset );
+        $uLength = Binary::consumeUINT16( $i_stOption, $io_uOffset );
+        $data = Binary::consume( $i_stOption, $io_uOffset, $uLength );
+        return new Option( $uCode, $data );
+    }
+
+
+    /** @return list<Option> */
+    public static function decodeRDataOptionList( string $i_stList, int &$io_uOffset,
+                                                  int    $i_uEndOfRData ) : array {
+        $rOut = [];
+        while ( $io_uOffset < $i_uEndOfRData ) {
+            $rOut[] = self::decodeRDataOption( $i_stList, $io_uOffset );
+        }
+        return $rOut;
+    }
+
+
+    public static function decodeRDataValue( RDataType $i_rdt, string $i_packet, int &$io_offset,
+                                             int       $i_uEndOfRData ) : RDataValue {
+        $data = match ( $i_rdt ) {
+            RDataType::CharacterString => Binary::consumeLabel( $i_packet, $io_offset ),
+            RDataType::CharacterStringList => self::decodeRDataCharacterStringList( $i_packet, $io_offset, $i_uEndOfRData ),
+            RDataType::DomainName => Binary::consumeNameArray( $i_packet, $io_offset ),
+            RDataType::IPv4Address => Binary::consumeIPv4( $i_packet, $io_offset ),
+            RDataType::IPv6Address => Binary::consumeIPv6( $i_packet, $io_offset ),
+            RDataType::Option => self::decodeRDataOption( $i_packet, $io_offset ),
+            RDataType::OptionList => self::decodeRDataOptionList( $i_packet, $io_offset, $i_uEndOfRData ),
+            RDataType::UINT16 => Binary::consumeUINT16( $i_packet, $io_offset ),
+            RDataType::UINT32 => Binary::consumeUINT32( $i_packet, $io_offset ),
+        };
+        return new RDataValue( $i_rdt, $data );
+    }
+
+
+    public static function decodeResourceRecord( string $i_packet, int &$io_offset ) : ResourceRecordInterface {
+        $r = [
+            'name' => Binary::consumeName( $i_packet, $io_offset ),
+            'type' => RecordType::consume( $i_packet, $io_offset ),
+            'class' => Binary::consumeUINT16( $i_packet, $io_offset ),
+            'ttl' => Binary::consumeUINT32( $i_packet, $io_offset ),
+        ];
+        $uRDLength = Binary::consumeUINT16( $i_packet, $io_offset );
+        $uRDOffset = $io_offset;
+        $rData = self::decodeRData( RDataMaps::map( $r[ 'type' ] ), $i_packet, $io_offset, $io_offset + $uRDLength );
+        assert( $io_offset - $uRDOffset === $uRDLength );
+        $r[ 'rdata' ] = $rData;
+
+        if ( $r[ 'type' ] === RecordType::OPT ) {
+            return OptRecord::fromArray( $r );
+        }
+        return ResourceRecord::fromArray( $r );
+    }
+
+
+    /**
+     * @param array<string, RDataType>  $i_rDataMap
+     * @param array<string, int>        $io_rLabelMap
+     * @param array<string, RDataValue> $i_rData
+     */
+    public static function encodeRData( array $i_rDataMap, array &$io_rLabelMap, int &$io_offset,
+                                        array $i_rData ) : string {
+        $stRData = '';
+        foreach ( $i_rDataMap as $stName => $rDataType ) {
+            if ( ! isset( $i_rData[ $stName ] ) ) {
+                throw new RecordException( "Missing RData '{$stName}'" );
+            }
+            $st = self::encodeRDataValue( $i_rData[ $stName ], $io_rLabelMap, $io_offset );
+            $stRData .= $st;
+            $io_offset += strlen( $st );
+        }
+
+        return $stRData;
+
+    }
+
+
+    public static function encodeRDataCharacterStringList( array $i_strings ) : string {
+        $stOut = '';
+        foreach ( $i_strings as $stString ) {
+            $stOut .= Binary::packLabel( $stString );
+        }
+        return $stOut;
+    }
+
+
+    public static function encodeRDataOption( Option $i_option ) : string {
+        $stOut = Binary::packUINT16( $i_option->code );
+        $stOut .= Binary::packUINT16( strlen( $i_option->data ) );
+        $stOut .= $i_option->data;
+        return $stOut;
+    }
+
+
+    public static function encodeRDataOptionList( array $i_options ) : string {
+        $stOut = '';
+        foreach ( $i_options as $option ) {
+            $stOut .= self::encodeRDataOption( $option );
+        }
+        return $stOut;
+    }
+
+
+    /** @param array<string, int> $io_rLabelMap */
+    public static function encodeRDataValue( RDataValue $i_rdv, array &$io_rLabelMap, int $i_uOffset ) : string {
+        return match ( $i_rdv->type ) {
+            RDataType::DomainName => Binary::packLabels( $i_rdv->value, $io_rLabelMap, $i_uOffset ),
+            RDataType::IPv4Address => Binary::packIPv4( $i_rdv->value ),
+            RDataType::IPv6Address => Binary::packIPv6( $i_rdv->value ),
+            RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
+            RDataType::UINT16 => Binary::packUINT16( 0 ),
+            RDataType::UINT32 => Binary::packUINT32( 0 ),
+            RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_rdv->value ),
+            RDataType::OptionList => self::encodeRDataOptionList( $i_rdv->value ),
+            default => throw new RecordException( 'Unhandled RDataType: ' . $i_rdv->type->name ),
+        };
+    }
+
+
+    /** @param array<string, int> $io_rLabelMap */
+    public static function encodeResourceRecord( ResourceRecordInterface $i_rr, array &$io_rLabelMap,
+                                                 int                     &$io_offset ) : string {
+        $uType = $i_rr->getType()->value;
+        $stOut = Binary::packLabels( $i_rr->getName(), $io_rLabelMap, $io_offset )
+            . Binary::packUINT16( $uType )
+            . Binary::packUINT16( $i_rr->classValue() )
+            . Binary::packUINT32( $i_rr->getTTL() );
+        $io_offset += strlen( $stOut ) + 2; // +2 for the RDLength that will be added later
+
+        $rMap = RDataMaps::map( $uType );
+        $stRData = self::encodeRData( $rMap, $io_rLabelMap, $io_offset, $i_rr->getRData() );
+        $stOut .= Binary::packUINT16( strlen( $stRData ) );
+        $stOut .= $stRData;
+
+        return $stOut;
+    }
 
 
     public function decode( string $i_packet ) : Message {
@@ -93,99 +259,6 @@ class RFC1035Codec implements CodecInterface {
         }
 
         return $st;
-    }
-
-
-    protected function decodeRDataValue( RDataType $i_rdt, string $i_packet, int &$io_offset ) : int|string {
-        return match ( $i_rdt ) {
-            RDataType::DomainName => Binary::consumeName( $i_packet, $io_offset ),
-            RDataType::IPv4Address => Binary::consumeIPv4( $i_packet, $io_offset ),
-            RDataType::IPv6Address => Binary::consumeIPv6( $i_packet, $io_offset ),
-            RDataType::CharacterString => Binary::consumeLabel( $i_packet, $io_offset ),
-            RDataType::UINT16 => Binary::consumeUINT16( $i_packet, $io_offset ),
-            RDataType::UINT32 => Binary::consumeUINT32( $i_packet, $io_offset ),
-            default => throw new RecordException( 'Unhandled RDataType: ' . $i_rdt->name ),
-        };
-    }
-
-
-    protected function decodeResourceRecord( string $i_packet, int &$io_offset ) : ResourceRecord {
-        $r = [
-            'name' => Binary::consumeName( $i_packet, $io_offset ),
-            'type' => RecordType::consume( $i_packet, $io_offset ),
-            'class' => RecordClass::consume( $i_packet, $io_offset ),
-            'ttl' => Binary::consumeUINT32( $i_packet, $io_offset ),
-        ];
-        $uRDLength = Binary::consumeUINT16( $i_packet, $io_offset );
-        $uRDOffset = $io_offset;
-        $rData = [];
-        $rMap = RDataMaps::map( $r[ 'type' ] );
-
-        foreach ( $rMap as $stName => $rDataType ) {
-            if ( $rDataType === RDataType::CharacterStringList ) {
-                $rData[ $stName ] = [];
-                while ( $io_offset < strlen( $i_packet ) ) {
-                    $rData[ $stName ][] = Binary::consumeLabel( $i_packet, $io_offset );
-                }
-                continue;
-            }
-            $rData[ $stName ] = $this->decodeRDataValue( $rDataType, $i_packet, $io_offset );
-        }
-        $r[ 'rdata' ] = $rData;
-        assert( $io_offset - $uRDOffset === $uRDLength );
-
-        return ResourceRecord::fromArray( $r );
-    }
-
-
-    /** @param array<string, int> $io_rLabelMap */
-    protected function encodeRDataValue( RDataValue $i_rdv, array &$io_rLabelMap, int $i_uOffset ) : string {
-        return match ( $i_rdv->type ) {
-            RDataType::DomainName => Binary::packLabels( $i_rdv->value, $io_rLabelMap, $i_uOffset ),
-            RDataType::IPv4Address => Binary::packIPv4( $i_rdv->value ),
-            RDataType::IPv6Address => Binary::packIPv6( $i_rdv->value ),
-            RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
-            RDataType::UINT16 => Binary::packUINT16( 0 ),
-            RDataType::UINT32 => Binary::packUINT32( 0 ),
-            default => throw new RecordException( 'Unhandled RDataType: ' . $i_rdv->type->name ),
-        };
-    }
-
-
-    /** @param array<string, int> $io_rLabelMap */
-    protected function encodeResourceRecord( ResourceRecordInterface $i_rr, array &$io_rLabelMap,
-                                             int                     &$io_offset ) : string {
-        $uType = $i_rr->getType()->value;
-        $stOut = Binary::packLabels( $i_rr->getName(), $io_rLabelMap, $io_offset )
-            . Binary::packUINT16( $uType )
-            . Binary::packUINT16( $i_rr->classValue() )
-            . Binary::packUINT32( $i_rr->getTTL() );
-        $io_offset += strlen( $stOut ) + 2; // +2 for the RDLength that will be added later
-
-        $rMap = RDataMaps::map( $uType );
-        $stRData = '';
-        foreach ( $rMap as $stName => $rDataType ) {
-            if ( ! isset( $i_rr[ $stName ] ) ) {
-                throw new RecordException( "Missing RData '{$stName}' for " . $i_rr->getType()->name );
-            }
-            $value = $i_rr->getRDataValueEx( $stName );
-            if ( $rDataType === RDataType::CharacterStringList ) {
-                $st = '';
-                assert( is_array( $value->value ) );
-                foreach ( $value->value as $stValue ) {
-                    $st = Binary::packLabel( $stValue );
-                }
-            } else {
-                $st = $this->encodeRDataValue( $value, $io_rLabelMap, $io_offset );
-            }
-            $stRData .= $st;
-            $io_offset += strlen( $st );
-        }
-
-        $stOut .= Binary::packUINT16( strlen( $stRData ) );
-        $stOut .= $stRData;
-
-        return $stOut;
     }
 
 

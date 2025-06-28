@@ -7,8 +7,10 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use InvalidArgumentException;
 use JDWX\DNSQuery\Data\DOK;
 use JDWX\DNSQuery\Data\EDNSVersion;
+use JDWX\DNSQuery\Data\OptionCode;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
@@ -37,7 +39,8 @@ class OptRecord extends AbstractResourceRecord {
                                  bool|DOK              $i_do = DOK::DNSSEC_NOT_SUPPORTED,
                                  int                   $uPayloadSize = self::DEFAULT_PAYLOAD_SIZE,
                                  int|EDNSVersion       $version = 0 ) {
-        parent::__construct( RecordType::OPT );
+        $rdv = new RDataValue( RDataType::OptionList, [] );
+        parent::__construct( RecordType::OPT, [ 'options' => $rdv ] );
         $this->rCode = ReturnCode::normalize( $rCode );
         $this->do = DOK::normalize( $i_do );
         $this->edns = EDNSVersion::normalize( $version );
@@ -47,9 +50,9 @@ class OptRecord extends AbstractResourceRecord {
 
     public static function fromArray( array $i_data ) : self {
         $rCode = $i_data[ 'rCode' ] ?? ReturnCode::NOERROR;
-        $do = $i_data[ 'do' ] ?? DOK::DNSSEC_NOT_SUPPORTED;
-        $uPayloadSize = $i_data[ 'payloadSize' ] ?? self::DEFAULT_PAYLOAD_SIZE;
-        $version = $i_data[ 'version' ] ?? 0;
+        $do = $i_data[ 'do' ] ?? DOK::fromFlagTTL( $i_data[ 'ttl' ] ) ?? DOK::DNSSEC_NOT_SUPPORTED;
+        $uPayloadSize = $i_data[ 'payloadSize' ] ?? $i_data[ 'class' ] ?? self::DEFAULT_PAYLOAD_SIZE;
+        $version = $i_data[ 'version' ] ?? EDNSVersion::fromFlagTTL( $i_data[ 'ttl' ] );
         return new self(
             $rCode,
             $do,
@@ -66,6 +69,17 @@ class OptRecord extends AbstractResourceRecord {
 
     public function __toString() : string {
         throw new LogicException( 'OPT records cannot be rendered to a string.' );
+    }
+
+
+    public function addOption( OptionCode|Option $i_option, ?string $i_stData = null ) : void {
+        if ( ! $i_option instanceof Option ) {
+            if ( ! is_string( $i_stData ) ) {
+                throw new InvalidArgumentException( 'Option data is missing.' );
+            }
+            $i_option = new Option( $i_option->code, $i_stData );
+        }
+        $this->rData[ 'options' ][] = $i_option;
     }
 
 
@@ -134,10 +148,10 @@ class OptRecord extends AbstractResourceRecord {
 
     public function setPayloadSize( int $i_size ) : void {
         if ( $i_size < 0 ) {
-            throw new \InvalidArgumentException( 'Payload size must be a non-negative integer.' );
+            throw new InvalidArgumentException( 'Payload size must be a non-negative integer.' );
         }
         if ( $i_size > 65535 ) {
-            throw new \InvalidArgumentException( 'Payload size must not exceed 65535.' );
+            throw new InvalidArgumentException( 'Payload size must not exceed 65535.' );
         }
         $this->uPayloadSize = $i_size;
     }
@@ -164,6 +178,11 @@ class OptRecord extends AbstractResourceRecord {
 
     public function type() : string {
         return RecordType::OPT->name;
+    }
+
+
+    public function version() : int {
+        return $this->getVersion()->value;
     }
 
 

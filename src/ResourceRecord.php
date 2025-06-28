@@ -39,11 +39,11 @@ class ResourceRecord extends AbstractResourceRecord {
 
 
     /**
-     * @param list<string>|string $rName
-     * @param int|string|RecordType $type
+     * @param list<string>|string         $rName
+     * @param int|string|RecordType       $type
      * @param int|string|RecordClass|null $class
-     * @param int|null $uTTL
-     * @param array<string, mixed> $rData
+     * @param int|null                    $uTTL
+     * @param array<string, mixed>        $rData
      */
     public function __construct(
         array|string                $rName,
@@ -60,14 +60,8 @@ class ResourceRecord extends AbstractResourceRecord {
         $this->setClass( $class ?? static::DEFAULT_CLASS );
         $this->setTTL( $uTTL ?? self::$uDefaultTTL );
 
-        $this->rDataMap = RDataMaps::map( $this->type );
+        parent::__construct( RDataMaps::map( $this->type ), $rData );
 
-        foreach ( array_keys( $this->rDataMap ) as $stKey ) {
-            if ( ! isset( $rData[ $stKey ] ) ) {
-                throw new InvalidArgumentException( "Missing required RData key: {$stKey}" );
-            }
-            $this->setRDataValueAlreadyChecked( $stKey, $rData[ $stKey ] );
-        }
     }
 
 
@@ -256,18 +250,6 @@ class ResourceRecord extends AbstractResourceRecord {
             $rOut[ 'rdata' ][ $stKey ] = $value->value;
         }
         return $rOut;
-    }
-
-
-    protected function setRDataValueAlreadyChecked( string $i_stName, mixed $i_value ) : void {
-        if ( ! $i_value instanceof RDataValue ) {
-            $i_value = new RDataValue( $this->rDataMap[ $i_stName ], $i_value );
-        } elseif ( $i_value->type !== $this->rDataMap[ $i_stName ] ) {
-            throw new InvalidArgumentException(
-                "RData type mismatch for {$i_stName}: wanted {$this->rDataMap[$i_stName]->name}, got {$i_value->type->name}"
-            );
-        }
-        $this->rData[ $i_stName ] = $i_value;
     }
 
 

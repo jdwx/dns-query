@@ -11,12 +11,18 @@ use InvalidArgumentException;
 
 
 /** Regrettably, this can't be called DO because that's a reserved word. */
-enum DOK: int {
+enum DOK : int {
 
 
     case DNSSEC_NOT_SUPPORTED = 0;
 
-    case DNSSEC_OK            = 1;
+    case DNSSEC_OK = 1;
+
+
+    public static function fromFlagTTL( int $i_flagTTL ) : self {
+        $i_flagTTL &= 0x8000;
+        return $i_flagTTL ? self::DNSSEC_OK : self::DNSSEC_NOT_SUPPORTED;
+    }
 
 
     public static function normalize( bool|int|DOK $i_value ) : DOK {

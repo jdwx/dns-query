@@ -12,18 +12,18 @@ use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\Strict\TypeIs;
 
 
-enum RecordClass: int {
+enum RecordClass : int {
 
 
-    case IN   = 1; // Internet (RFC 1035)
+    case IN = 1; // Internet (RFC 1035)
 
-    case CH   = 3; // Chaos (RFC 1035, obsolete)
+    case CH = 3; // Chaos (RFC 1035, obsolete)
 
-    case HS   = 4; // Hesiod (RFC 1035, obsolete)
+    case HS = 4; // Hesiod (RFC 1035, obsolete)
 
     case NONE = 254; // No class (RFC 2136)
 
-    case ANY  = 255; // Any class (RFC 1035)
+    case ANY = 255; // Any class (RFC 1035)
 
 
     public static function consume( string $i_stData, int &$io_iOffset ) : self {
@@ -81,7 +81,8 @@ enum RecordClass: int {
 
     public static function normalize( int|string|self $i_value ) : self {
         if ( is_int( $i_value ) ) {
-            return self::tryFrom( $i_value ) ?? throw new RecordClassException( "Invalid record class ID: {$i_value}" );
+            return self::tryFrom( $i_value )
+                ?? throw new RecordClassException( "Invalid record class ID: {$i_value}" );
         }
         if ( is_string( $i_value ) ) {
             return self::fromName( $i_value );

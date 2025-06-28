@@ -22,6 +22,8 @@ final class RDataMaps {
     /** @var array<int, array<string, RDataType>> */
     private const array MAP_LIST = [
         RecordType::A->value => [ 'address' => RDataType::IPv4Address ],
+        RecordType::AAAA->value => [ 'address' => RDataType::IPv6Address ],
+        RecordType::CNAME->value => [ 'cname' => RDataType::DomainName ],
         RecordType::MX->value => [
             'preference' => RDataType::UINT16,
             'exchange' => RDataType::DomainName,

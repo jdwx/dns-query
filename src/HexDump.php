@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\Strict\OK;
+
+
 final class HexDump {
 
 
@@ -41,6 +44,18 @@ final class HexDump {
         }
 
         return $st;
+    }
+
+
+    public static function fromTcpDump( string $i_stDump ) : string {
+        $stHex = '';
+        foreach ( OK::preg_split( '/[\r\n]/', $i_stDump ) as $stLine ) {
+            // $stLine = preg_replace( '/^\s*[0-9a-f]+:\s*([0-9a-f]{4}\s*){0,8}/i', '\\2', $stLine );
+            $stLine = preg_replace( '/^\s*0x[0-9a-f]{4}:\s*(([0-9a-f]{2,4}\s*){1,8}).*$/i', '\\1', $stLine );
+            $stLine = preg_replace( '/\s+/', '', $stLine );
+            $stHex .= $stLine;
+        }
+        return hex2bin( $stHex );
     }
 
 
