@@ -35,12 +35,15 @@ class OptRecord extends AbstractResourceRecord {
     private int $uPayloadSize;
 
 
+    /**
+     * @param list<Option>|RDataValue $options
+     */
     public function __construct( int|string|ReturnCode $rCode = ReturnCode::NOERROR,
                                  bool|DOK              $i_do = DOK::DNSSEC_NOT_SUPPORTED,
                                  int                   $uPayloadSize = self::DEFAULT_PAYLOAD_SIZE,
-                                 int|EDNSVersion       $version = 0 ) {
-        $rdv = new RDataValue( RDataType::OptionList, [] );
-        parent::__construct( RecordType::OPT, [ 'options' => $rdv ] );
+                                 int|EDNSVersion       $version = 0,
+                                 array|RDataValue      $options = [] ) {
+        parent::__construct( RecordType::OPT, [ 'options' => $options ] );
         $this->rCode = ReturnCode::normalize( $rCode );
         $this->do = DOK::normalize( $i_do );
         $this->edns = EDNSVersion::normalize( $version );
@@ -53,11 +56,16 @@ class OptRecord extends AbstractResourceRecord {
         $do = $i_data[ 'do' ] ?? DOK::fromFlagTTL( $i_data[ 'ttl' ] ) ?? DOK::DNSSEC_NOT_SUPPORTED;
         $uPayloadSize = $i_data[ 'payloadSize' ] ?? $i_data[ 'class' ] ?? self::DEFAULT_PAYLOAD_SIZE;
         $version = $i_data[ 'version' ] ?? EDNSVersion::fromFlagTTL( $i_data[ 'ttl' ] );
+
+        // Extract options from either direct key or under rdata
+        $options = $i_data[ 'options' ] ?? $i_data[ 'rdata' ][ 'options' ] ?? [];
+
         return new self(
             $rCode,
             $do,
             $uPayloadSize,
-            $version instanceof EDNSVersion ? $version : new EDNSVersion( (int) $version )
+            $version instanceof EDNSVersion ? $version : new EDNSVersion( (int) $version ),
+            $options
         );
     }
 
@@ -107,7 +115,7 @@ class OptRecord extends AbstractResourceRecord {
         return [
             'rCode' => $this->rCode,
             'do' => $this->do,
-            'options' => [],
+            'options' => $this->rData[ 'options' ]->value ?? [],
             'version' => $this->edns,
         ];
     }
@@ -117,7 +125,7 @@ class OptRecord extends AbstractResourceRecord {
         if ( 'options' !== $stKey ) {
             return null;
         }
-        return new RDataValue( RDataType::OptionList, $this->getRData()[ 'options' ] );
+        return $this->rData[ 'options' ] ?? null;
     }
 
 
