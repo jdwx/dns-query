@@ -85,9 +85,11 @@ class OptRecord extends AbstractResourceRecord {
             if ( ! is_string( $i_stData ) ) {
                 throw new InvalidArgumentException( 'Option data is missing.' );
             }
-            $i_option = new Option( $i_option->code, $i_stData );
+            $i_option = new Option( $i_option->value, $i_stData );
         }
-        $this->rData[ 'options' ][] = $i_option;
+        $options = $this->rData[ 'options' ]->value;
+        $options[] = $i_option;
+        $this->rData[ 'options' ] = new RDataValue( RDataType::OptionList, $options );
     }
 
 
