@@ -14,6 +14,7 @@ use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\Strict\TypeIs;
+use LogicException;
 use OutOfBoundsException;
 
 
@@ -26,7 +27,7 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
 
     /**
      * @param array<string, RDataType>|RecordType $rDataMap
-     * @param array<string, RDataValue>           $rData
+     * @param array<string, RDataValue> $rData
      */
     public function __construct( array|RecordType $rDataMap, protected array $rData = [] ) {
         if ( $rDataMap instanceof RecordType ) {
@@ -88,17 +89,18 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
 
 
     public function offsetSet( mixed $offset, mixed $value ) : void {
+        $this->setRDataValue( TypeIs::string( $offset ), $value );
     }
 
 
     public function offsetUnset( mixed $offset ) : void {
-        // TODO: Implement offsetUnset() method.
+        throw new LogicException( 'Cannot unset RData values in a ResourceRecord.' );
     }
 
 
     public function setRDataValue( string $i_stName, mixed $i_value ) : void {
         if ( ! $this->hasRDataValue( $i_stName ) ) {
-            throw new OutOfBoundsException( "RData key not found: {$i_stName}" );
+            throw new InvalidArgumentException( "Invalid RData key: {$i_stName}" );
         }
         if ( ! $i_value instanceof RDataValue ) {
             $i_value = new RDataValue( $this->rDataMap[ $i_stName ], $i_value );
