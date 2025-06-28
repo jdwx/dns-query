@@ -107,8 +107,8 @@ class RFC1035Codec implements CodecInterface {
 
 
     /**
-     * @param array<string, RDataType>  $i_rDataMap
-     * @param array<string, int>        $io_rLabelMap
+     * @param array<string, RDataType> $i_rDataMap
+     * @param array<string, int> $io_rLabelMap
      * @param array<string, RDataValue> $i_rData
      */
     public static function encodeRData( array $i_rDataMap, array &$io_rLabelMap, int &$io_offset,
@@ -156,16 +156,18 @@ class RFC1035Codec implements CodecInterface {
 
     /** @param array<string, int> $io_rLabelMap */
     public static function encodeRDataValue( RDataValue $i_rdv, array &$io_rLabelMap, int $i_uOffset ) : string {
+        /** @noinspection PhpUnusedMatchConditionInspection */
         return match ( $i_rdv->type ) {
+            RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
+            RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_rdv->value ),
             RDataType::DomainName => Binary::packLabels( $i_rdv->value, $io_rLabelMap, $i_uOffset ),
             RDataType::IPv4Address => Binary::packIPv4( $i_rdv->value ),
             RDataType::IPv6Address => Binary::packIPv6( $i_rdv->value ),
-            RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
+            RDataType::Option => self::encodeRDataOption( $i_rdv->value ),
+            RDataType::OptionList => self::encodeRDataOptionList( $i_rdv->value ),
             RDataType::UINT16 => Binary::packUINT16( 0 ),
             RDataType::UINT32 => Binary::packUINT32( 0 ),
-            RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_rdv->value ),
-            RDataType::OptionList => self::encodeRDataOptionList( $i_rdv->value ),
-            default => throw new RecordException( 'Unhandled RDataType: ' . $i_rdv->type->name ),
+            default => throw new RecordException( 'Unhandled RDataType for encode: ' . $i_rdv->type->name ),
         };
     }
 
@@ -206,15 +208,15 @@ class RFC1035Codec implements CodecInterface {
         }
 
         for ( $ii = 0 ; $ii < $aCount ; ++$ii ) {
-            $msg->answer[] = $this->decodeResourceRecord( $i_packet, $uOffset );
+            $msg->answer[] = self::decodeResourceRecord( $i_packet, $uOffset );
         }
 
         for ( $ii = 0 ; $ii < $auCount ; ++$ii ) {
-            $msg->authority[] = $this->decodeResourceRecord( $i_packet, $uOffset );
+            $msg->authority[] = self::decodeResourceRecord( $i_packet, $uOffset );
         }
 
         for ( $ii = 0 ; $ii < $adCount ; ++$ii ) {
-            $rr = $this->decodeResourceRecord( $i_packet, $uOffset );
+            $rr = self::decodeResourceRecord( $i_packet, $uOffset );
             if ( $rr->isType( 'OPT' ) ) {
                 $msg->opt[] = $rr;
             } else {
@@ -243,19 +245,19 @@ class RFC1035Codec implements CodecInterface {
         }
 
         foreach ( $i_msg->answer as $rr ) {
-            $st .= $this->encodeResourceRecord( $rr, $rLabelMap, $uOffset );
+            $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
         foreach ( $i_msg->authority as $rr ) {
-            $st .= $this->encodeResourceRecord( $rr, $rLabelMap, $uOffset );
+            $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
         foreach ( $i_msg->additional as $rr ) {
-            $st .= $this->encodeResourceRecord( $rr, $rLabelMap, $uOffset );
+            $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
         foreach ( $i_msg->opt as $rr ) {
-            $st .= $this->encodeResourceRecord( $rr, $rLabelMap, $uOffset );
+            $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
         return $st;

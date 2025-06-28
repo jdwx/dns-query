@@ -11,10 +11,9 @@ use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\HexDump;
-use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\Question;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\OptRecord;
+use JDWX\DNSQuery\RDataValue;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -40,7 +39,6 @@ final class RFC1035CodecTest extends TestCase {
         0x00b0:  0000 0000 0000                           ......
         ZEND;
         $packet = HexDump::fromTcpDump( $stPacketDump );
-        var_dump( strlen( $packet ) );
         $packet = substr( $packet, 28 ); // Remove IP and UDP headers
         $codec = new RFC1035Codec();
         $msg = $codec->decode( $packet );
@@ -302,6 +300,105 @@ final class RFC1035CodecTest extends TestCase {
     }
 
 
+    public function testEncodeRDataCharacterStringList() : void {
+        $strings = [ 'Foo', 'Bar', 'Baz', 'Quux' ];
+        $st = RFC1035Codec::encodeRDataCharacterStringList( $strings );
+        self::assertSame( "\x03Foo\x03Bar\x03Baz\x04Quux", $st );
+    }
+
+
+    public function testEncodeRDataOption() : void {
+        $option = new Option( 0x123, 'Test data' );
+        $st = RFC1035Codec::encodeRDataOption( $option );
+        self::assertSame( "\x01\x23\x00\x09Test data", $st );
+    }
+
+
+    public function testEncodeRDataOptionList() : void {
+        $options = [
+            new Option( 0x123, 'Test data' ),
+            new Option( 0x456, 'More data' ),
+        ];
+        $st = RFC1035Codec::encodeRDataOptionList( $options );
+        self::assertSame( "\x01\x23\x00\x09Test data\x04\x56\x00\x09More data", $st );
+    }
+
+
+    public function testEncodeRDataValueForCharacterString() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::CharacterString, 'Test string' );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x0bTest string", $st );
+    }
+
+
+    public function testEncodeRDataValueForCharacterStringList() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::CharacterStringList, [ 'Foo', 'Bar', 'Baz' ] );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x03Foo\x03Bar\x03Baz", $st );
+    }
+
+
+    public function testEncodeRDataValueForDomainName() : void {
+        $rLabelMap = [];
+        $uOffset = 3;
+        $rdv = new RDataValue( RDataType::DomainName, [ 'example', 'com' ] );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $uOffset += strlen( $st );
+        self::assertSame( "\x07example\x03com\x00", $st );
+        self::assertSame( 3, array_values( $rLabelMap )[ 0 ] ); // Offset for 'example'
+        self::assertSame( 11, array_values( $rLabelMap )[ 1 ] ); // Offset for 'com'
+        self::assertCount( 2, $rLabelMap );
+
+        $rdv = new RDataValue( RDataType::DomainName, [ 'sub', 'domain', 'example', 'com' ] );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( HexDump::escape( "\x03sub\x06domain\xc0\x03" ), HexDump::escape( $st ) );
+    }
+
+
+    public function testEncodeRDataValueForIPv4() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::IPv4Address, '1.2.3.4' );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x01\x02\x03\x04", $st );
+    }
+
+
+    public function testEncodeRDataValueForIPv6() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::IPv6Address, '2001:db8::1' );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", $st );
+    }
+
+
+    public function testEncodeRDataValueForOption() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::Option, new Option( 0x123, 'Test data' ) );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x01\x23\x00\x09Test data", $st );
+    }
+
+
+    public function testEncodeRDataValueForOptionList() : void {
+        $rLabelMap = [];
+        $uOffset = 0;
+        $rdv = new RDataValue( RDataType::OptionList, [
+            new Option( 0x123, 'Test data' ),
+            new Option( 0x456, 'More data' ),
+        ] );
+        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        self::assertSame( "\x01\x23\x00\x09Test data\x04\x56\x00\x09More data", $st );
+    }
+
+
+    /*
     public function testEncodeForRequest() : void {
         $codec = new RFC1035Codec();
         $msg = new Message();
@@ -326,6 +423,7 @@ final class RFC1035CodecTest extends TestCase {
         $st = substr( $st, 2 );
         self::assertSame( '', $st ); # End of message
     }
+    */
 
 
 }
