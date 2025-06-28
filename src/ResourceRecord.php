@@ -39,11 +39,11 @@ class ResourceRecord extends AbstractResourceRecord {
 
 
     /**
-     * @param list<string>|string         $rName
-     * @param int|string|RecordType       $type
+     * @param list<string>|string $rName
+     * @param int|string|RecordType $type
      * @param int|string|RecordClass|null $class
-     * @param int|null                    $uTTL
-     * @param array<string, mixed>        $rData
+     * @param int|null $uTTL
+     * @param array<string, mixed> $rData
      */
     public function __construct(
         array|string                $rName,
@@ -214,14 +214,6 @@ class ResourceRecord extends AbstractResourceRecord {
 
     public function setClass( int|string|RecordClass $class ) : void {
         $this->class = RecordClass::normalize( $class );
-    }
-
-
-    public function setRDataValue( string $i_stName, mixed $i_value ) : void {
-        if ( ! array_key_exists( $i_stName, $this->rDataMap ) ) {
-            throw new InvalidArgumentException( "Invalid RData key: {$i_stName}" );
-        }
-        $this->setRDataValueAlreadyChecked( $i_stName, $i_value );
     }
 
 
