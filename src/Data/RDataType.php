@@ -14,22 +14,26 @@ use JDWX\Strict\TypeIs;
 use LogicException;
 
 
-enum RDataType : int {
+enum RDataType: int {
 
 
-    case DomainName = 0;
+    case DomainName          = 0;
 
-    case IPv4Address = 1;
+    case IPv4Address         = 1;
 
-    case IPv6Address = 2;
+    case IPv6Address         = 2;
 
-    case CharacterString = 3;
+    case CharacterString     = 3;
 
     case CharacterStringList = 4;
 
-    case UINT16 = 5;
+    case UINT16              = 5;
 
-    case UINT32 = 6;
+    case UINT32              = 6;
+
+    case Option              = 7;
+
+    case OptionList          = 8;
 
 
     public static function normalize( int|RDataType $i_type ) : RDataType {

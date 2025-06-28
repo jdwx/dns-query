@@ -10,18 +10,16 @@ namespace JDWX\DNSQuery;
 use ArrayAccess;
 use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RDataMaps;
-use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\Quote\Operators\DelimiterOperator;
 use JDWX\Quote\Operators\QuoteOperator;
 use JDWX\Quote\Parser;
-use OutOfBoundsException;
 
 
 /** @implements ArrayAccess<string, mixed> */
-class ResourceRecord implements ResourceRecordInterface, ArrayAccess {
+class ResourceRecord extends AbstractResourceRecord {
 
 
     protected const RecordClass DEFAULT_CLASS = RecordClass::IN;
@@ -36,22 +34,16 @@ class ResourceRecord implements ResourceRecordInterface, ArrayAccess {
 
     protected int $uTTL;
 
-    /** @var array<string, RDataType> */
-    protected array $rDataMap;
-
-    /** @var array<string, RDataValue> */
-    protected array $rData = [];
-
     /** @var list<string> $rName */
     protected array $rName;
 
 
     /**
-     * @param list<string>|string         $rName
-     * @param int|string|RecordType       $type
+     * @param list<string>|string $rName
+     * @param int|string|RecordType $type
      * @param int|string|RecordClass|null $class
-     * @param int|null                    $uTTL
-     * @param array<string, mixed>        $rData
+     * @param int|null $uTTL
+     * @param array<string, mixed> $rData
      */
     public function __construct(
         array|string                $rName,
@@ -190,8 +182,8 @@ class ResourceRecord implements ResourceRecordInterface, ArrayAccess {
     }
 
 
-    public function class() : string {
-        return $this->class->name;
+    public function classValue() : int {
+        return $this->class->value;
     }
 
 
@@ -216,15 +208,6 @@ class ResourceRecord implements ResourceRecordInterface, ArrayAccess {
     }
 
 
-    public function getRDataValueEx( string $stKey ) : RDataValue {
-        $rdv = $this->getRDataValue( $stKey );
-        if ( $rdv instanceof RDataValue ) {
-            return $rdv;
-        }
-        throw new OutOfBoundsException( "RData key not found: {$stKey}" );
-    }
-
-
     public function getTTL() : int {
         return $this->uTTL;
     }
@@ -232,43 +215,6 @@ class ResourceRecord implements ResourceRecordInterface, ArrayAccess {
 
     public function getType() : RecordType {
         return $this->type;
-    }
-
-
-    public function isClass( int|string|RecordClass $i_class ) : bool {
-        return $this->class->is( $i_class );
-    }
-
-
-    public function isType( int|string|RecordType $i_type ) : bool {
-        return $this->type->is( $i_type );
-    }
-
-
-    public function name() : string {
-        return DomainName::format( $this->rName );
-    }
-
-
-    public function offsetExists( mixed $offset ) : bool {
-        return isset( $this->rData[ $offset ] );
-    }
-
-
-    public function offsetGet( mixed $offset ) : mixed {
-        if ( isset( $this->rData[ $offset ] ) ) {
-            return $this->rData[ $offset ]->value;
-        }
-        throw new OutOfBoundsException( "RData key not found: {$offset}" );
-    }
-
-
-    public function offsetSet( mixed $offset, mixed $value ) : void {
-    }
-
-
-    public function offsetUnset( mixed $offset ) : void {
-        // TODO: Implement offsetUnset() method.
     }
 
 
@@ -310,16 +256,6 @@ class ResourceRecord implements ResourceRecordInterface, ArrayAccess {
             $rOut[ 'rdata' ][ $stKey ] = $value->value;
         }
         return $rOut;
-    }
-
-
-    public function ttl() : int {
-        return $this->getTTL();
-    }
-
-
-    public function type() : string {
-        return $this->type->name;
     }
 
 

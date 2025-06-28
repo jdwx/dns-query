@@ -17,6 +17,7 @@ use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\Question;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord;
+use JDWX\DNSQuery\ResourceRecordInterface;
 
 
 class RFC1035Codec implements CodecInterface {
@@ -140,7 +141,7 @@ class RFC1035Codec implements CodecInterface {
     /** @param array<string, int> $io_rLabelMap */
     protected function encodeRDataValue( RDataValue $i_rdv, array &$io_rLabelMap, int $i_uOffset ) : string {
         return match ( $i_rdv->type ) {
-            RDataType::DomainName => Binary::packName( $i_rdv->value, $io_rLabelMap, $i_uOffset ),
+            RDataType::DomainName => Binary::packLabels( $i_rdv->value, $io_rLabelMap, $i_uOffset ),
             RDataType::IPv4Address => Binary::packIPv4( $i_rdv->value ),
             RDataType::IPv6Address => Binary::packIPv6( $i_rdv->value ),
             RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
@@ -152,11 +153,12 @@ class RFC1035Codec implements CodecInterface {
 
 
     /** @param array<string, int> $io_rLabelMap */
-    protected function encodeResourceRecord( ResourceRecord $i_rr, array &$io_rLabelMap, int &$io_offset ) : string {
+    protected function encodeResourceRecord( ResourceRecordInterface $i_rr, array &$io_rLabelMap,
+                                             int                     &$io_offset ) : string {
         $uType = $i_rr->getType()->value;
         $stOut = Binary::packLabels( $i_rr->getName(), $io_rLabelMap, $io_offset )
             . Binary::packUINT16( $uType )
-            . Binary::packUINT16( $i_rr->getClass()->value )
+            . Binary::packUINT16( $i_rr->classValue() )
             . Binary::packUINT32( $i_rr->getTTL() );
         $io_offset += strlen( $stOut ) + 2; // +2 for the RDLength that will be added later
 
@@ -164,7 +166,7 @@ class RFC1035Codec implements CodecInterface {
         $stRData = '';
         foreach ( $rMap as $stName => $rDataType ) {
             if ( ! isset( $i_rr[ $stName ] ) ) {
-                throw new RecordException( 'Unknown record type: ' . $i_rr->getType()->value );
+                throw new RecordException( "Missing RData '{$stName}' for " . $i_rr->getType()->name );
             }
             $value = $i_rr->getRDataValueEx( $stName );
             if ( $rDataType === RDataType::CharacterStringList ) {

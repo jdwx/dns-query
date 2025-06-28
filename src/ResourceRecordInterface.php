@@ -24,6 +24,9 @@ interface ResourceRecordInterface extends \Stringable {
     public function class() : string;
 
 
+    public function classValue() : int;
+
+
     public function getClass() : RecordClass;
 
 
@@ -33,6 +36,12 @@ interface ResourceRecordInterface extends \Stringable {
 
     /** @return array<string, RDataValue> */
     public function getRData() : array;
+
+
+    public function getRDataValue( string $stKey ) : ?RDataValue;
+
+
+    public function getRDataValueEx( string $stKey ) : RDataValue;
 
 
     public function getTTL() : int;
@@ -51,7 +60,10 @@ interface ResourceRecordInterface extends \Stringable {
 
 
     /** @return array<string, mixed> */
-    public function toArray() : array;
+    public function toArray( bool $i_bNameAsArray = false ) : array;
+
+
+    public function ttl() : int;
 
 
     public function type() : string;

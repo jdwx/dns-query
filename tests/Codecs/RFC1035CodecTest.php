@@ -11,6 +11,8 @@ use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\Question;
+use JDWX\DNSQuery\OptRecord;
+use JDWX\DNSQuery\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -19,12 +21,16 @@ use PHPUnit\Framework\TestCase;
 final class RFC1035CodecTest extends TestCase {
 
 
-    public function testDecodeForRequest() : void {
+    public function testDecode() : void {
         $codec = new RFC1035Codec();
         $msg = new Message();
         $msg->id = 0x1234;
         $msg->opcode = OpCode::QUERY;
-        $msg->question[] = new Question( 'test', 'A', 'IN' );
+        $msg->question[] = new Question( 'foo', 'A', 'IN' );
+        $msg->answer[] = ResourceRecord::fromString( 'foo.bar 3600 IN A 192.0.2.1' );
+        $msg->authority[] = ResourceRecord::fromString( 'baz.qux 7200 IN NS quux.corge' );
+        $msg->additional[] = ResourceRecord::fromString( 'grault.garply 10800 IN A 192.0.2.2' );
+        $msg->opt[] = new OptRecord();
         $st = $codec->encode( $msg );
         $msg2 = $codec->decode( $st );
         self::assertSame( $msg->id, $msg2->id );
@@ -36,9 +42,35 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( $msg->ra, $msg2->ra );
         self::assertSame( $msg->z->bits, $msg2->z->bits );
         self::assertCount( 1, $msg2->question );
-        self::assertSame( 'test', $msg2->question[ 0 ]->stName );
+        self::assertSame( 'foo', $msg2->question[ 0 ]->stName );
         self::assertSame( 'A', $msg2->question[ 0 ]->type->name );
         self::assertSame( 'IN', $msg2->question[ 0 ]->class->name );
+
+        self::assertCount( 1, $msg2->answer );
+        self::assertSame( [ 'foo', 'bar' ], $msg2->answer[ 0 ]->getName() );
+        self::assertSame( 'A', $msg2->answer[ 0 ]->type() );
+        self::assertSame( 'IN', $msg2->answer[ 0 ]->class() );
+        self::assertSame( 3600, $msg2->answer[ 0 ]->ttl() );
+
+        self::assertCount( 1, $msg2->authority );
+        self::assertSame( [ 'baz', 'qux' ], $msg2->authority[ 0 ]->getName() );
+        self::assertSame( 'NS', $msg2->authority[ 0 ]->type() );
+        self::assertSame( 'IN', $msg2->authority[ 0 ]->class() );
+        self::assertSame( 7200, $msg2->authority[ 0 ]->ttl() );
+
+        self::assertCount( 1, $msg2->additional );
+        self::assertSame( [ 'grault', 'garply' ], $msg2->additional[ 0 ]->getName() );
+        self::assertSame( 'A', $msg2->additional[ 0 ]->type() );
+        self::assertSame( 'IN', $msg2->additional[ 0 ]->class() );
+        self::assertSame( 10800, $msg2->additional[ 0 ]->ttl() );
+
+        self::assertCount( 1, $msg2->opt );
+        self::assertSame( [ 'test', 'opt' ], $msg2->opt[ 0 ]->getName() );
+        self::assertSame( 'OPT', $msg2->opt[ 0 ]->type() );
+        self::assertSame( 'IN', $msg2->opt[ 0 ]->class() );
+        self::assertSame( 32768, $msg2->opt[ 0 ]->ttl() );
+
+
     }
 
 

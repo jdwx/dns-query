@@ -133,6 +133,11 @@ enum ReturnCode: int {
     }
 
 
+    public function toFlagTTL() : int {
+        return ( $this->value >> 4 ) << 24;
+    }
+
+
     public function toFlagWord() : int {
         return $this->value & 0x0F;
     }

@@ -27,6 +27,9 @@ final class RDataMaps {
             'exchange' => RDataType::DomainName,
         ],
         RecordType::NS->value => [ 'nsdname' => RDataType::DomainName ],
+        RecordType::OPT->value => [
+            'options' => RDataType::OptionList,
+        ],
         RecordType::TXT->value => [
             'text' => RDataType::CharacterStringList,
         ],
