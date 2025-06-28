@@ -32,6 +32,16 @@ final class RDataMaps {
         RecordType::OPT->value => [
             'options' => RDataType::OptionList,
         ],
+        RecordType::PTR->value => [ 'ptrdname' => RDataType::DomainName ],
+        RecordType::SOA->value => [
+            'mname' => RDataType::DomainName,
+            'rname' => RDataType::DomainName,
+            'serial' => RDataType::UINT32,
+            'refresh' => RDataType::UINT32,
+            'retry' => RDataType::UINT32,
+            'expire' => RDataType::UINT32,
+            'minimum' => RDataType::UINT32,
+        ],
         RecordType::TXT->value => [
             'text' => RDataType::CharacterStringList,
         ],
