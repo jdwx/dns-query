@@ -12,7 +12,7 @@ use JDWX\DNSQuery\Data\EDNSVersion;
 use PHPUnit\Framework\TestCase;
 
 
-class ENDSVersionTest extends TestCase {
+class EDNSVersionTest extends TestCase {
 
 
     public function testConstruct() : void {
@@ -20,14 +20,15 @@ class ENDSVersionTest extends TestCase {
         self::assertInstanceOf( EDNSVersion::class, new EDNSVersion( 255 ) );
 
         self::expectException( InvalidArgumentException::class );
-        new EDNSVersion( -1 );
-
+        $x = new EDNSVersion( -1 );
+        unset( $x );
     }
 
 
     public function testConstructForTooBigValue() : void {
         self::expectException( InvalidArgumentException::class );
-        new EDNSVersion( 256 );
+        $x = new EDNSVersion( 256 );
+        unset( $x );
     }
 
 

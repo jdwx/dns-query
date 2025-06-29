@@ -7,11 +7,16 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use ArrayAccess;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 
 
-interface ResourceRecordInterface extends \Stringable {
+/**
+ * @extends ArrayAccess<string, mixed>
+ * @suppress PhanAccessWrongInheritanceCategoryInternal
+ */
+interface ResourceRecordInterface extends \Stringable, ArrayAccess {
 
 
     /** @param array<string, mixed> $i_data */

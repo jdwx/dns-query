@@ -24,12 +24,16 @@ use JDWX\DNSQuery\ResourceRecordInterface;
 class RFC1035Codec implements CodecInterface {
 
 
-    public static function decodeRData( array $rMap, string $i_packet, int &$io_offset,
+    /**
+     * @param array<string, RDataType> $i_rDataMap
+     * @return array<string, RDataValue>
+     */
+    public static function decodeRData( array $i_rDataMap, string $i_packet, int &$io_offset,
                                         int   $i_uEndOfRData ) : array {
         $rData = [];
 
         /** @noinspection PhpLoopCanBeConvertedToArrayMapInspection */
-        foreach ( $rMap as $stName => $rDataType ) {
+        foreach ( $i_rDataMap as $stName => $rDataType ) {
             $rData[ $stName ] = self::decodeRDataValue( $rDataType, $i_packet, $io_offset, $i_uEndOfRData );
         }
         assert( $io_offset === $i_uEndOfRData,
@@ -128,9 +132,10 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
-    public static function encodeRDataCharacterStringList( array $i_strings ) : string {
+    /** @param list<string> $i_rStrings */
+    public static function encodeRDataCharacterStringList( array $i_rStrings ) : string {
         $stOut = '';
-        foreach ( $i_strings as $stString ) {
+        foreach ( $i_rStrings as $stString ) {
             $stOut .= Binary::packLabel( $stString );
         }
         return $stOut;
@@ -145,9 +150,10 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
-    public static function encodeRDataOptionList( array $i_options ) : string {
+    /** @param list<Option> $i_rOptions */
+    public static function encodeRDataOptionList( array $i_rOptions ) : string {
         $stOut = '';
-        foreach ( $i_options as $option ) {
+        foreach ( $i_rOptions as $option ) {
             $stOut .= self::encodeRDataOption( $option );
         }
         return $stOut;
@@ -156,7 +162,6 @@ class RFC1035Codec implements CodecInterface {
 
     /** @param array<string, int> $io_rLabelMap */
     public static function encodeRDataValue( RDataValue $i_rdv, array &$io_rLabelMap, int $i_uOffset ) : string {
-        /** @noinspection PhpUnusedMatchConditionInspection */
         return match ( $i_rdv->type ) {
             RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
             RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_rdv->value ),
@@ -167,7 +172,6 @@ class RFC1035Codec implements CodecInterface {
             RDataType::OptionList => self::encodeRDataOptionList( $i_rdv->value ),
             RDataType::UINT16 => Binary::packUINT16( $i_rdv->value ),
             RDataType::UINT32 => Binary::packUINT32( $i_rdv->value ),
-            default => throw new RecordException( 'Unhandled RDataType for encode: ' . $i_rdv->type->name ),
         };
     }
 

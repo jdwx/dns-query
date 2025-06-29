@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
-use ArrayAccess;
 use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
@@ -18,7 +17,7 @@ use LogicException;
 use OutOfBoundsException;
 
 
-abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInterface {
+abstract class AbstractResourceRecord implements ResourceRecordInterface {
 
 
     /** @var array<string, RDataType> */
@@ -27,7 +26,7 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
 
     /**
      * @param array<string, RDataType>|RecordType $rDataMap
-     * @param array<string, RDataValue> $rData
+     * @param array<string, mixed> $rData
      */
     public function __construct( array|RecordType $rDataMap, protected array $rData = [] ) {
         if ( $rDataMap instanceof RecordType ) {
@@ -46,6 +45,12 @@ abstract class AbstractResourceRecord implements ArrayAccess, ResourceRecordInte
 
     public function class() : string {
         return $this->getClass()->name;
+    }
+
+
+    /** @return array<string, RDataValue> */
+    public function getRData() : array {
+        return $this->rData;
     }
 
 

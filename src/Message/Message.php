@@ -17,7 +17,7 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Data\TC;
 use JDWX\DNSQuery\Data\ZBits;
-use JDWX\DNSQuery\ResourceRecord;
+use JDWX\DNSQuery\ResourceRecordInterface;
 use Stringable;
 
 
@@ -45,16 +45,16 @@ class Message implements Stringable {
     /** @var list<Question> */
     public array $question = [];
 
-    /** @var list<ResourceRecord> */
+    /** @var list<ResourceRecordInterface> */
     public array $answer = [];
 
-    /** @var list<ResourceRecord> */
+    /** @var list<ResourceRecordInterface> */
     public array $authority = [];
 
-    /** @var list<ResourceRecord> */
+    /** @var list<ResourceRecordInterface> */
     public array $additional = [];
 
-    /** @var list<ResourceRecord> */
+    /** @var list<ResourceRecordInterface> */
     public array $opt = [];
 
 
@@ -78,12 +78,14 @@ class Message implements Stringable {
     }
 
 
-    public static function response( Message $i_request ) : self {
+    public static function response( Message $i_request, int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) : self {
         $msg = new self();
+        $msg->opcode = $i_request->opcode;
         $msg->qr = QR::RESPONSE;
         $msg->id = $i_request->id;
         $msg->question = $i_request->question;
         $msg->rd = $i_request->rd;
+        $msg->returnCode = ReturnCode::normalize( $i_rc );
         return $msg;
     }
 

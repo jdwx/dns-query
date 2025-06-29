@@ -127,11 +127,9 @@ enum RDataType: int {
                 }
                 return $uValue;
 
+            default:
+                throw new LogicException( "Unhandled RDataType: {$this->name}" );
         }
-        // @codeCoverageIgnoreStart
-        /** @phpstan-ignore deadCode.unreachable */
-        throw new LogicException( "Unhandled RDataType: {$this->name}" );
-        // @codeCoverageIgnoreEnd
     }
 
 

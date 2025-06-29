@@ -320,7 +320,6 @@ final class RFC1035CodecTest extends TestCase {
         $uOffset = 0;
         $rr = RFC1035Codec::decodeResourceRecord( $st, $uOffset );
 
-        self::assertInstanceOf( OptRecord::class, $rr );
         assert( $rr instanceof OptRecord );
 
         self::assertSame( [], $rr->getName() ); // Root domain

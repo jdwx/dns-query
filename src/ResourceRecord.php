@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
-use ArrayAccess;
 use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RecordClass;
@@ -18,7 +17,6 @@ use JDWX\Quote\Operators\QuoteOperator;
 use JDWX\Quote\Parser;
 
 
-/** @implements ArrayAccess<string, mixed> */
 class ResourceRecord extends AbstractResourceRecord {
 
 
@@ -188,12 +186,6 @@ class ResourceRecord extends AbstractResourceRecord {
 
     public function getName() : array {
         return $this->rName;
-    }
-
-
-    /** @return array<string, RDataValue> */
-    public function getRData() : array {
-        return $this->rData;
     }
 
 

@@ -53,7 +53,7 @@ class OptRecord extends AbstractResourceRecord {
 
     public static function fromArray( array $i_data ) : self {
         $rCode = $i_data[ 'rCode' ] ?? ReturnCode::NOERROR;
-        $do = $i_data[ 'do' ] ?? DOK::fromFlagTTL( $i_data[ 'ttl' ] ) ?? DOK::DNSSEC_NOT_SUPPORTED;
+        $do = $i_data[ 'do' ] ?? DOK::fromFlagTTL( $i_data[ 'ttl' ] ?? 0 );
         $uPayloadSize = $i_data[ 'payloadSize' ] ?? $i_data[ 'class' ] ?? self::DEFAULT_PAYLOAD_SIZE;
         $version = $i_data[ 'version' ] ?? EDNSVersion::fromFlagTTL( $i_data[ 'ttl' ] );
 
@@ -110,16 +110,6 @@ class OptRecord extends AbstractResourceRecord {
 
     public function getPayloadSize() : int {
         return $this->uPayloadSize;
-    }
-
-
-    public function getRData() : array {
-        return [
-            'rCode' => $this->rCode,
-            'do' => $this->do,
-            'options' => $this->rData[ 'options' ]->value ?? [],
-            'version' => $this->edns,
-        ];
     }
 
 
