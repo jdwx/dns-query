@@ -275,6 +275,12 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
+    public function testFromStringForExtraRData() : void {
+        self::expectException( Exception::class );
+        ResourceRecord::fromString( 'example.com. 3600 IN A 1.2.3.4 5.6.7.8' );
+    }
+
+
     public function testFromStringForFirstClass() : void {
         $rr = ResourceRecord::fromString( 'example.com. IN 12345 A 1.2.3.4' );
         self::assertSame( 12345, $rr->ttl() );
@@ -288,6 +294,12 @@ final class ResourceRecordTest extends TestCase {
         self::assertSame( 12345, $rr->ttl() );
         self::assertTrue( $rr->isClass( 'IN' ) );
         self::assertTrue( $rr->isType( 'A' ) );
+    }
+
+
+    public function testFromStringForMultipleTTL() : void {
+        self::expectException( Exception::class );
+        ResourceRecord::fromString( 'example.com. 3600 7200 IN A 1.2.3.4' );
     }
 
 
@@ -510,6 +522,37 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
+    public function testOffsetExists() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        self::assertTrue( isset( $rr[ 'address' ] ) );
+        self::assertFalse( isset( $rr[ 'nonexistent' ] ) );
+    }
+
+
+    public function testOffsetGet() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        self::assertSame( '1.2.3.4', $rr[ 'address' ] );
+    }
+
+
+    public function testOffsetSet() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        $rr[ 'address' ] = '5.6.7.8';
+        self::assertSame( '5.6.7.8', $rr->getRDataValueEx( 'address' )->value );
+    }
+
+
+    public function testOffsetUnset() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        self::expectException( LogicException::class );
+        unset( $rr[ 'address' ] );
+    }
+
+
     public function testPTRRecord() : void {
         $rr = new ResourceRecord( '1.2.0.192.in-addr.arpa', 'PTR', 'IN', 3600,
             [ 'ptrdname' => [ 'example', 'com' ] ] );
@@ -728,6 +771,20 @@ final class ResourceRecordTest extends TestCase {
         self::assertStringContainsString( 'IN', $string );
         self::assertStringContainsString( 'TXT', $string );
         self::assertStringContainsString( 'v=spf1', $string );
+    }
+
+
+    public function testType() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        self::assertSame( 'A', $rr->type() );
+    }
+
+
+    public function testTypeValue() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        self::assertSame( RecordType::A->value, $rr->typeValue() ); // A record type value
     }
 
 

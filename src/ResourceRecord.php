@@ -78,9 +78,7 @@ class ResourceRecord extends AbstractResourceRecord {
             throw new InvalidArgumentException( 'Invalid name format: must be string or array' );
         }
         $type = RecordType::normalize( $i_data[ 'type' ] );
-        $class = isset( $i_data[ 'class' ] )
-            ? RecordClass::normalize( $i_data[ 'class' ] )
-            : null;
+        $class = RecordClass::normalize( $i_data[ 'class' ] );
         $uTTL = isset( $i_data[ 'ttl' ] )
             ? intval( $i_data[ 'ttl' ] )
             : null;
@@ -234,11 +232,6 @@ class ResourceRecord extends AbstractResourceRecord {
             $rOut[ 'rdata' ][ $stKey ] = $value->value;
         }
         return $rOut;
-    }
-
-
-    public function typeValue() : int {
-        return $this->getType()->value;
     }
 
 
