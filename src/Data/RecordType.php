@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
-use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\BufferInterface;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
 use JDWX\DNSQuery\RR\ALL;
 use JDWX\DNSQuery\RR\RR;
@@ -222,8 +222,8 @@ enum RecordType: int {
     }
 
 
-    public static function consume( string $i_bin, int &$io_offset ) : self {
-        $id = Binary::consumeUINT16( $i_bin, $io_offset );
+    public static function consume( BufferInterface $i_buffer ) : self {
+        $id = $i_buffer->consumeUINT16();
         return self::tryFrom( $id )
             ?? throw new RecordTypeException( "Invalid record type ID in binary data: {$id}" );
     }
@@ -366,8 +366,8 @@ enum RecordType: int {
     }
 
 
-    public static function tryConsume( string $i_bin, int &$i_uOffset ) : ?self {
-        return self::tryFrom( Binary::consumeUINT16( $i_bin, $i_uOffset ) );
+    public static function tryConsume( BufferInterface $i_buffer ) : ?self {
+        return self::tryFrom( $i_buffer->consumeUINT16() );
     }
 
 

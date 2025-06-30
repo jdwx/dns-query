@@ -8,6 +8,8 @@ namespace JDWX\DNSQuery\Codecs;
 
 
 use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\Buffer;
+use JDWX\DNSQuery\BufferInterface;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
@@ -28,79 +30,77 @@ class RFC1035Codec implements CodecInterface {
      * @param array<string, RDataType> $i_rDataMap
      * @return array<string, RDataValue>
      */
-    public static function decodeRData( array $i_rDataMap, string $i_packet, int &$io_offset,
-                                        int   $i_uEndOfRData ) : array {
+    public static function decodeRData( array $i_rDataMap, BufferInterface $i_buffer, int $i_uEndOfRData ) : array {
         $rData = [];
 
         /** @noinspection PhpLoopCanBeConvertedToArrayMapInspection */
         foreach ( $i_rDataMap as $stName => $rDataType ) {
-            $rData[ $stName ] = self::decodeRDataValue( $rDataType, $i_packet, $io_offset, $i_uEndOfRData );
+            $rData[ $stName ] = self::decodeRDataValue( $rDataType, $i_buffer, $i_uEndOfRData );
         }
-        assert( $io_offset === $i_uEndOfRData,
-            "Offset after reading RData ({$io_offset}) does not equal end of RData ({$i_uEndOfRData})."
+        $uOffset = $i_buffer->tell();
+        assert( $uOffset === $i_uEndOfRData,
+            "Offset after reading RData ({$uOffset}) does not equal end of RData ({$i_uEndOfRData})."
         );
         return $rData;
     }
 
 
     /** @return list<string> */
-    public static function decodeRDataCharacterStringList( string $i_stPacket, int &$io_uOffset,
-                                                           int    $i_uEndOfRData ) : array {
+    public static function decodeRDataCharacterStringList( BufferInterface $i_buffer, int $i_uEndOfRData ) : array {
         $rOut = [];
-        while ( $io_uOffset < $i_uEndOfRData ) {
-            $rOut[] = Binary::consumeLabel( $i_stPacket, $io_uOffset );
+        while ( $i_buffer->tell() < $i_uEndOfRData ) {
+            $rOut[] = $i_buffer->consumeLabel();
         }
         return $rOut;
     }
 
 
-    public static function decodeRDataOption( string $i_stOption, int &$io_uOffset ) : Option {
-        $uCode = Binary::consumeUINT16( $i_stOption, $io_uOffset );
-        $uLength = Binary::consumeUINT16( $i_stOption, $io_uOffset );
-        $data = Binary::consume( $i_stOption, $io_uOffset, $uLength );
+    public static function decodeRDataOption( BufferInterface $i_buffer ) : Option {
+        $uCode = $i_buffer->consumeUINT16();
+        $uLength = $i_buffer->consumeUINT16();
+        $data = $i_buffer->consume( $uLength );
         return new Option( $uCode, $data );
     }
 
 
     /** @return list<Option> */
-    public static function decodeRDataOptionList( string $i_stList, int &$io_uOffset,
-                                                  int    $i_uEndOfRData ) : array {
+    public static function decodeRDataOptionList( BufferInterface $i_buffer, int $i_uEndOfRData ) : array {
         $rOut = [];
-        while ( $io_uOffset < $i_uEndOfRData ) {
-            $rOut[] = self::decodeRDataOption( $i_stList, $io_uOffset );
+        while ( $i_buffer->tell() < $i_uEndOfRData ) {
+            $rOut[] = self::decodeRDataOption( $i_buffer );
         }
         return $rOut;
     }
 
 
-    public static function decodeRDataValue( RDataType $i_rdt, string $i_packet, int &$io_offset,
+    public static function decodeRDataValue( RDataType $i_rdt, BufferInterface $i_buffer,
                                              int       $i_uEndOfRData ) : RDataValue {
         $data = match ( $i_rdt ) {
-            RDataType::CharacterString => Binary::consumeLabel( $i_packet, $io_offset ),
-            RDataType::CharacterStringList => self::decodeRDataCharacterStringList( $i_packet, $io_offset, $i_uEndOfRData ),
-            RDataType::DomainName => Binary::consumeNameArray( $i_packet, $io_offset ),
-            RDataType::IPv4Address => Binary::consumeIPv4( $i_packet, $io_offset ),
-            RDataType::IPv6Address => Binary::consumeIPv6( $i_packet, $io_offset ),
-            RDataType::Option => self::decodeRDataOption( $i_packet, $io_offset ),
-            RDataType::OptionList => self::decodeRDataOptionList( $i_packet, $io_offset, $i_uEndOfRData ),
-            RDataType::UINT16 => Binary::consumeUINT16( $i_packet, $io_offset ),
-            RDataType::UINT32 => Binary::consumeUINT32( $i_packet, $io_offset ),
+            RDataType::CharacterString => $i_buffer->consumeLabel(),
+            RDataType::CharacterStringList => self::decodeRDataCharacterStringList( $i_buffer, $i_uEndOfRData ),
+            RDataType::DomainName => $i_buffer->consumeNameArray(),
+            RDataType::IPv4Address => $i_buffer->consumeIPv4(),
+            RDataType::IPv6Address => $i_buffer->consumeIPv6(),
+            RDataType::Option => self::decodeRDataOption( $i_buffer ),
+            RDataType::OptionList => self::decodeRDataOptionList( $i_buffer, $i_uEndOfRData ),
+            RDataType::UINT16 => $i_buffer->consumeUINT16(),
+            RDataType::UINT32 => $i_buffer->consumeUINT32(),
         };
         return new RDataValue( $i_rdt, $data );
     }
 
 
-    public static function decodeResourceRecord( string $i_packet, int &$io_offset ) : ResourceRecordInterface {
+    public static function decodeResourceRecord( BufferInterface $i_buffer ) : ResourceRecordInterface {
         $r = [
-            'name' => Binary::consumeName( $i_packet, $io_offset ),
-            'type' => RecordType::consume( $i_packet, $io_offset ),
-            'class' => Binary::consumeUINT16( $i_packet, $io_offset ),
-            'ttl' => Binary::consumeUINT32( $i_packet, $io_offset ),
+            'name' => $i_buffer->consumeName(),
+            'type' => RecordType::consume( $i_buffer ),
+            'class' => $i_buffer->consumeUINT16(),
+            'ttl' => $i_buffer->consumeUINT32(),
         ];
-        $uRDLength = Binary::consumeUINT16( $i_packet, $io_offset );
-        $uRDOffset = $io_offset;
-        $rData = self::decodeRData( RDataMaps::map( $r[ 'type' ] ), $i_packet, $io_offset, $io_offset + $uRDLength );
-        assert( $io_offset - $uRDOffset === $uRDLength );
+        $uRDLength = $i_buffer->consumeUINT16();
+        $uRDOffset = $i_buffer->tell();
+        $rData = self::decodeRData( RDataMaps::map( $r[ 'type' ] ), $i_buffer, $uRDOffset + $uRDLength );
+        assert( $i_buffer->tell() - $uRDOffset === $uRDLength );
         $r[ 'rdata' ] = $rData;
 
         if ( $r[ 'type' ] === RecordType::OPT ) {
@@ -197,30 +197,30 @@ class RFC1035Codec implements CodecInterface {
 
     public function decode( string $i_packet ) : Message {
         $msg = new Message();
+        $buffer = new Buffer( $i_packet );
 
-        $uOffset = 0;
-        $msg->id = Binary::consumeUINT16( $i_packet, $uOffset );
-        $msg->setFlagWord( Binary::consumeUINT16( $i_packet, $uOffset ) );
+        $msg->id = $buffer->consumeUINT16();
+        $msg->setFlagWord( $buffer->consumeUINT16() );
 
-        $qCount = Binary::consumeUINT16( $i_packet, $uOffset );
-        $aCount = Binary::consumeUINT16( $i_packet, $uOffset );
-        $auCount = Binary::consumeUINT16( $i_packet, $uOffset );
-        $adCount = Binary::consumeUINT16( $i_packet, $uOffset );
+        $qCount = $buffer->consumeUINT16();
+        $aCount = $buffer->consumeUINT16();
+        $auCount = $buffer->consumeUINT16();
+        $adCount = $buffer->consumeUINT16();
 
         for ( $ii = 0 ; $ii < $qCount ; ++$ii ) {
-            $msg->question[] = Question::fromBinary( $i_packet, $uOffset );
+            $msg->question[] = Question::fromBinary( $buffer );
         }
 
         for ( $ii = 0 ; $ii < $aCount ; ++$ii ) {
-            $msg->answer[] = self::decodeResourceRecord( $i_packet, $uOffset );
+            $msg->answer[] = self::decodeResourceRecord( $buffer );
         }
 
         for ( $ii = 0 ; $ii < $auCount ; ++$ii ) {
-            $msg->authority[] = self::decodeResourceRecord( $i_packet, $uOffset );
+            $msg->authority[] = self::decodeResourceRecord( $buffer );
         }
 
         for ( $ii = 0 ; $ii < $adCount ; ++$ii ) {
-            $rr = self::decodeResourceRecord( $i_packet, $uOffset );
+            $rr = self::decodeResourceRecord( $buffer );
             if ( $rr->isType( 'OPT' ) ) {
                 $msg->opt[] = $rr;
             } else {

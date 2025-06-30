@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
+use JDWX\DNSQuery\Buffer;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\Strict\OK;
@@ -20,26 +21,23 @@ final class RecordClassTest extends TestCase {
 
 
     public function testConsume() : void {
-        $data = OK::pack( 'n', 1 ) . 'rest';
-        $offset = 0;
-        self::assertSame( RecordClass::IN, RecordClass::consume( $data, $offset ) );
-        self::assertSame( 2, $offset );
+        $data = new Buffer( OK::pack( 'n', 1 ) . 'rest' );
+        self::assertSame( RecordClass::IN, RecordClass::consume( $data ) );
+        self::assertSame( 2, $data->tell() );
     }
 
 
     public function testConsumeForInsufficientData() : void {
-        $data = 'a';
-        $offset = 0;
+        $data = new Buffer( 'a' );
         self::expectException( OutOfBoundsException::class );
-        RecordClass::consume( $data, $offset );
+        RecordClass::consume( $data );
     }
 
 
     public function testConsumeForInvalid() : void {
-        $data = 'nope';
-        $offset = 0;
+        $data = new Buffer( 'nope' );
         self::expectException( RecordClassException::class );
-        RecordClass::consume( $data, $offset );
+        RecordClass::consume( $data );
     }
 
 
@@ -158,27 +156,24 @@ final class RecordClassTest extends TestCase {
 
 
     public function testTryConsume() : void {
-        $data = OK::pack( 'n', 1 ) . 'rest';
-        $offset = 0;
-        self::assertSame( RecordClass::IN, RecordClass::tryConsume( $data, $offset ) );
-        self::assertSame( 2, $offset );
+        $data = new Buffer( OK::pack( 'n', 1 ) . 'rest' );
+        self::assertSame( RecordClass::IN, RecordClass::tryConsume( $data ) );
+        self::assertSame( 2, $data->tell() );
     }
 
 
     public function testTryConsumeForInsufficientData() : void {
-        $data = 'a';
-        $offset = 0;
+        $data = new Buffer( 'a' );
         self::expectException( OutOfBoundsException::class );
-        RecordClass::tryConsume( $data, $offset );
+        RecordClass::tryConsume( $data );
     }
 
 
     public function testTryConsumeForInvalidValue() : void {
-        $data = 'nope';
-        $offset = 0;
-        self::assertNull( RecordClass::tryConsume( $data, $offset ) );
+        $data = new Buffer( 'nope' );
+        self::assertNull( RecordClass::tryConsume( $data ) );
         # It still ate the two bytes
-        self::assertSame( 2, $offset );
+        self::assertSame( 2, $data->tell() );
     }
 
 

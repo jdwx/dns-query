@@ -125,29 +125,6 @@ abstract class RR {
     }
 
 
-    public static function fromBinary( string $i_stData, int &$io_iOffset ) : RR {
-        $stName = Binary::consumeName( $i_stData, $io_iOffset );
-        $type = RecordType::consume( $i_stData, $io_iOffset );
-        $class = RecordClass::consume( $i_stData, $io_iOffset );
-        $ttl = Binary::consumeUINT32( $i_stData, $io_iOffset );
-        $rdLength = Binary::consumeUINT16( $i_stData, $io_iOffset );
-        $uRDataOffset = $io_iOffset;
-        $rdata = Binary::consume( $i_stData, $io_iOffset, $rdLength );
-
-        $stClass = $type->toClassName();
-        $rr = new $stClass();
-        assert( $rr instanceof RR );
-        $rr->name = $stName;
-        $rr->type = $type->name;
-        $rr->class = $class->name;
-        $rr->ttl = $ttl;
-        $rr->rdLength = $rdLength;
-        $rr->rdata = $rdata;
-        $rr->rrFromBinary( $i_stData, $uRDataOffset, $rdLength );
-        return $rr;
-    }
-
-
     /**
      * parses a standard RR format lines, as defined by rfc1035 (kinda)
      *
@@ -588,12 +565,6 @@ abstract class RR {
         }
 
         return $data;
-    }
-
-
-    protected function rrFromBinary( string $i_stData, int $i_rDataOffset, int $i_rdLength ) : void {
-        $packet = new Packet();
-        $this->rrSet( $packet );
     }
 
 

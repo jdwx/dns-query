@@ -160,8 +160,10 @@ class LegacyQuestion {
 
         # Unpack the type and class.
         try {
-            $type = RecordType::consume( $i_packet->rdata, $i_packet->offset );
-            $class = RecordClass::consume( $i_packet->rdata, $i_packet->offset );
+            $type = RecordType::from( Binary::unpackUINT16( $i_packet->rdata, $i_packet->offset ) );
+            $i_packet->offset += 2;
+            $class = RecordClass::from( Binary::unpackUINT16( $i_packet->rdata, $i_packet->offset ) );
+            $i_packet->offset += 2;
         } catch ( InvalidArgumentException $e ) {
             throw new Exception(
                 'Invalid question section: ' . $e->getMessage(),

@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Message;
 
 
 use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\BufferInterface;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 
@@ -27,10 +28,10 @@ class Question implements \Stringable {
     }
 
 
-    public static function fromBinary( string $binary, int &$io_uOffset ) : self {
-        $stName = Binary::consumeName( $binary, $io_uOffset );
-        $type = RecordType::from( Binary::consumeUINT16( $binary, $io_uOffset ) );
-        $class = RecordClass::from( Binary::consumeUINT16( $binary, $io_uOffset ) );
+    public static function fromBinary( BufferInterface $i_buffer ) : self {
+        $stName = $i_buffer->consumeName();
+        $type = RecordType::from( $i_buffer->consumeUINT16() );
+        $class = RecordClass::from( $i_buffer->consumeUINT16() );
         return new self( $stName, $type, $class );
     }
 

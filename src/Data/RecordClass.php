@@ -7,27 +7,27 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
-use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\BufferInterface;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\Strict\TypeIs;
 
 
-enum RecordClass : int {
+enum RecordClass: int {
 
 
-    case IN = 1; // Internet (RFC 1035)
+    case IN   = 1; // Internet (RFC 1035)
 
-    case CH = 3; // Chaos (RFC 1035, obsolete)
+    case CH   = 3; // Chaos (RFC 1035, obsolete)
 
-    case HS = 4; // Hesiod (RFC 1035, obsolete)
+    case HS   = 4; // Hesiod (RFC 1035, obsolete)
 
     case NONE = 254; // No class (RFC 2136)
 
-    case ANY = 255; // Any class (RFC 1035)
+    case ANY  = 255; // Any class (RFC 1035)
 
 
-    public static function consume( string $i_stData, int &$io_iOffset ) : self {
-        $id = Binary::consumeUINT16( $i_stData, $io_iOffset );
+    public static function consume( BufferInterface $i_buffer ) : self {
+        $id = $i_buffer->consumeUINT16();
         return self::tryFrom( $id )
             ?? throw new RecordClassException( "Invalid record class ID in binary data: {$id}" );
     }
@@ -91,8 +91,8 @@ enum RecordClass : int {
     }
 
 
-    public static function tryConsume( string $i_stData, int &$io_iOffset ) : ?self {
-        return self::tryFrom( Binary::consumeUINT16( $i_stData, $io_iOffset ) );
+    public static function tryConsume( BufferInterface $i_buffer ) : ?self {
+        return self::tryFrom( $i_buffer->consumeUINT16() );
     }
 
 

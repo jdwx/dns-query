@@ -19,114 +19,6 @@ use OutOfRangeException;
 final class Binary {
 
 
-    public static function consume( string $i_stData, int &$io_uOffset, int $i_uLength ) : string {
-        $st = self::tryConsume( $i_stData, $io_uOffset, $i_uLength );
-        if ( strlen( $st ) !== $i_uLength ) {
-            throw new OutOfBoundsException( "Failed to consume {$i_uLength} bytes from data at {$io_uOffset}." );
-        }
-        return $st;
-    }
-
-
-    public static function consumeIPv4( string $i_stData, int &$io_uOffset ) : string {
-        $st = self::unpackIPv4( $i_stData, $io_uOffset );
-        $io_uOffset += 4;
-        return $st;
-    }
-
-
-    public static function consumeIPv6( string $i_stData, int &$io_uOffset ) : string {
-        $st = self::unpackIPv6( $i_stData, $io_uOffset );
-        $io_uOffset += 16;
-        return $st;
-    }
-
-
-    public static function consumeLabel( string $i_stData, int &$io_uOffset ) : string {
-        $st = self::unpackLabel( $i_stData, $io_uOffset );
-        $io_uOffset += strlen( $st ) + 1;
-        return $st;
-    }
-
-
-    /**
-     * Be a little careful with this function. It is theoretically legal for a name to
-     * contain dots that are part of a label, not label separators. This function
-     * will lose that distinction. However, in practice, this is unlikely to be a problem.
-     */
-    public static function consumeName( string $i_stData, int &$io_uOffset ) : string {
-        return implode( '.', self::consumeNameArray( $i_stData, $io_uOffset ) );
-    }
-
-
-    /**
-     * @param string $i_stData
-     * @param int    $io_uOffset
-     * @return list<string>
-     */
-    public static function consumeNameArray( string $i_stData, int &$io_uOffset ) : array {
-        # Names can be encoded as a series of labels, or as a pointer to a previously defined name, or
-        # a combination of both.
-        $rOut = [];
-        while ( true ) {
-            $stLabel = self::consumeNameLabel( $i_stData, $io_uOffset );
-            if ( chr( 0 ) === $stLabel ) {
-                return $rOut;
-            }
-            $uPointer = self::unpackPointer( $stLabel );
-            if ( is_int( $uPointer ) ) {
-                return array_merge( $rOut, self::expandNamePointer( $i_stData, $uPointer ) );
-            }
-
-            $rOut[] = substr( $stLabel, 1 );
-        }
-    }
-
-
-    public static function consumeNameLabel( string $i_stData, int &$io_uOffset ) : string {
-        $stLabel = self::unpackNameLabel( $i_stData, $io_uOffset );
-        $io_uOffset += strlen( $stLabel );
-        return $stLabel;
-    }
-
-
-    public static function consumeUINT16( string $i_stData, int &$io_uOffset ) : int {
-        $st = self::consume( $i_stData, $io_uOffset, 2 );
-        return self::unpackUINT16( $st );
-    }
-
-
-    public static function consumeUINT32( string $i_stData, int &$io_uOffset ) : int {
-        $st = self::consume( $i_stData, $io_uOffset, 4 );
-        return self::unpackUINT32( $st );
-    }
-
-
-    /**
-     * @param array<int, true> $x_rLoopDetection Internal use only. Prevents infinite loops.
-     * @return list<string> Array of labels
-     */
-    public static function expandNamePointer( string $i_stData, int $i_uOffset, array $x_rLoopDetection = [] ) : array {
-        if ( isset( $x_rLoopDetection[ $i_uOffset ] ) ) {
-            throw new InvalidArgumentException( "Detected loop in name pointer at offset {$i_uOffset}." );
-        }
-        $x_rLoopDetection[ $i_uOffset ] = true;
-        $rOut = [];
-        while ( true ) {
-            $stLabel = self::unpackNameLabel( $i_stData, $i_uOffset );
-            if ( chr( 0 ) === $stLabel ) {
-                return $rOut;
-            }
-            $uPointer = self::unpackPointer( $stLabel );
-            if ( is_int( $uPointer ) ) {
-                return array_merge( $rOut, self::expandNamePointer( $i_stData, $uPointer, $x_rLoopDetection ) );
-            }
-            $rOut[] = substr( $stLabel, 1 );
-            $i_uOffset += strlen( $stLabel );
-        }
-    }
-
-
     public static function packIPv4( string $i_stIPv4 ) : string {
         $st = inet_pton( $i_stIPv4 );
         if ( ! is_string( $st ) ) {
@@ -157,7 +49,7 @@ final class Binary {
 
 
     /**
-     * @param list<string>       $i_rLabels
+     * @param list<string> $i_rLabels
      * @param array<string, int> $io_rLabelMap
      */
     public static function packLabels( array $i_rLabels, array &$io_rLabelMap, int $i_uOffset ) : string {
@@ -271,8 +163,8 @@ final class Binary {
      * Consume a string, incrementing the offset by the length of the consumed string.
      *
      * @param string $i_stData
-     * @param int    $io_uOffset
-     * @param int    $i_uLength
+     * @param int $io_uOffset
+     * @param int $i_uLength
      * @return string
      */
     public static function tryConsume( string $i_stData, int &$io_uOffset, int $i_uLength ) : string {
@@ -283,40 +175,44 @@ final class Binary {
 
 
     public static function unpackIPv4( string $i_stData, int $i_uOffset = 0 ) : string {
-        $st = self::consume( $i_stData, $i_uOffset, 4 );
+        $st = substr( $i_stData, $i_uOffset, 4 );
+        if ( strlen( $st ) < 4 ) {
+            throw new OutOfBoundsException( 'Not enough data to unpack IPv4 address.' );
+        }
         return OK::inet_ntop( $st );
     }
 
 
     public static function unpackIPv6( string $i_stData, int $i_uOffset = 0 ) : string {
-        $st = self::consume( $i_stData, $i_uOffset, 16 );
+        $st = substr( $i_stData, $i_uOffset, 16 );
+        if ( strlen( $st ) < 16 ) {
+            throw new OutOfBoundsException( 'Not enough data to unpack IPv6 address.' );
+        }
         return OK::inet_ntop( $st );
     }
 
 
-    public static function unpackLabel( string $i_stData, int $i_uOffset = 0 ) : string {
-        $stFirstByte = self::consume( $i_stData, $i_uOffset, 1 );
-        $uFirstByte = ord( $stFirstByte );
-        if ( 0 === $uFirstByte ) {
-            return '';
-        }
-        if ( ( $uFirstByte & 0xC0 ) > 0 ) {
-            throw new InvalidArgumentException( 'Unexpected bits in character string length.' );
-        }
-        return self::consume( $i_stData, $i_uOffset, $uFirstByte );
-    }
-
-
     public static function unpackNameLabel( string $i_stData, int $i_uOffset = 0 ) : string {
-        $stFirstByte = self::consume( $i_stData, $i_uOffset, 1 );
+        $stFirstByte = substr( $i_stData, $i_uOffset, 1 );
+        if ( '' === $stFirstByte ) {
+            throw new OutOfBoundsException( "Not enough data to unpack name label at {$i_uOffset}." );
+        }
         $uFirstByte = ord( $stFirstByte );
         if ( 0 === $uFirstByte ) {
             return $stFirstByte;
         }
         if ( 0xC0 === ( $uFirstByte & 0xC0 ) ) {
-            return $stFirstByte . self::consume( $i_stData, $i_uOffset, 1 );
+            $st = substr( $i_stData, $i_uOffset, 2 );
+            if ( strlen( $st ) < 2 ) {
+                throw new OutOfBoundsException( "Not enough data to unpack pointer at {$i_uOffset}." );
+            }
+            return $st;
         }
-        return $stFirstByte . self::consume( $i_stData, $i_uOffset, ord( $stFirstByte ) );
+        $st = substr( $i_stData, $i_uOffset, $uFirstByte + 1 );
+        if ( strlen( $st ) < $uFirstByte + 1 ) {
+            throw new OutOfBoundsException( "Not enough data to unpack label at {$i_uOffset}." );
+        }
+        return $st;
     }
 
 
@@ -344,6 +240,15 @@ final class Binary {
             throw new OutOfBoundsException( 'Not enough data to unpack 32-bit integer.' );
         }
         return TypeIs::int( OK::unpack( 'N', $st )[ 1 ] );
+    }
+
+
+    public static function unpackUINT8( string $i_stData, int $i_uOffset = 0 ) : int {
+        $st = substr( $i_stData, $i_uOffset, 1 );
+        if ( strlen( $st ) < 1 ) {
+            throw new OutOfBoundsException( 'Not enough data to unpack 8-bit integer.' );
+        }
+        return TypeIs::int( ord( $st ) );
     }
 
 
