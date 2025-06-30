@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery;
 
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\RecordClassException;
+use JDWX\DNSQuery\Exceptions\RecordTypeException;
 
 
 /**
@@ -50,7 +52,7 @@ class OpaqueResourceRecord implements ResourceRecordInterface {
     }
 
 
-    public static function fromString( string $i_string ) : ResourceRecordInterface {
+    public static function fromString( string $i_string ) : self {
         $buffer = new Buffer( $i_string );
         return self::fromBuffer( $buffer );
     }
@@ -71,7 +73,7 @@ class OpaqueResourceRecord implements ResourceRecordInterface {
         if ( $class instanceof RecordClass ) {
             return $class;
         }
-        throw new \InvalidArgumentException( "Unknown record class: {$this->uClass}" );
+        throw new RecordClassException( "Unknown record class: {$this->uClass}" );
     }
 
 
@@ -105,7 +107,7 @@ class OpaqueResourceRecord implements ResourceRecordInterface {
         if ( $type instanceof RecordType ) {
             return $type;
         }
-        throw new \InvalidArgumentException( "Unknown record type: {$this->uType}" );
+        throw new RecordTypeException( "Unknown record type: {$this->uType}" );
     }
 
 
