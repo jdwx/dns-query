@@ -55,6 +55,9 @@ interface ResourceRecordInterface extends \Stringable, ArrayAccess {
     public function getType() : RecordType;
 
 
+    public function hasRDataValue( string $i_stName ) : bool;
+
+
     public function isClass( int|string|RecordClass $i_class ) : bool;
 
 
@@ -63,15 +66,18 @@ interface ResourceRecordInterface extends \Stringable, ArrayAccess {
 
     public function name() : string;
 
+    public function setRDataValue( string $i_stName, mixed $i_value ) : void;
 
     /** @return array<string, mixed> */
     public function toArray( bool $i_bNameAsArray = false ) : array;
-
 
     public function ttl() : int;
 
 
     public function type() : string;
+
+
+    public function typeValue() : int;
 
 
 }

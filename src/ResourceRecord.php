@@ -175,7 +175,7 @@ class ResourceRecord extends AbstractResourceRecord {
 
 
     public function classValue() : int {
-        return $this->class->value;
+        return $this->getClass()->value;
     }
 
 
@@ -234,6 +234,11 @@ class ResourceRecord extends AbstractResourceRecord {
             $rOut[ 'rdata' ][ $stKey ] = $value->value;
         }
         return $rOut;
+    }
+
+
+    public function typeValue() : int {
+        return $this->getType()->value;
     }
 
 

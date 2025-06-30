@@ -12,12 +12,13 @@ use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
-use JDWX\Strict\TypeIs;
-use LogicException;
 use OutOfBoundsException;
 
 
 abstract class AbstractResourceRecord implements ResourceRecordInterface {
+
+
+    use ResourceRecordTrait;
 
 
     /** @var array<string, RDataType> */
@@ -40,11 +41,6 @@ abstract class AbstractResourceRecord implements ResourceRecordInterface {
             }
             $this->setRDataValueAlreadyChecked( $stKey, $rData[ $stKey ] );
         }
-    }
-
-
-    public function class() : string {
-        return $this->getClass()->name;
     }
 
 
@@ -78,31 +74,6 @@ abstract class AbstractResourceRecord implements ResourceRecordInterface {
     }
 
 
-    public function name() : string {
-        return DomainName::format( $this->getName() );
-    }
-
-
-    public function offsetExists( mixed $offset ) : bool {
-        return isset( $this->rData[ $offset ] );
-    }
-
-
-    public function offsetGet( mixed $offset ) : mixed {
-        return $this->getRDataValueEx( TypeIs::string( $offset ) )->value;
-    }
-
-
-    public function offsetSet( mixed $offset, mixed $value ) : void {
-        $this->setRDataValue( TypeIs::string( $offset ), $value );
-    }
-
-
-    public function offsetUnset( mixed $offset ) : void {
-        throw new LogicException( 'Cannot unset RData values in a ResourceRecord.' );
-    }
-
-
     public function setRDataValue( string $i_stName, mixed $i_value ) : void {
         if ( ! $this->hasRDataValue( $i_stName ) ) {
             throw new InvalidArgumentException( "Invalid RData key: {$i_stName}" );
@@ -111,16 +82,6 @@ abstract class AbstractResourceRecord implements ResourceRecordInterface {
             $i_value = new RDataValue( $this->rDataMap[ $i_stName ], $i_value );
         }
         $this->rData[ $i_stName ] = $i_value;
-    }
-
-
-    public function ttl() : int {
-        return $this->getTTL();
-    }
-
-
-    public function type() : string {
-        return $this->getType()->name;
     }
 
 
