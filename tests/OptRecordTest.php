@@ -11,18 +11,18 @@ use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\OptRecord;
+use JDWX\DNSQuery\OptResourceRecord;
 use JDWX\DNSQuery\RDataValue;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
-#[CoversClass( OptRecord::class )]
+#[CoversClass( OptResourceRecord::class )]
 final class OptRecordTest extends TestCase {
 
 
     public function testAddOption() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::assertCount( 0, $opt[ 'options' ] );
 
         $option = new Option( 10, 'test-data' );
@@ -35,7 +35,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testAddOptionMissingData() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::expectException( InvalidArgumentException::class );
         self::expectExceptionMessage( 'Option data is missing.' );
         $opt->addOption( OptionCode::COOKIE );
@@ -43,7 +43,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testAddOptionWithCodeAndData() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         $opt->addOption( OptionCode::COOKIE, 'cookie-value' );
 
         self::assertCount( 1, $opt[ 'options' ] );
@@ -56,7 +56,7 @@ final class OptRecordTest extends TestCase {
         $options = [
             new Option( 10, 'test-data' ),
         ];
-        $opt = new OptRecord( options: $options );
+        $opt = new OptResourceRecord( options: $options );
 
         // Test exists
         self::assertTrue( isset( $opt[ 'options' ] ) );
@@ -70,13 +70,13 @@ final class OptRecordTest extends TestCase {
 
 
     public function testClassValue() : void {
-        $opt = new OptRecord( uPayloadSize: 1232 );
+        $opt = new OptResourceRecord( uPayloadSize: 1232 );
         self::assertSame( 1232, $opt->classValue() );
     }
 
 
     public function testConstructDefault() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
 
         self::assertSame( 'OPT', $opt->type() );
         self::assertSame( '', $opt->name() );
@@ -93,7 +93,7 @@ final class OptRecordTest extends TestCase {
             new Option( 15, 'error-data' ),
         ];
 
-        $opt = new OptRecord(
+        $opt = new OptResourceRecord(
             ReturnCode::NOERROR,
             DOK::DNSSEC_OK,
             1232,
@@ -119,7 +119,7 @@ final class OptRecordTest extends TestCase {
             $options
         );
 
-        $opt = new OptRecord(
+        $opt = new OptResourceRecord(
             ReturnCode::NOERROR,
             DOK::DNSSEC_NOT_SUPPORTED,
             4096,
@@ -141,7 +141,7 @@ final class OptRecordTest extends TestCase {
             'ttl' => 0,
         ];
 
-        $opt = OptRecord::fromArray( $data );
+        $opt = OptResourceRecord::fromArray( $data );
         self::assertSame( 'OPT', $opt->type() );
         self::assertSame( 1232, $opt->payloadSize() );
         self::assertSame( 0, $opt->version() );
@@ -164,7 +164,7 @@ final class OptRecordTest extends TestCase {
             ],
         ];
 
-        $opt = OptRecord::fromArray( $data );
+        $opt = OptResourceRecord::fromArray( $data );
         self::assertCount( 1, $opt[ 'options' ] );
         self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
         self::assertSame( 'nested-data', $opt[ 'options' ][ 0 ]->data );
@@ -185,7 +185,7 @@ final class OptRecordTest extends TestCase {
             'options' => $options,
         ];
 
-        $opt = OptRecord::fromArray( $data );
+        $opt = OptResourceRecord::fromArray( $data );
         self::assertCount( 2, $opt[ 'options' ] );
         self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
         self::assertSame( 'cookie', $opt[ 'options' ][ 0 ]->data );
@@ -195,12 +195,12 @@ final class OptRecordTest extends TestCase {
     public function testFromStringThrowsException() : void {
         self::expectException( LogicException::class );
         self::expectExceptionMessage( 'OPT records cannot be created from a string.' );
-        OptRecord::fromString( 'test' );
+        OptResourceRecord::fromString( 'test' );
     }
 
 
     public function testGetClassThrowsException() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::expectException( LogicException::class );
         self::expectExceptionMessage( 'OPT records do not have a class.' );
         $opt->getClass();
@@ -208,14 +208,14 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetPayloadSize() : void {
-        $opt = new OptRecord( uPayloadSize: 2048 );
+        $opt = new OptResourceRecord( uPayloadSize: 2048 );
         self::assertSame( 2048, $opt->getPayloadSize() );
         self::assertSame( 2048, $opt->payloadSize() );
     }
 
 
     public function testGetRData() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         $rData = $opt->getRData();
 
         self::assertArrayHasKey( 'options', $rData );
@@ -225,7 +225,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetRDataValue() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         $rdataValue = $opt->getRDataValue( 'options' );
 
         self::assertInstanceOf( RDataValue::class, $rdataValue );
@@ -235,13 +235,13 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetRDataValueInvalidKey() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::assertNull( $opt->getRDataValue( 'invalid' ) );
     }
 
 
     public function testGetTTL() : void {
-        $opt = new OptRecord(
+        $opt = new OptResourceRecord(
             ReturnCode::SERVFAIL,
             DOK::DNSSEC_OK,
             4096,
@@ -255,27 +255,27 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetType() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::assertSame( RecordType::OPT, $opt->getType() );
     }
 
 
     public function testGetVersion() : void {
-        $opt = new OptRecord( version: 2 );
+        $opt = new OptResourceRecord( version: 2 );
         self::assertInstanceOf( EDNSVersion::class, $opt->getVersion() );
         self::assertSame( 2, $opt->version() );
     }
 
 
     public function testSetPayloadSize() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         $opt->setPayloadSize( 8192 );
         self::assertSame( 8192, $opt->payloadSize() );
     }
 
 
     public function testSetPayloadSizeInvalidNegative() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::expectException( InvalidArgumentException::class );
         self::expectExceptionMessage( 'Payload size must be a non-negative integer.' );
         $opt->setPayloadSize( -1 );
@@ -283,7 +283,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testSetPayloadSizeInvalidTooLarge() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::expectException( InvalidArgumentException::class );
         self::expectExceptionMessage( 'Payload size must not exceed 65535.' );
         $opt->setPayloadSize( 65536 );
@@ -291,7 +291,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testToArray() : void {
-        $opt = new OptRecord( uPayloadSize: 1232 );
+        $opt = new OptResourceRecord( uPayloadSize: 1232 );
         $array = $opt->toArray();
 
         self::assertArrayHasKey( 'name', $array );
@@ -310,7 +310,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testToArrayWithNameAsArray() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         $array = $opt->toArray( true );
 
         self::assertSame( [], $array[ 'name' ] );
@@ -318,7 +318,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testToStringThrowsException() : void {
-        $opt = new OptRecord();
+        $opt = new OptResourceRecord();
         self::expectException( LogicException::class );
         self::expectExceptionMessage( 'OPT records cannot be rendered to a string.' );
         $x = (string) $opt;

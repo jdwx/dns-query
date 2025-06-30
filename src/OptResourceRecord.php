@@ -18,7 +18,7 @@ use JDWX\DNSQuery\Data\ReturnCode;
 use LogicException;
 
 
-class OptRecord extends AbstractResourceRecord {
+class OptResourceRecord extends AbstractResourceRecord {
 
 
     public const int DEFAULT_PAYLOAD_SIZE = 4096;

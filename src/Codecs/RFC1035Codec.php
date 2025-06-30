@@ -17,7 +17,7 @@ use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\Question;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\OptRecord;
+use JDWX\DNSQuery\OptResourceRecord;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecordInterface;
@@ -104,7 +104,7 @@ class RFC1035Codec implements CodecInterface {
         $r[ 'rdata' ] = $rData;
 
         if ( $r[ 'type' ] === RecordType::OPT ) {
-            return OptRecord::fromArray( $r );
+            return OptResourceRecord::fromArray( $r );
         }
         return ResourceRecord::fromArray( $r );
     }

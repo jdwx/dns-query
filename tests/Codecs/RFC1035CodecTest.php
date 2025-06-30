@@ -16,7 +16,7 @@ use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\Question;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\OptRecord;
+use JDWX\DNSQuery\OptResourceRecord;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -88,7 +88,7 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( '23.40.60.40', $msg->answer[ 3 ][ 'address' ] );
 
         $opt = $msg->opt[ 0 ];
-        assert( $opt instanceof OptRecord );
+        assert( $opt instanceof OptResourceRecord );
         self::assertSame( 0, $opt->version() );
         self::assertSame( 1232, $opt->payloadSize() );
         self::assertSame( [], $opt[ 'options' ] );
@@ -309,7 +309,7 @@ final class RFC1035CodecTest extends TestCase {
         );
         $rr = RFC1035Codec::decodeResourceRecord( $buffer );
 
-        assert( $rr instanceof OptRecord );
+        assert( $rr instanceof OptResourceRecord );
 
         self::assertSame( [], $rr->getName() ); // Root domain
         self::assertSame( 'OPT', $rr->type() );
