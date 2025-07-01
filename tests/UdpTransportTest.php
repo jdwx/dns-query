@@ -8,9 +8,9 @@ namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Network\UdpTransport;
-use JDWX\DNSQuery\Packet\RequestPacket;
+use JDWX\DNSQuery\Legacy\Lookups;
+use JDWX\DNSQuery\Legacy\Network\UdpTransport;
+use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;

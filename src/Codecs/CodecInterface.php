@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Codecs;
 
 
-use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
+use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 /**
@@ -17,10 +18,10 @@ use JDWX\DNSQuery\Message\Message;
 interface CodecInterface {
 
 
-    public function decode( string $i_packet ) : Message;
+    public function decode( BufferInterface $i_buffer ) : MessageInterface;
 
 
-    public function encode( Message $i_msg ) : string;
+    public function encode( MessageInterface $i_msg ) : string;
 
 
 }

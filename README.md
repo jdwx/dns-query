@@ -90,15 +90,15 @@ var_dump( $out );
 ```
 
 ```
-class JDWX\DNSQuery\Packet\ResponsePacket#13 (12) {
+class JDWX\DNSQuery\Legacy\Packet\ResponsePacket#13 (12) {
   public string $rdata =>
   string(49) "(binary data)"
   public int $rdLength =>
   int(49)
   public int $offset =>
   int(49)
-  public JDWX\DNSQuery\Packet\Header $header =>
-  class JDWX\DNSQuery\Packet\Header#14 (15) {
+  public JDWX\DNSQuery\Legacy\Packet\Header $header =>
+  class JDWX\DNSQuery\Legacy\Packet\Header#14 (15) {
     public int $id =>
     int(37144)
     public int $qr =>

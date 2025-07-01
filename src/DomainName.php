@@ -35,6 +35,15 @@ final class DomainName {
     }
 
 
+    public static function normalize( array|string $i_name, array $i_rOrigin = [] ) : array {
+        if ( is_string( $i_name ) ) {
+            $i_name = self::parse( $i_name, $i_rOrigin );
+        }
+        $i_name = array_merge( $i_name, $i_rOrigin );
+        return array_map( fn( string $x ) => strtolower( trim( $x ) ), $i_name );
+    }
+
+
     /**
      * @param list<string> $i_rOrigin
      * @return list<string>

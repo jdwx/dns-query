@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Packet\Header;
+use JDWX\DNSQuery\Legacy\Packet\Header;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

@@ -14,19 +14,16 @@ use JDWX\DNSQuery\Message\Message;
 abstract class AbstractTransport implements TransportInterface {
 
 
-    use UnifiedTransportTrait;
-
-
     public function __construct( private readonly CodecInterface $codec ) {}
 
 
-    public function receiveRequest( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
-        return $this->receiveMessage( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
+    public function receiveRequest() : ?Message {
+        return $this->receiveMessage();
     }
 
 
-    public function receiveResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
-        return $this->receiveMessage( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
+    public function receiveResponse() : ?Message {
+        return $this->receiveMessage();
     }
 
 
@@ -40,25 +37,20 @@ abstract class AbstractTransport implements TransportInterface {
     }
 
 
-    protected function receiveMessage( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
-        $packet = $this->receivePacket( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
+    protected function receiveMessage() : ?Message {
+        $packet = $this->receive();
         if ( ! is_string( $packet ) ) {
             return null;
         }
-        return $this->codec->decode( $packet );
+        $buffer = new Buffer( $packet );
+        return $this->codec->decode( $buffer );
     }
-
-
-    abstract protected function receivePacket( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?string;
 
 
     protected function sendMessage( Message $i_msg ) : void {
         $packet = $this->codec->encode( $i_msg );
-        $this->sendPacket( $packet );
+        $this->send( $packet );
     }
-
-
-    abstract protected function sendPacket( string $packet ) : void;
 
 
 }

@@ -8,8 +8,8 @@ namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Network\Socket;
-use JDWX\DNSQuery\Network\TransportManager;
+use JDWX\DNSQuery\Legacy\Network\Socket;
+use JDWX\DNSQuery\Legacy\Network\TransportManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

@@ -8,19 +8,19 @@ namespace JDWX\DNSQuery\Codecs;
 
 
 use JDWX\DNSQuery\Binary;
-use JDWX\DNSQuery\Buffer;
-use JDWX\DNSQuery\BufferInterface;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\Question;
+use JDWX\DNSQuery\Message\OpaqueMessage;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\OptResourceRecord;
+use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\RDataValue;
-use JDWX\DNSQuery\ResourceRecord;
-use JDWX\DNSQuery\ResourceRecordInterface;
+use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
+use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 class RFC1035Codec implements CodecInterface {
@@ -195,32 +195,31 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
-    public function decode( string $i_packet ) : Message {
-        $msg = new Message();
-        $buffer = new Buffer( $i_packet );
+    public function decode( BufferInterface $i_buffer ) : MessageInterface {
+        $msg = new OpaqueMessage();
 
-        $msg->id = $buffer->consumeUINT16();
-        $msg->setFlagWord( $buffer->consumeUINT16() );
+        $msg->id = $i_buffer->consumeUINT16();
+        $msg->setFlagWord( $i_buffer->consumeUINT16() );
 
-        $qCount = $buffer->consumeUINT16();
-        $aCount = $buffer->consumeUINT16();
-        $auCount = $buffer->consumeUINT16();
-        $adCount = $buffer->consumeUINT16();
+        $qCount = $i_buffer->consumeUINT16();
+        $aCount = $i_buffer->consumeUINT16();
+        $auCount = $i_buffer->consumeUINT16();
+        $adCount = $i_buffer->consumeUINT16();
 
         for ( $ii = 0 ; $ii < $qCount ; ++$ii ) {
-            $msg->question[] = Question::fromBinary( $buffer );
+            $msg->question[] = Question::fromBinary( $i_buffer );
         }
 
         for ( $ii = 0 ; $ii < $aCount ; ++$ii ) {
-            $msg->answer[] = self::decodeResourceRecord( $buffer );
+            $msg->answer[] = self::decodeResourceRecord( $i_buffer );
         }
 
         for ( $ii = 0 ; $ii < $auCount ; ++$ii ) {
-            $msg->authority[] = self::decodeResourceRecord( $buffer );
+            $msg->authority[] = self::decodeResourceRecord( $i_buffer );
         }
 
         for ( $ii = 0 ; $ii < $adCount ; ++$ii ) {
-            $rr = self::decodeResourceRecord( $buffer );
+            $rr = self::decodeResourceRecord( $i_buffer );
             if ( $rr->isType( 'OPT' ) ) {
                 $msg->opt[] = $rr;
             } else {

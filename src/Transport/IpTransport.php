@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Transport;
 
 
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
-use JDWX\DNSQuery\Lookups;
+use JDWX\DNSQuery\Legacy\Lookups;
 use JDWX\Socket\Socket;
 
 
@@ -58,19 +58,19 @@ class IpTransport extends AbstractTransport {
     }
 
 
-    protected function receivePacket( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?string {
+    public function receive( int $i_uBufferSize = 65_536 ) : ?string {
         $data = '';
-        if ( ! $this->socket->selectForRead( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds ) ) {
+        if ( ! $this->socket->selectForRead() ) {
             return null;
         }
-        $this->socket->recvFrom( $data, $this->maxSize, 0, $this->nameServer, $this->port );
+        $this->socket->recvFrom( $data, $i_uBufferSize, 0, $this->nameServer, $this->port );
         return $data;
     }
 
 
-    protected function sendPacket( string $packet ) : void {
-        $u = $this->socket->sendTo( $packet, strlen( $packet ), $this->nameServer, $this->port );
-        if ( $u !== strlen( $packet ) ) {
+    public function send( string $i_stData ) : void {
+        $u = $this->socket->sendTo( $i_stData, strlen( $i_stData ), $this->nameServer, $this->port );
+        if ( $u !== strlen( $i_stData ) ) {
             throw new \RuntimeException( 'Failed to send the entire packet.' );
         }
     }

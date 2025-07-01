@@ -7,16 +7,16 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
-use JDWX\DNSQuery\Buffer;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
-use JDWX\DNSQuery\Packet\Packet;
+use JDWX\DNSQuery\Legacy\Packet\Packet;
+use JDWX\DNSQuery\Legacy\RR\RR;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\ALL;
 use JDWX\DNSQuery\RR\ANY;
 use JDWX\DNSQuery\RR\DS;
 use JDWX\DNSQuery\RR\MX;
-use JDWX\DNSQuery\RR\RR;
+use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

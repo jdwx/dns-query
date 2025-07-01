@@ -18,6 +18,14 @@ class ZBits implements \Stringable {
     }
 
 
+    public static function normalize( int|ZBits $value ) : self {
+        if ( is_int( $value ) ) {
+            return new self( $value );
+        }
+        return $value;
+    }
+
+
     public function __toString() : string {
         return strval( $this->bits );
     }

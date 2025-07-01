@@ -7,8 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
-use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RDataType;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -62,25 +62,25 @@ final class RDataTypeTest extends TestCase {
 
 
     public function testParseForInvalidIPv4() : void {
-        self::expectException( InvalidArgumentException::class );
+        self::expectException( RecordDataException::class );
         RDataType::IPv4Address->parse( '999.999.999.999' );
     }
 
 
     public function testParseForInvalidIPv6() : void {
-        self::expectException( InvalidArgumentException::class );
+        self::expectException( RecordDataException::class );
         RDataType::IPv6Address->parse( 'invalid-ipv6' );
     }
 
 
     public function testParseForInvalidUINT16() : void {
-        self::expectException( InvalidArgumentException::class );
+        self::expectException( RecordDataException::class );
         RDataType::UINT16->parse( '65536' ); // UINT16 max is 65535
     }
 
 
     public function testParseForInvalidUINT32() : void {
-        self::expectException( InvalidArgumentException::class );
+        self::expectException( RecordDataException::class );
         RDataType::UINT32->parse( '-1' );
     }
 

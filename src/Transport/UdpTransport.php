@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-use JDWX\DNSQuery\Lookups;
+use JDWX\DNSQuery\Legacy\Lookups;
 
 
 class UdpTransport extends IpTransport {

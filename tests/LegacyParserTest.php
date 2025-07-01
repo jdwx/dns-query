@@ -24,11 +24,11 @@ namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Packet\RequestPacket;
-use JDWX\DNSQuery\Packet\ResponsePacket;
-use JDWX\DNSQuery\RR\RR;
+use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
+use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
+use JDWX\DNSQuery\Legacy\RR\RR;
+use JDWX\DNSQuery\Legacy\Updater;
 use JDWX\DNSQuery\RR\TSIG;
-use JDWX\DNSQuery\Updater;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

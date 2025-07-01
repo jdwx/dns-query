@@ -7,18 +7,18 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Codecs;
 
 
-use JDWX\DNSQuery\Buffer;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\Question;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\OptResourceRecord;
+use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\RDataValue;
-use JDWX\DNSQuery\ResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
+use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -45,8 +45,9 @@ final class RFC1035CodecTest extends TestCase {
         ZEND;
         $packet = HexDump::fromTcpDump( $stPacketDump );
         $packet = substr( $packet, 28 ); // Remove IP and UDP headers
+        $buffer = new Buffer( $packet );
         $codec = new RFC1035Codec();
-        $msg = $codec->decode( $packet );
+        $msg = $codec->decode( $buffer );
 
         self::assertSame( 56866, $msg->id );
         self::assertSame( OpCode::QUERY, $msg->opcode );

@@ -4,9 +4,9 @@
 declare( strict_types = 1 );
 
 
-use JDWX\DNSQuery\Buffer;
-use JDWX\DNSQuery\BufferInterface;
-use JDWX\DNSQuery\BufferTrait;
+use JDWX\DNSQuery\Transport\Buffer;
+use JDWX\DNSQuery\Transport\BufferInterface;
+use JDWX\DNSQuery\Transport\BufferTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

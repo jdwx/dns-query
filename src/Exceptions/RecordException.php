@@ -7,9 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Exceptions;
 
 
-use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Packet\RequestPacket;
-use JDWX\DNSQuery\Packet\ResponsePacket;
+use JDWX\DNSQuery\Legacy\Lookups;
+use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
+use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
 
 
 class RecordException extends Exception {

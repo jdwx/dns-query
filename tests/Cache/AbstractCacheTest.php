@@ -13,8 +13,8 @@ use JDWX\DNSQuery\Cache\MessageCache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\Question;
-use JDWX\DNSQuery\ResourceRecord;
+use JDWX\DNSQuery\Question\Question;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

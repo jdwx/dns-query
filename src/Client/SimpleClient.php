@@ -42,8 +42,8 @@ class SimpleClient extends AbstractTimedClient {
     }
 
 
-    protected function receiveAnyResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message {
-        return $this->transport->receiveResponse( $i_uTimeoutSeconds, $i_uTimeoutMicroSeconds );
+    protected function receiveAnyResponse() : ?Message {
+        return $this->transport->receiveResponse();
     }
 
 

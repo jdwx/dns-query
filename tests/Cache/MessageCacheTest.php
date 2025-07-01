@@ -9,7 +9,7 @@ namespace JDWX\DNSQuery\Tests\Cache;
 
 use JDWX\DNSQuery\Cache\MessageCache;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\ResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

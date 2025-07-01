@@ -17,91 +17,55 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Data\TC;
 use JDWX\DNSQuery\Data\ZBits;
-use JDWX\DNSQuery\ResourceRecordInterface;
-use Stringable;
+use JDWX\DNSQuery\Question\Question;
+use JDWX\DNSQuery\Question\QuestionInterface;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 
 
-class Message implements Stringable {
+class Message implements MessageInterface {
 
 
-    public int $id = 0;
-
-    public QR $qr = QR::QUERY;
-
-    public OpCode $opcode = OpCode::QUERY;
-
-    public AA $aa = AA::NON_AUTHORITATIVE;
-
-    public TC $tc = TC::NOT_TRUNCATED;
-
-    public RD $rd = RD::RECURSION_DESIRED;
-
-    public RA $ra = RA::RECURSION_NOT_AVAILABLE;
-
-    public ZBits $z;
-
-    public ReturnCode $returnCode = ReturnCode::NOERROR;
-
-    /** @var list<Question> */
-    public array $question = [];
-
-    /** @var list<ResourceRecordInterface> */
-    public array $answer = [];
-
-    /** @var list<ResourceRecordInterface> */
-    public array $authority = [];
-
-    /** @var list<ResourceRecordInterface> */
-    public array $additional = [];
-
-    /** @var list<ResourceRecordInterface> */
-    public array $opt = [];
-
-
-    public function __construct() {
-        $this->z = new ZBits();
-    }
+    /**
+     * @param list<QuestionInterface> $question
+     * @param list<ResourceRecordInterface> $answer
+     * @param list<ResourceRecordInterface> $authority
+     * @param list<ResourceRecordInterface> $additional
+     * @param list<ResourceRecordInterface> $opt
+     */
+    public function __construct( private HeaderInterface $header,
+                                 private array           $question = [],
+                                 private array           $answer = [],
+                                 private array           $authority = [],
+                                 private array           $additional = [],
+                                 private array           $opt = [] ) {}
 
 
     public static function request( string|Question        $domain,
                                     int|string|RecordType  $type = RecordType::ANY,
                                     int|string|RecordClass $class = RecordClass::IN ) : self {
-        $msg = new self();
-        $msg->setRandomId();
+        $header = Header::request();
         if ( ! $domain instanceof Question ) {
             $type = RecordType::normalize( $type );
             $class = RecordClass::normalize( $class );
             $domain = new Question( $domain, $type, $class );
         }
-        $msg->question[] = $domain;
-        return $msg;
+        return new self( $header, [ $domain ] );
     }
 
 
-    public static function response( Message $i_request, int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) : self {
-        $msg = new self();
-        $msg->opcode = $i_request->opcode;
-        $msg->qr = QR::RESPONSE;
-        $msg->id = $i_request->id;
-        $msg->question = $i_request->question;
-        $msg->rd = $i_request->rd;
-        $msg->returnCode = ReturnCode::normalize( $i_rc );
+    public static function response( MessageInterface $i_request, int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) : self {
+        $header = Header::response( $i_request->header(), $i_rc );
+        $msg = new self(
+            $header,
+            $i_request->getQuestion(),
+        );
         return $msg;
     }
 
 
     public function __toString() : string {
-        $st = ';; ' . ( $this->qr === QR::QUERY ? 'Query' : 'Query Response' ) . "\n";
-        $st .= ';; ->>HEADER<<- opcode: ' . $this->opcode->name
-            . ', status: ' . $this->returnCode->name
-            . ', id: ' . $this->id . "\n";
-        $st .= ';; flags: ' . ( $this->qr === QR::RESPONSE ? 'qr ' : '' )
-            . trim( $this->aa->toFlag()
-                . $this->tc->toFlag()
-                . $this->rd->toFlag()
-                . $this->ra->toFlag()
-            )
-            . '; z: ' . $this->z
+
+        $st = $this->header
             . '; QUERY: ' . count( $this->question )
             . ', ANSWER: ' . count( $this->answer )
             . ', AUTHORITY: ' . count( $this->authority )
@@ -152,15 +116,48 @@ class Message implements Stringable {
     }
 
 
-    public function getFlagWord() : int {
-        return $this->qr->toFlagWord()
-            | $this->opcode->toFlagWord()
-            | $this->aa->toFlagWord()
-            | $this->tc->toFlagWord()
-            | $this->rd->toFlagWord()
-            | $this->ra->toFlagWord()
-            | $this->z->toFlagWord()
-            | $this->returnCode->toFlagWord();
+    public function additional( int $i_uIndex ) : ?ResourceRecordInterface {
+        return $this->additional[ $i_uIndex ] ?? null;
+    }
+
+
+    public function answer( int $i_uIndex ) : ?ResourceRecordInterface {
+        return $this->answer[ $i_uIndex ] ?? null;
+    }
+
+
+    public function authority( int $i_uIndex ) : ?ResourceRecordInterface {
+        return $this->authority[ $i_uIndex ] ?? null;
+    }
+
+
+    public function getAdditional() : array {
+        return $this->additional;
+    }
+
+
+    public function getAnswer() : array {
+        return $this->answer;
+    }
+
+
+    public function getAuthority() : array {
+        return $this->authority;
+    }
+
+
+    public function getQuestion() : array {
+        return $this->question;
+    }
+
+
+    public function header() : HeaderInterface {
+        return $this->header;
+    }
+
+
+    public function question( int $i_uIndex = 0 ) : ?QuestionInterface {
+        return $this->question[ $i_uIndex ] ?? null;
     }
 
 
@@ -173,11 +170,6 @@ class Message implements Stringable {
         $this->ra = RA::fromFlagWord( $i_iWord );
         $this->z = ZBits::fromFlagWord( $i_iWord );
         $this->returnCode = ReturnCode::fromFlagWord( $i_iWord );
-    }
-
-
-    public function setRandomId() : void {
-        $this->id = random_int( 0, 65535 );
     }
 
 

@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-use JDWX\DNSQuery\Resolver;
+use JDWX\DNSQuery\Legacy\Resolver;
 
 
 require_once '../vendor/autoload.php';

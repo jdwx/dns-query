@@ -7,10 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Server;
 
 
-use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\ResourceRecordInterface;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use JDWX\DNSQuery\Transport\TransportInterface;
 use JDWX\DNSQuery\Transport\UdpTransport;
 
@@ -63,8 +62,7 @@ class SimpleServer {
      */
     public static function recordHandler( array $i_rRecords ) : callable {
         return function ( Message $request ) use ( $i_rRecords ) : Message {
-            $server = new self( new UdpTransport( '127.0.0.1' ) ); // Dummy transport
-            $response = $server->createDefaultResponse( $request );
+            $response = Message::response( $request );
 
             // Add the provided records as answers
             foreach ( $i_rRecords as $record ) {
@@ -145,25 +143,6 @@ class SimpleServer {
 
 
     /**
-     * Create a default response for a request.
-     * This creates a basic response that echoes the question back with no answers.
-     */
-    protected function createDefaultResponse( Message $request ) : Message {
-        $response = new Message();
-        $response->id = $request->id;
-        $response->qr = QR::RESPONSE;
-        $response->rd = $request->rd;
-        $response->ra = $request->ra;
-        $response->opcode = $request->opcode;
-
-        // Copy questions to response
-        $response->question = $request->question;
-
-        return $response;
-    }
-
-
-    /**
      * Process a request and generate a response.
      */
     protected function processRequest( Message $request ) : ?Message {
@@ -171,7 +150,7 @@ class SimpleServer {
             return call_user_func( $this->requestHandler, $request );
         }
 
-        return $this->createDefaultResponse( $request );
+        return Message::response( $request );
     }
 
 

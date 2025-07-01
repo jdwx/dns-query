@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests;
 
 
-use JDWX\DNSQuery\NamedRoot;
+use JDWX\DNSQuery\Legacy\NamedRoot;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

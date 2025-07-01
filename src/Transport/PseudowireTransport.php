@@ -7,9 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-use JDWX\DNSQuery\Codecs\CodecInterface;
-use JDWX\DNSQuery\Message\Message;
-use RuntimeException;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -19,38 +17,41 @@ class PseudowireTransport implements TransportInterface {
 
 
     /** @var list<string> */
-    private array $rRequests = [];
+    private array $rSendBuffer = [];
 
     /** @var list<string> */
-    private array $rResponses = [];
+    private array $rReceiveBuffer = [];
 
 
-    public function __construct( private readonly CodecInterface $codec ) {}
+    public function __construct() {}
 
 
-    public function receiveRequest( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : Message {
-        if ( empty( $this->rRequests ) ) {
-            throw new RuntimeException( 'No requests available.' );
+    public function receive( int $i_uBufferSize = 65_536 ) : ?string {
+        if ( empty( $this->rReceiveBuffer ) ) {
+            return null;
         }
-        return $this->codec->decode( array_shift( $this->rRequests ) );
-    }
-
-
-    public function receiveResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : Message {
-        if ( empty( $this->rResponses ) ) {
-            throw new RuntimeException( 'No responses available.' );
+        $st = TypeIs::string( array_shift( $this->rReceiveBuffer ) );
+        if ( strlen( $st ) > $i_uBufferSize ) {
+            $stRest = substr( $st, $i_uBufferSize );
+            array_unshift( $this->rReceiveBuffer, $stRest );
+            $st = substr( $st, 0, $i_uBufferSize );
         }
-        return $this->codec->decode( array_shift( $this->rResponses ) );
+        return $st;
     }
 
 
-    public function sendRequest( Message $i_request ) : void {
-        $this->rRequests[] = $this->codec->encode( $i_request );
+    public function receiveFarEnd() : ?string {
+        return array_shift( $this->rSendBuffer );
     }
 
 
-    public function sendResponse( Message $i_response ) : void {
-        $this->rResponses[] = $this->codec->encode( $i_response );
+    public function send( string $i_stData ) : void {
+        $this->rSendBuffer[] = $i_stData;
+    }
+
+
+    public function sendFarEnd( string $i_stData ) : void {
+        $this->rReceiveBuffer[] = $i_stData;
     }
 
 

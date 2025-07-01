@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\Tests\Codecs;
 
 use JDWX\DNSQuery\Codecs\SerializeCodec;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\TestCase;
 
 
@@ -18,7 +19,9 @@ class SerializeCodecTest extends TestCase {
     public function testCodec() : void {
         $codec = new SerializeCodec();
         $msg = Message::request( 'example.com', 'A' );
-        $msg2 = $codec->decode( $codec->encode( $msg ) );
+        $st = $codec->encode( $msg );
+        $buffer = new Buffer( $st );
+        $msg2 = $codec->decode( $buffer );
         self::assertSame( strval( $msg ), strval( $msg2 ) );
     }
 

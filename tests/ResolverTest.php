@@ -9,9 +9,9 @@ namespace JDWX\DNSQuery\Tests;
 
 use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Lookups;
-use JDWX\DNSQuery\Packet\ResponsePacket;
-use JDWX\DNSQuery\Resolver;
+use JDWX\DNSQuery\Legacy\Lookups;
+use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
+use JDWX\DNSQuery\Legacy\Resolver;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\CNAME;
 use JDWX\DNSQuery\RR\MX;

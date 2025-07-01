@@ -47,10 +47,7 @@ abstract class AbstractTimedClient extends AbstractClient {
             if ( $fNow >= $fEndTime ) {
                 return null; // Timeout
             }
-            $fRemainingTime = $fEndTime - $fNow;
-            $uTimeoutSeconds = (int) $fRemainingTime;
-            $uTimeoutMicroSeconds = (int) ( ( $fRemainingTime - $uTimeoutSeconds ) * 1_000_000.0 );
-            $msg = $this->receiveAnyResponse( $uTimeoutSeconds, $uTimeoutMicroSeconds );
+            $msg = $this->receiveAnyResponse();
             if ( is_null( $msg ) ) {
                 return null;
             }
@@ -62,7 +59,7 @@ abstract class AbstractTimedClient extends AbstractClient {
     }
 
 
-    abstract protected function receiveAnyResponse( int $i_uTimeoutSeconds, int $i_uTimeoutMicroSeconds ) : ?Message;
+    abstract protected function receiveAnyResponse() : ?Message;
 
 
 }

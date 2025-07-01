@@ -10,7 +10,7 @@ namespace JDWX\DNSQuery\Cache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\Question;
+use JDWX\DNSQuery\Question\Question;
 
 
 /** The interface for response packet caching. */

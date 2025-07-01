@@ -7,8 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
-use InvalidArgumentException;
 use JDWX\DNSQuery\DomainName;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\Strict\TypeIs;
 use LogicException;
@@ -86,14 +86,14 @@ enum RDataType: int {
             case self::IPv4Address:
                 $st = filter_var( $i_stValue, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
                 if ( false === $st ) {
-                    throw new InvalidArgumentException( "Invalid IPv4 address: {$i_stValue}" );
+                    throw new RecordDataException( "Invalid IPv4 address: {$i_stValue}" );
                 }
                 return $st;
 
             case self::IPv6Address:
                 $st = filter_var( $i_stValue, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 );
                 if ( false === $st ) {
-                    throw new InvalidArgumentException( "Invalid IPv6 address: {$i_stValue}" );
+                    throw new RecordDataException( "Invalid IPv6 address: {$i_stValue}" );
                 }
                 return $st;
 
@@ -111,7 +111,7 @@ enum RDataType: int {
                     ],
                 ] );
                 if ( false === $uValue ) {
-                    throw new InvalidArgumentException( "Invalid UINT16 value: $i_stValue" );
+                    throw new RecordDataException( "Invalid UINT16 value: $i_stValue" );
                 }
                 return $uValue;
 
@@ -123,7 +123,7 @@ enum RDataType: int {
                     ],
                 ] );
                 if ( false === $uValue ) {
-                    throw new InvalidArgumentException( "Invalid UINT32 value: $i_stValue" );
+                    throw new RecordDataException( "Invalid UINT32 value: $i_stValue" );
                 }
                 return $uValue;
 

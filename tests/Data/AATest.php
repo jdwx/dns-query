@@ -30,6 +30,16 @@ final class AATest extends TestCase {
     }
 
 
+    public function testNormalize() : void {
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::NON_AUTHORITATIVE->normalize( false ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::AUTHORITATIVE->normalize( true ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::NON_AUTHORITATIVE->normalize( 0 ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::AUTHORITATIVE->normalize( 1 ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::NON_AUTHORITATIVE->normalize( 'noaa' ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::AUTHORITATIVE->normalize( 'aa' ) );
+    }
+
+
     public function testToBool() : void {
         self::assertFalse( AA::NON_AUTHORITATIVE->toBool() );
         self::assertTrue( AA::AUTHORITATIVE->toBool() );

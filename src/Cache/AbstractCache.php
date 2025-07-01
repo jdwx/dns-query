@@ -10,7 +10,8 @@ namespace JDWX\DNSQuery\Cache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\Question;
+use JDWX\DNSQuery\Question\Question;
+use JDWX\DNSQuery\Question\QuestionInterface;
 
 
 /** Contains the caching functionality that is independent of what type of cache is being
@@ -39,15 +40,15 @@ abstract class AbstractCache implements MessageCacheInterface {
      */
     public static function calculateTTL( Message $i_msg, int $i_uDefaultMaxTTL = 86400 * 365 ) : int {
         $uTTL = $i_uDefaultMaxTTL;
-        foreach ( $i_msg->answer as $rr ) {
+        foreach ( $i_msg->getAnswer() as $rr ) {
             $uTTL = min( $uTTL, $rr->ttl() );
         }
 
-        foreach ( $i_msg->authority as $rr ) {
+        foreach ( $i_msg->getAuthority() as $rr ) {
             $uTTL = min( $uTTL, $rr->ttl() );
         }
 
-        foreach ( $i_msg->additional as $rr ) {
+        foreach ( $i_msg->getAdditional() as $rr ) {
             $uTTL = min( $uTTL, $rr->ttl() );
         }
 
@@ -71,12 +72,12 @@ abstract class AbstractCache implements MessageCacheInterface {
     }
 
 
-    protected static function preHash( Message|Question $i_target ) : string {
+    protected static function preHash( Message|QuestionInterface $i_target ) : string {
         if ( $i_target instanceof Question ) {
-            return "{$i_target->stName}|{$i_target->type->value}|{$i_target->class->value}&";
+            return "{$i_target->name()}|{$i_target->type()}|{$i_target->class()}&";
         }
         $st = '';
-        foreach ( $i_target->question as $q ) {
+        foreach ( $i_target->getQuestion() as $q ) {
             $st .= static::preHash( $q );
         }
         return $st;
@@ -102,9 +103,9 @@ abstract class AbstractCache implements MessageCacheInterface {
     /**
      * Store a response in the cache with a precalculated time-to-live (TTL).
      *
-     * @param string  $i_key Key for the new response
+     * @param string $i_key Key for the new response
      * @param Message $i_msg Response to cache
-     * @param int     $i_ttl TTL in seconds to cache this response
+     * @param int $i_ttl TTL in seconds to cache this response
      *
      * @return void
      */
