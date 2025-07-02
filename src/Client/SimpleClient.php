@@ -53,10 +53,6 @@ class SimpleClient extends AbstractTimedClient {
 
 
     protected function receiveAnyResponse() : ?MessageInterface {
-        $nst = $this->transport->receive();
-        if ( ! is_string( $nst ) ) {
-            return null;
-        }
         return $this->codec->decode( $this->buffer );
     }
 
