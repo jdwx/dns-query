@@ -45,7 +45,7 @@ enum RD: int {
             return self::fromBool( $value );
         }
         if ( is_int( $value ) ) {
-            return self::fromFlagWord( $value );
+            return self::from( $value );
         }
         if ( is_string( $value ) ) {
             return self::fromName( $value );
@@ -55,7 +55,7 @@ enum RD: int {
 
 
     public static function tryFromName( string $name ) : ?self {
-        return match ( $name ) {
+        return match ( strtolower( trim( $name ) ) ) {
             'nord', 'recursion_not_desired' => self::RECURSION_NOT_DESIRED,
             'rd', 'recursion_desired' => self::RECURSION_DESIRED,
             default => null,

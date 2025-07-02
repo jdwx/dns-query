@@ -45,7 +45,7 @@ enum TC: int {
             return self::fromBool( $value );
         }
         if ( is_int( $value ) ) {
-            return self::fromFlagWord( $value );
+            return self::from( $value );
         }
         if ( is_string( $value ) ) {
             return self::fromName( $value );
@@ -55,8 +55,9 @@ enum TC: int {
 
 
     public static function tryFromName( string $name ) : ?self {
-        return match ( $name ) {
-            'notc', 'not_truncated' => self::NOT_TRUNCATED,
+        /** @noinspection SpellCheckingInspection */
+        return match ( strtolower( trim( $name ) ) ) {
+            'notc', 'not_truncated', 'nottruncated' => self::NOT_TRUNCATED,
             'tc', 'truncated' => self::TRUNCATED,
             default => null,
         };

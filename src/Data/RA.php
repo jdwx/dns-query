@@ -45,7 +45,7 @@ enum RA: int {
             return self::fromBool( $value );
         }
         if ( is_int( $value ) ) {
-            return self::fromFlagWord( $value );
+            return self::from( $value );
         }
         if ( is_string( $value ) ) {
             return self::fromName( $value );
@@ -55,7 +55,7 @@ enum RA: int {
 
 
     public static function tryFromName( string $name ) : ?self {
-        return match ( $name ) {
+        return match ( strtolower( trim( $name ) ) ) {
             'nora', 'recursion_not_available' => self::RECURSION_NOT_AVAILABLE,
             'ra', 'recursion_available' => self::RECURSION_AVAILABLE,
             default => null,

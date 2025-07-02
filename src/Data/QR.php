@@ -59,10 +59,9 @@ enum QR: int {
 
 
     public static function tryFromName( string $name ) : ?QR {
-        $name = strtoupper( $name );
-        return match ( $name ) {
-            'QUERY' => self::QUERY,
-            'RESPONSE' => self::RESPONSE,
+        return match ( strtolower( trim( $name ) ) ) {
+            'query' => self::QUERY,
+            'response' => self::RESPONSE,
             default => null,
         };
     }
