@@ -183,7 +183,7 @@ class ResourceRecord extends AbstractResourceRecord {
 
 
     public function __toString() : string {
-        $st = $this->name() . ' ' . $this->getTTL() . ' IN ' . $this->type() . ' ' . $this->class() . ' ';
+        $st = $this->name() . ' ' . $this->getTTL() . ' ' . $this->class() . ' ' . $this->type() . ' ';
         $st .= $this->rData;
         return $st;
     }
