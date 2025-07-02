@@ -30,6 +30,19 @@ final class RDTest extends TestCase {
     }
 
 
+    public function testNormalize() : void {
+        self::assertSame( RD::RECURSION_NOT_DESIRED, RD::normalize( false ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::normalize( true ) );
+        self::assertSame( RD::RECURSION_NOT_DESIRED, RD::normalize( 0 ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::normalize( 1 ) );
+        self::assertSame( RD::RECURSION_NOT_DESIRED, RD::normalize( 'nord' ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::normalize( 'rd' ) );
+        self::assertSame( RD::RECURSION_NOT_DESIRED, RD::normalize( 'Recursion_Not_Desired' ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::normalize( 'Recursion_Desired' ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::normalize( RD::RECURSION_DESIRED ) );
+    }
+
+
     public function testToBool() : void {
         self::assertFalse( RD::RECURSION_NOT_DESIRED->toBool() );
         self::assertTrue( RD::RECURSION_DESIRED->toBool() );

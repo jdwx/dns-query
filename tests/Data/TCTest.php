@@ -30,6 +30,19 @@ final class TCTest extends TestCase {
     }
 
 
+    public function testNormalize() : void {
+        self::assertSame( TC::NOT_TRUNCATED, TC::normalize( false ) );
+        self::assertSame( TC::TRUNCATED, TC::normalize( true ) );
+        self::assertSame( TC::NOT_TRUNCATED, TC::normalize( 0 ) );
+        self::assertSame( TC::TRUNCATED, TC::normalize( 1 ) );
+        self::assertSame( TC::NOT_TRUNCATED, TC::normalize( 'notc' ) );
+        self::assertSame( TC::TRUNCATED, TC::normalize( 'tc' ) );
+        self::assertSame( TC::NOT_TRUNCATED, TC::normalize( 'Not_Truncated' ) );
+        self::assertSame( TC::TRUNCATED, TC::normalize( 'TRUNCATED' ) );
+        self::assertSame( TC::TRUNCATED, TC::normalize( TC::TRUNCATED ) );
+    }
+
+
     public function testToBool() : void {
         self::assertFalse( TC::NOT_TRUNCATED->toBool() );
         self::assertTrue( TC::TRUNCATED->toBool() );
