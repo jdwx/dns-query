@@ -131,7 +131,7 @@ final class FlagWordTest extends TestCase {
             'recursion_available',
             i_rc: 'SERVFAIL'
         );
-        
+
         self::assertSame( QR::RESPONSE, $flagWord->qr );
         self::assertSame( OpCode::IQUERY, $flagWord->opCode );
         self::assertSame( AA::AUTHORITATIVE, $flagWord->aa );
@@ -228,7 +228,6 @@ final class FlagWordTest extends TestCase {
     public function testNormalize() : void {
         // Test with integer
         $flagWord = FlagWord::normalize( 0x8580 );
-        self::assertInstanceOf( FlagWord::class, $flagWord );
         self::assertSame( QR::RESPONSE, $flagWord->qr );
         self::assertSame( AA::AUTHORITATIVE, $flagWord->aa );
 
