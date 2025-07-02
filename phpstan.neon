@@ -1,6 +1,7 @@
 parameters:
 	excludePaths:
 		- src/Legacy
+		- tests/Legacy
 	level: 6
 	paths:
 		- examples
