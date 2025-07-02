@@ -7,18 +7,12 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
-use JDWX\DNSQuery\Data\AA;
-use JDWX\DNSQuery\Data\OpCode;
-use JDWX\DNSQuery\Data\QR;
-use JDWX\DNSQuery\Data\RA;
-use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
-use JDWX\DNSQuery\Data\TC;
-use JDWX\DNSQuery\Data\ZBits;
 use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\Question\QuestionInterface;
+use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 
 
@@ -26,18 +20,19 @@ class Message implements MessageInterface {
 
 
     /**
+     * @param HeaderInterface $header
      * @param list<QuestionInterface> $question
      * @param list<ResourceRecordInterface> $answer
      * @param list<ResourceRecordInterface> $authority
      * @param list<ResourceRecordInterface> $additional
-     * @param list<ResourceRecordInterface> $opt
+     * @param ?OptResourceRecord $opt
      */
-    public function __construct( private HeaderInterface $header,
-                                 private array           $question = [],
-                                 private array           $answer = [],
-                                 private array           $authority = [],
-                                 private array           $additional = [],
-                                 private array           $opt = [] ) {}
+    public function __construct( private readonly HeaderInterface $header,
+                                 private array                    $question = [],
+                                 private array                    $answer = [],
+                                 private array                    $authority = [],
+                                 private array                    $additional = [],
+                                 private ?OptResourceRecord       $opt = null ) {}
 
 
     public static function request( string|Question        $domain,
@@ -71,13 +66,10 @@ class Message implements MessageInterface {
             . ', AUTHORITY: ' . count( $this->authority )
             . ', ADDITIONAL: ' . count( $this->additional ) . "\n\n";
 
-        if ( count( $this->opt ) > 0 ) {
+        if ( $this->opt instanceof OptResourceRecord ) {
             /** @noinspection SpellCheckingInspection */
-            $st .= ";; OPT PSEUDOSECTION:\n";
-            foreach ( $this->opt as $opt ) {
-                $st .= ';' . $opt . "\n";
-            }
-            $st .= "\n";
+            $st .= ";; OPT PSEUDOSECTION:\n"
+                . ';' . $this->opt . "\n\n";
         }
 
         if ( count( $this->question ) > 0 ) {
@@ -116,6 +108,34 @@ class Message implements MessageInterface {
     }
 
 
+    public function addAdditional( ResourceRecordInterface $i_additional ) : void {
+        $this->additional[] = $i_additional;
+        $uCount = count( $this->additional );
+        if ( $this->opt instanceof OptResourceRecord ) {
+            $uCount += 1; // OPT is counted as additional
+        }
+        $this->header->setARCount( $uCount );
+    }
+
+
+    public function addAnswer( ResourceRecordInterface $i_answer ) : void {
+        $this->answer[] = $i_answer;
+        $this->header->setANCount( count( $this->answer ) );
+    }
+
+
+    public function addAuthority( ResourceRecordInterface $i_authority ) : void {
+        $this->authority[] = $i_authority;
+        $this->header->setNSCount( count( $this->authority ) );
+    }
+
+
+    public function addQuestion( QuestionInterface $i_question ) : void {
+        $this->question[] = $i_question;
+        $this->header->setQDCount( count( $this->question ) );
+    }
+
+
     public function additional( int $i_uIndex ) : ?ResourceRecordInterface {
         return $this->additional[ $i_uIndex ] ?? null;
     }
@@ -146,6 +166,11 @@ class Message implements MessageInterface {
     }
 
 
+    public function getOpt() : ?OptResourceRecord {
+        return $this->opt;
+    }
+
+
     public function getQuestion() : array {
         return $this->question;
     }
@@ -156,20 +181,29 @@ class Message implements MessageInterface {
     }
 
 
+    public function id() : int {
+        return $this->header->id();
+    }
+
+
+    public function opt() : ?OptResourceRecord {
+        return $this->opt;
+    }
+
+
     public function question( int $i_uIndex = 0 ) : ?QuestionInterface {
         return $this->question[ $i_uIndex ] ?? null;
     }
 
 
-    public function setFlagWord( int $i_iWord ) : void {
-        $this->qr = QR::fromFlagWord( $i_iWord );
-        $this->opcode = OpCode::fromFlagWord( $i_iWord );
-        $this->aa = AA::fromFlagWord( $i_iWord );
-        $this->tc = TC::fromFlagWord( $i_iWord );
-        $this->rd = RD::fromFlagWord( $i_iWord );
-        $this->ra = RA::fromFlagWord( $i_iWord );
-        $this->z = ZBits::fromFlagWord( $i_iWord );
-        $this->returnCode = ReturnCode::fromFlagWord( $i_iWord );
+    public function setOpt( ?OptResourceRecord $i_opt ) : void {
+        $this->opt = $i_opt;
+    }
+
+
+    public function setQuestion( QuestionInterface $i_question ) : void {
+        $this->question = [ $i_question ];
+        $this->header->setQDCount( 1 );
     }
 
 

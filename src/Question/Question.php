@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Question;
 
 
-use JDWX\DNSQuery\Binary;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Transport\BufferInterface;
@@ -21,11 +20,12 @@ class Question extends AbstractQuestion {
     private RecordClass $class;
 
 
-    public function __construct( array|string           $name, int|string|RecordType $type,
-                                 int|string|RecordClass $class ) {
-        parent::__construct( $name );
-        $this->type = RecordType::normalize( $type );
-        $this->class = RecordClass::normalize( $class );
+    /** @param list<string>|string $i_name */
+    public function __construct( array|string           $i_name, int|string|RecordType $i_type,
+                                 int|string|RecordClass $i_class ) {
+        parent::__construct( $i_name );
+        $this->type = RecordType::normalize( $i_type );
+        $this->class = RecordClass::normalize( $i_class );
     }
 
 
@@ -47,21 +47,13 @@ class Question extends AbstractQuestion {
     }
 
 
-    public function setClass( int|string|RecordClass $i_rClass ) : void {
-        $this->class = RecordClass::normalize( $i_rClass );
+    public function setClass( int|string|RecordClass $i_class ) : void {
+        $this->class = RecordClass::normalize( $i_class );
     }
 
 
-    public function setType( int|string|RecordType $i_rType ) : void {
-        $this->type = RecordType::normalize( $i_rType );
-    }
-
-
-    /** @param array<string, int> $io_rLabelMap */
-    public function toBinary( array &$io_rLabelMap, int $i_uOffset ) : string {
-        return Binary::packLabels( $this->rName, $io_rLabelMap, $i_uOffset )
-            . $this->type->toBinary()
-            . $this->class->toBinary();
+    public function setType( int|string|RecordType $i_type ) : void {
+        $this->type = RecordType::normalize( $i_type );
     }
 
 

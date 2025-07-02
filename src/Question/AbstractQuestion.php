@@ -13,11 +13,13 @@ use JDWX\DNSQuery\DomainName;
 abstract class AbstractQuestion implements QuestionInterface {
 
 
+    /** @var list<string> */
     private array $rName;
 
 
-    public function __construct( array|string $name ) {
-        $this->setName( $name );
+    /** @param list<string>|string $i_name */
+    public function __construct( array|string $i_name ) {
+        $this->setName( $i_name );
     }
 
 
@@ -36,6 +38,7 @@ abstract class AbstractQuestion implements QuestionInterface {
     }
 
 
+    /** @return list<string> */
     public function getName() : array {
         return $this->rName;
     }
@@ -46,8 +49,11 @@ abstract class AbstractQuestion implements QuestionInterface {
     }
 
 
-    public function setName( array|string $name ) : void {
-        $this->rName = DomainName::normalize( $name );
+    /**
+     * @param list<string>|string $i_name
+     */
+    public function setName( array|string $i_name ) : void {
+        $this->rName = DomainName::normalize( $i_name );
     }
 
 

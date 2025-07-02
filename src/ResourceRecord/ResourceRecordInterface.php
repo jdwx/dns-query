@@ -7,24 +7,12 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
-use ArrayAccess;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
-use JDWX\DNSQuery\RDataValue;
+use Stringable;
 
 
-/**
- * @extends ArrayAccess<string, mixed>
- * @suppress PhanAccessWrongInheritanceCategoryInternal
- */
-interface ResourceRecordInterface extends \Stringable, ArrayAccess {
-
-
-    /** @param array<string, mixed> $i_data */
-    public static function fromArray( array $i_data ) : self;
-
-
-    public static function fromString( string $i_string ) : self;
+interface ResourceRecordInterface extends Stringable {
 
 
     public function class() : string;
@@ -40,23 +28,13 @@ interface ResourceRecordInterface extends \Stringable, ArrayAccess {
     public function getName() : array;
 
 
-    /** @return array<string, RDataValue> */
-    public function getRData() : array;
-
-
-    public function getRDataValue( string $stKey ) : ?RDataValue;
-
-
-    public function getRDataValueEx( string $stKey ) : RDataValue;
+    public function getRData() : RDataInterface;
 
 
     public function getTTL() : int;
 
 
     public function getType() : RecordType;
-
-
-    public function hasRDataValue( string $i_stName ) : bool;
 
 
     public function isClass( int|string|RecordClass $i_class ) : bool;
@@ -68,7 +46,20 @@ interface ResourceRecordInterface extends \Stringable, ArrayAccess {
     public function name() : string;
 
 
-    public function setRDataValue( string $i_stName, mixed $i_value ) : void;
+    public function setClass( int|string|RecordClass $i_class ) : void;
+
+
+    /** @param list<string>|string $i_name */
+    public function setName( array|string $i_name ) : void;
+
+
+    public function setRData( string|RDataInterface $i_rData ) : void;
+
+
+    public function setTTL( int $i_uTTL ) : void;
+
+
+    public function setType( int|string|RecordType $i_type ) : void;
 
 
     /** @return array<string, mixed> */

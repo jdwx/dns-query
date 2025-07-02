@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Tests\RR;
 
 
 use JDWX\DNSQuery\Legacy\RR\RR;
-use JDWX\DNSQuery\RR\TXT;
+use JDWX\DNSQuery\Legacy\RR\TXT;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

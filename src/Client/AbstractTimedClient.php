@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Client;
 
 
-use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 
 
 abstract class AbstractTimedClient extends AbstractClient {
@@ -17,7 +17,7 @@ abstract class AbstractTimedClient extends AbstractClient {
 
     protected int $uDefaultTimeoutMicroSeconds = 0;
 
-    /** @var array<int, Message> */
+    /** @var array<int, MessageInterface> */
     private array $rLookAside = [];
 
 
@@ -32,7 +32,7 @@ abstract class AbstractTimedClient extends AbstractClient {
 
 
     public function receiveResponse( ?int $i_id = null, ?int $i_nuTimeoutSeconds = null,
-                                     ?int $i_nuTimeoutMicroSeconds = null ) : ?Message {
+                                     ?int $i_nuTimeoutMicroSeconds = null ) : ?MessageInterface {
         if ( is_int( $i_id ) && isset( $this->rLookAside[ $i_id ] ) ) {
             $msg = $this->rLookAside[ $i_id ];
             unset( $this->rLookAside[ $i_id ] );
@@ -51,15 +51,15 @@ abstract class AbstractTimedClient extends AbstractClient {
             if ( is_null( $msg ) ) {
                 return null;
             }
-            if ( ! is_int( $i_id ) || $msg->id === $i_id ) {
+            if ( ! is_int( $i_id ) || $msg->id() === $i_id ) {
                 return $msg;
             }
-            $this->rLookAside[ $msg->id ] = $msg;
+            $this->rLookAside[ $msg->id() ] = $msg;
         }
     }
 
 
-    abstract protected function receiveAnyResponse() : ?Message;
+    abstract protected function receiveAnyResponse() : ?MessageInterface;
 
 
 }

@@ -7,20 +7,20 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Client;
 
 
-use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 
 
 interface ClientInterface {
 
 
-    public function query( Message $i_request ) : ?Message;
+    public function query( MessageInterface $i_request ) : ?MessageInterface;
 
 
     public function receiveResponse( ?int $i_id = null, ?int $i_nuTimeoutSeconds = null,
-                                     ?int $i_nuTimeoutMicroSeconds = null ) : ?Message;
+                                     ?int $i_nuTimeoutMicroSeconds = null ) : ?MessageInterface;
 
 
-    public function sendRequest( Message $i_request ) : void;
+    public function sendRequest( MessageInterface $i_request ) : void;
 
 
 }

@@ -12,8 +12,8 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
 use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
 use JDWX\DNSQuery\Legacy\RR\RR;
-use JDWX\DNSQuery\RR\SIG;
-use JDWX\DNSQuery\RR\TSIG;
+use JDWX\DNSQuery\Legacy\RR\SIG;
+use JDWX\DNSQuery\Legacy\RR\TSIG;
 
 
 /**

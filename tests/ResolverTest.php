@@ -12,9 +12,9 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Lookups;
 use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
 use JDWX\DNSQuery\Legacy\Resolver;
-use JDWX\DNSQuery\RR\A;
-use JDWX\DNSQuery\RR\CNAME;
-use JDWX\DNSQuery\RR\MX;
+use JDWX\DNSQuery\Legacy\RR\A;
+use JDWX\DNSQuery\Legacy\RR\CNAME;
+use JDWX\DNSQuery\Legacy\RR\MX;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

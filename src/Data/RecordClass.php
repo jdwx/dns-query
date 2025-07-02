@@ -26,6 +26,15 @@ enum RecordClass: int {
     case ANY  = 255; // Any class (RFC 1035)
 
 
+    public static function anyToId( int|string|self $i_value ) : int {
+        if ( is_int( $i_value ) ) {
+            return $i_value;
+        }
+        $i_value = self::normalize( $i_value );
+        return $i_value->value;
+    }
+
+
     public static function consume( BufferInterface $i_buffer ) : self {
         $id = $i_buffer->consumeUINT16();
         return self::tryFrom( $id )

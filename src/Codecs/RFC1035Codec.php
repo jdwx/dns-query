@@ -12,18 +12,50 @@ use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordException;
+use JDWX\DNSQuery\Message\Header;
+use JDWX\DNSQuery\Message\HeaderInterface;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Message\OpaqueMessage;
+use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\Question\Question;
+use JDWX\DNSQuery\Question\OpaqueQuestion;
+use JDWX\DNSQuery\Question\QuestionInterface;
 use JDWX\DNSQuery\RDataValue;
+use JDWX\DNSQuery\ResourceRecord\OpaqueRData;
 use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\RData;
+use JDWX\DNSQuery\ResourceRecord\RDataInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 class RFC1035Codec implements CodecInterface {
+
+
+    public static function decodeHeader( BufferInterface $i_buffer ) : HeaderInterface {
+        $uId = $i_buffer->consumeUINT16();
+        $uFlagWord = $i_buffer->consumeUINT16();
+        $qCount = $i_buffer->consumeUINT16();
+        $aCount = $i_buffer->consumeUINT16();
+        $auCount = $i_buffer->consumeUINT16();
+        $adCount = $i_buffer->consumeUINT16();
+        return new Header(
+            $uId,
+            $uFlagWord,
+            $qCount,
+            $aCount,
+            $auCount,
+            $adCount
+        );
+    }
+
+
+    public static function decodeQuestion( BufferInterface $i_buffer ) : QuestionInterface {
+        $rName = $i_buffer->consumeNameArray();
+        $uType = $i_buffer->consumeUINT16();
+        $uClass = $i_buffer->consumeUINT16();
+        return new OpaqueQuestion( $rName, $uType, $uClass );
+    }
 
 
     /**
@@ -110,25 +142,46 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
-    /**
-     * @param array<string, RDataType> $i_rDataMap
-     * @param array<string, int> $io_rLabelMap
-     * @param array<string, RDataValue> $i_rData
-     */
-    public static function encodeRData( array $i_rDataMap, array &$io_rLabelMap, int &$io_offset,
-                                        array $i_rData ) : string {
+    public static function encodeHeader( HeaderInterface $i_header ) : string {
+        return Binary::packUINT16( $i_header->id() )
+            . Binary::packUINT16( $i_header->flagWord()->value() )
+            . Binary::packUINT16( $i_header->getQDCount() )
+            . Binary::packUINT16( $i_header->getANCount() )
+            . Binary::packUINT16( $i_header->getNSCount() )
+            . Binary::packUINT16( $i_header->getARCount() );
+    }
+
+
+    /** @param array<string, int> $io_rLabelMap */
+    public static function encodeQuestion( QuestionInterface $i_question, array &$io_rLabelMap, int &$io_uOffset ) : string {
+        $stName = Binary::packLabels( $i_question->getName(), $io_rLabelMap, $io_uOffset );
+        $stType = Binary::packUINT16( $i_question->typeValue() );
+        $stClass = Binary::packUINT16( $i_question->classValue() );
+        $st = $stName . $stType . $stClass;
+        $io_uOffset += strlen( $st );
+        return $st;
+    }
+
+
+    /** @param array<string, int> $io_rLabelMap */
+    public static function encodeRData( RDataInterface $i_rData, array &$io_rLabelMap, int &$io_offset ) : string {
+        if ( $i_rData instanceof OpaqueRData ) {
+            $io_offset += strlen( $i_rData->stData );
+            return $i_rData->stData;
+        }
+        assert( $i_rData instanceof RData );
+        $rMap = $i_rData->map();
         $stRData = '';
-        foreach ( $i_rDataMap as $stName => $rDataType ) {
+        foreach ( $rMap as $stName => $rDataType ) {
             if ( ! isset( $i_rData[ $stName ] ) ) {
                 throw new RecordException( "Missing RData '{$stName}'" );
             }
-            $st = self::encodeRDataValue( $i_rData[ $stName ], $io_rLabelMap, $io_offset );
+            $st = self::encodeRDataValue( $rDataType, $i_rData[ $stName ], $io_rLabelMap, $io_offset );
             $stRData .= $st;
             $io_offset += strlen( $st );
         }
 
         return $stRData;
-
     }
 
 
@@ -161,17 +214,18 @@ class RFC1035Codec implements CodecInterface {
 
 
     /** @param array<string, int> $io_rLabelMap */
-    public static function encodeRDataValue( RDataValue $i_rdv, array &$io_rLabelMap, int $i_uOffset ) : string {
-        return match ( $i_rdv->type ) {
-            RDataType::CharacterString => Binary::packLabel( $i_rdv->value ),
-            RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_rdv->value ),
-            RDataType::DomainName => Binary::packLabels( $i_rdv->value, $io_rLabelMap, $i_uOffset ),
-            RDataType::IPv4Address => Binary::packIPv4( $i_rdv->value ),
-            RDataType::IPv6Address => Binary::packIPv6( $i_rdv->value ),
-            RDataType::Option => self::encodeRDataOption( $i_rdv->value ),
-            RDataType::OptionList => self::encodeRDataOptionList( $i_rdv->value ),
-            RDataType::UINT16 => Binary::packUINT16( $i_rdv->value ),
-            RDataType::UINT32 => Binary::packUINT32( $i_rdv->value ),
+    public static function encodeRDataValue( RDataType $i_rdt, mixed $i_value, array &$io_rLabelMap,
+                                             int       $i_uOffset ) : string {
+        return match ( $i_rdt ) {
+            RDataType::CharacterString => Binary::packLabel( $i_value ),
+            RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_value ),
+            RDataType::DomainName => Binary::packLabels( $i_value, $io_rLabelMap, $i_uOffset ),
+            RDataType::IPv4Address => Binary::packIPv4( $i_value ),
+            RDataType::IPv6Address => Binary::packIPv6( $i_value ),
+            RDataType::Option => self::encodeRDataOption( $i_value ),
+            RDataType::OptionList => self::encodeRDataOptionList( $i_value ),
+            RDataType::UINT16 => Binary::packUINT16( $i_value ),
+            RDataType::UINT32 => Binary::packUINT32( $i_value ),
         };
     }
 
@@ -179,15 +233,15 @@ class RFC1035Codec implements CodecInterface {
     /** @param array<string, int> $io_rLabelMap */
     public static function encodeResourceRecord( ResourceRecordInterface $i_rr, array &$io_rLabelMap,
                                                  int                     &$io_offset ) : string {
-        $uType = $i_rr->getType()->value;
         $stOut = Binary::packLabels( $i_rr->getName(), $io_rLabelMap, $io_offset )
-            . Binary::packUINT16( $uType )
+            . Binary::packUINT16( $i_rr->typeValue() )
             . Binary::packUINT16( $i_rr->classValue() )
             . Binary::packUINT32( $i_rr->getTTL() );
         $io_offset += strlen( $stOut ) + 2; // +2 for the RDLength that will be added later
 
-        $rMap = RDataMaps::map( $uType );
-        $stRData = self::encodeRData( $rMap, $io_rLabelMap, $io_offset, $i_rr->getRData() );
+        $rData = $i_rr->getRData();
+        $stRData = self::encodeRData( $rData, $io_rLabelMap, $io_offset );
+
         $stOut .= Binary::packUINT16( strlen( $stRData ) );
         $stOut .= $stRData;
 
@@ -195,72 +249,78 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
-    public function decode( BufferInterface $i_buffer ) : MessageInterface {
-        $msg = new OpaqueMessage();
+    public function decode( BufferInterface $i_buffer ) : ?MessageInterface {
 
-        $msg->id = $i_buffer->consumeUINT16();
-        $msg->setFlagWord( $i_buffer->consumeUINT16() );
-
-        $qCount = $i_buffer->consumeUINT16();
-        $aCount = $i_buffer->consumeUINT16();
-        $auCount = $i_buffer->consumeUINT16();
-        $adCount = $i_buffer->consumeUINT16();
-
-        for ( $ii = 0 ; $ii < $qCount ; ++$ii ) {
-            $msg->question[] = Question::fromBinary( $i_buffer );
+        if ( ! $i_buffer->readyCheck() ) {
+            return null;
         }
 
-        for ( $ii = 0 ; $ii < $aCount ; ++$ii ) {
-            $msg->answer[] = self::decodeResourceRecord( $i_buffer );
+        $header = self::decodeHeader( $i_buffer );
+        $question = [];
+        $answer = [];
+        $authority = [];
+        $additional = [];
+        $opt = null;
+
+        for ( $ii = 0 ; $ii < $header->getQDCount() ; ++$ii ) {
+            $question[] = self::decodeQuestion( $i_buffer );
         }
 
-        for ( $ii = 0 ; $ii < $auCount ; ++$ii ) {
-            $msg->authority[] = self::decodeResourceRecord( $i_buffer );
+        for ( $ii = 0 ; $ii < $header->getANCount() ; ++$ii ) {
+            $answer[] = self::decodeResourceRecord( $i_buffer );
         }
 
-        for ( $ii = 0 ; $ii < $adCount ; ++$ii ) {
+        for ( $ii = 0 ; $ii < $header->getNSCount() ; ++$ii ) {
+            $authority[] = self::decodeResourceRecord( $i_buffer );
+        }
+
+        for ( $ii = 0 ; $ii < $header->getARCount() ; ++$ii ) {
             $rr = self::decodeResourceRecord( $i_buffer );
-            if ( $rr->isType( 'OPT' ) ) {
-                $msg->opt[] = $rr;
+            if ( $rr instanceof OptResourceRecord ) {
+                if ( $opt !== null ) {
+                    throw new RecordException( 'Multiple OPT records found in message.' );
+                }
+                $opt = $rr;
             } else {
-                $msg->additional[] = $rr;
+                $additional[] = $rr;
             }
         }
-        return $msg;
+        return new Message(
+            $header,
+            $question,
+            $answer,
+            $authority,
+            $additional,
+            $opt
+        );
     }
 
 
-    public function encode( Message $i_msg ) : string {
-        $st = Binary::packUINT16( $i_msg->id )
-            . Binary::packUINT16( $i_msg->getFlagWord() )
-            . Binary::packUINT16( count( $i_msg->question ) )
-            . Binary::packUINT16( count( $i_msg->answer ) )
-            . Binary::packUINT16( count( $i_msg->authority ) )
-            . Binary::packUINT16( count( $i_msg->additional ) + count( $i_msg->opt ) );
+    public function encode( MessageInterface $i_msg ) : string {
+        $st = self::encodeHeader( $i_msg->header() );
 
         $rLabelMap = [];
         $uOffset = strlen( $st );
 
-        foreach ( $i_msg->question as $q ) {
-            $stQ = $q->toBinary( $rLabelMap, strlen( $st ) );
-            $st .= $stQ;
-            $uOffset += strlen( $stQ );
+        foreach ( $i_msg->getQuestion() as $q ) {
+            $st .= self::encodeQuestion( $q, $rLabelMap, $uOffset );
         }
 
-        foreach ( $i_msg->answer as $rr ) {
+        foreach ( $i_msg->getAnswer() as $rr ) {
             $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
-        foreach ( $i_msg->authority as $rr ) {
+        foreach ( $i_msg->getAuthority() as $rr ) {
             $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
-        foreach ( $i_msg->additional as $rr ) {
+        foreach ( $i_msg->getAdditional() as $rr ) {
             $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
         }
 
-        foreach ( $i_msg->opt as $rr ) {
-            $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
+        $opt = $i_msg->opt();
+        if ( $opt instanceof ResourceRecordInterface ) {
+            $st .= self::encodeResourceRecord( $opt, $rLabelMap, $uOffset );
         }
 
         return $st;

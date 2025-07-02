@@ -27,8 +27,8 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
 use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
 use JDWX\DNSQuery\Legacy\RR\RR;
+use JDWX\DNSQuery\Legacy\RR\TSIG;
 use JDWX\DNSQuery\Legacy\Updater;
-use JDWX\DNSQuery\RR\TSIG;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

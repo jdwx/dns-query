@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Cache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\Question\QuestionInterface;
 
@@ -34,11 +35,11 @@ abstract class AbstractCache implements MessageCacheInterface {
      * cache, so we can look at their individual TTLs on each run. we only
      * unserialize the actual RR object when it's get() from the cache.
      *
-     * @param Message $i_msg Response packet to compute the TTL
+     * @param MessageInterface $i_msg Response packet to compute the TTL
      *
      * @return int TTL for the response packet in seconds
      */
-    public static function calculateTTL( Message $i_msg, int $i_uDefaultMaxTTL = 86400 * 365 ) : int {
+    public static function calculateTTL( MessageInterface $i_msg, int $i_uDefaultMaxTTL = 86400 * 365 ) : int {
         $uTTL = $i_uDefaultMaxTTL;
         foreach ( $i_msg->getAnswer() as $rr ) {
             $uTTL = min( $uTTL, $rr->ttl() );
@@ -57,7 +58,7 @@ abstract class AbstractCache implements MessageCacheInterface {
 
 
     /** @inheritDoc */
-    public static function hash( Message|Question $i_msg ) : string {
+    public static function hash( MessageInterface|QuestionInterface $i_msg ) : string {
         return hash( 'sha256', static::preHash( $i_msg ) );
     }
 
@@ -95,7 +96,7 @@ abstract class AbstractCache implements MessageCacheInterface {
 
 
     /** @inheritDoc */
-    public function put( string $i_key, Message $i_msg ) : void {
+    public function put( string $i_key, MessageInterface $i_msg ) : void {
         $this->putWithTTL( $i_key, $i_msg, self::calculateTTL( $i_msg ) );
     }
 
@@ -104,12 +105,12 @@ abstract class AbstractCache implements MessageCacheInterface {
      * Store a response in the cache with a precalculated time-to-live (TTL).
      *
      * @param string $i_key Key for the new response
-     * @param Message $i_msg Response to cache
+     * @param MessageInterface $i_msg Response to cache
      * @param int $i_ttl TTL in seconds to cache this response
      *
      * @return void
      */
-    abstract protected function putWithTTL( string $i_key, Message $i_msg, int $i_ttl ) : void;
+    abstract protected function putWithTTL( string $i_key, MessageInterface $i_msg, int $i_ttl ) : void;
 
 
 }

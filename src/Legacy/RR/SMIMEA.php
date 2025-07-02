@@ -7,9 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Legacy\RR;
 
 
-use JDWX\DNSQuery\RR\TLSA;
-
-
 /**
  * DNS Library for handling lookups and updates.
  *

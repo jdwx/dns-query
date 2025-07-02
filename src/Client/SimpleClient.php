@@ -7,7 +7,11 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Client;
 
 
-use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Codecs\CodecInterface;
+use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Message\MessageInterface;
+use JDWX\DNSQuery\Transport\BufferInterface;
+use JDWX\DNSQuery\Transport\TransportBuffer;
 use JDWX\DNSQuery\Transport\TransportInterface;
 use JDWX\DNSQuery\Transport\UdpTransport;
 
@@ -23,9 +27,14 @@ use JDWX\DNSQuery\Transport\UdpTransport;
 class SimpleClient extends AbstractTimedClient {
 
 
+    private BufferInterface $buffer;
+
+
     public function __construct( private readonly TransportInterface $transport,
+                                 private readonly CodecInterface     $codec,
                                  ?int                                $i_nuDefaultTimeoutSeconds = null,
                                  ?int                                $i_nuDefaultTimeoutMicroSeconds = null ) {
+        $this->buffer = new TransportBuffer( $this->transport );
         parent::__construct( $i_nuDefaultTimeoutSeconds, $i_nuDefaultTimeoutMicroSeconds );
     }
 
@@ -33,17 +42,22 @@ class SimpleClient extends AbstractTimedClient {
     public static function createUdp( string $i_stNameServer, int $i_uPort = 53, string $i_stLocalAddress = '',
                                       ?int   $i_uLocalPort = null ) : self {
         $xpt = new UdpTransport( $i_stNameServer, $i_uPort, $i_stLocalAddress, $i_uLocalPort );
-        return new self( $xpt );
+        $codec = new RFC1035Codec();
+        return new self( $xpt, $codec );
     }
 
 
-    public function sendRequest( Message $i_request ) : void {
-        $this->transport->sendRequest( $i_request );
+    public function sendRequest( MessageInterface $i_request ) : void {
+        $this->transport->send( $this->codec->encode( $i_request ) );
     }
 
 
-    protected function receiveAnyResponse() : ?Message {
-        return $this->transport->receiveResponse();
+    protected function receiveAnyResponse() : ?MessageInterface {
+        $nst = $this->transport->receive();
+        if ( ! is_string( $nst ) ) {
+            return null;
+        }
+        return $this->codec->decode( $this->buffer );
     }
 
 

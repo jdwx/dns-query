@@ -9,7 +9,6 @@ namespace JDWX\DNSQuery\Data;
 
 use JDWX\DNSQuery\DomainName;
 use JDWX\DNSQuery\Exceptions\RecordDataException;
-use JDWX\DNSQuery\RDataValue;
 use JDWX\Strict\TypeIs;
 use LogicException;
 
@@ -55,13 +54,11 @@ enum RDataType: int {
 
 
     /** @param list<string> $io_rArgs */
-    public function consume( array &$io_rArgs ) : RDataValue {
+    public function consume( array &$io_rArgs ) : mixed {
         if ( self::CharacterStringList === $this ) {
-            $out = new RDataValue( $this, array_merge( $io_rArgs, [] ) );
-            $io_rArgs = [];
-            return $out;
+            return array_merge( $io_rArgs, [] );
         }
-        return new RDataValue( $this, $this->parse( array_shift( $io_rArgs ) ) );
+        return $this->parse( array_shift( $io_rArgs ) );
     }
 
 

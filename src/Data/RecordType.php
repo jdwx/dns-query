@@ -8,8 +8,6 @@ namespace JDWX\DNSQuery\Data;
 
 
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
-use JDWX\DNSQuery\Legacy\RR\RR;
-use JDWX\DNSQuery\RR\ALL;
 use JDWX\DNSQuery\Transport\BufferInterface;
 
 
@@ -212,13 +210,12 @@ enum RecordType: int {
     case ZZZ_TEST_ONLY_DO_NOT_USE = 999_999_999; # Internal use only
 
 
-    public static function classNameToId( string $i_stClassName ) : int {
-        return self::fromClassName( $i_stClassName )->value;
-    }
-
-
-    public static function classNameToName( string $i_stClassName ) : string {
-        return self::fromClassName( $i_stClassName )->name;
+    public static function anyToId( int|string|self $i_value ) : int {
+        if ( is_int( $i_value ) ) {
+            return $i_value;
+        }
+        $i_value = self::normalize( $i_value );
+        return $i_value->value;
     }
 
 
@@ -235,15 +232,6 @@ enum RecordType: int {
             return $x;
         }
         throw new RecordTypeException( 'Invalid binary data for RecordType' );
-    }
-
-
-    public static function fromClassName( string $i_stClassName ) : self {
-        $x = self::tryFromClassName( $i_stClassName );
-        if ( $x instanceof self ) {
-            return $x;
-        }
-        throw new RecordTypeException( "Unknown record class: {$i_stClassName}" );
     }
 
 
@@ -265,20 +253,9 @@ enum RecordType: int {
     }
 
 
-    public static function idToClassName( int $i_id ) : string {
-        return self::tryFrom( $i_id )?->toClassName()
-            ?? throw new RecordTypeException( "Unknown record type ID: {$i_id}" );
-    }
-
-
     public static function idToName( int $i_id ) : string {
         return self::tryFrom( $i_id )->name
             ?? throw new RecordTypeException( "Unknown record type ID: {$i_id}" );
-    }
-
-
-    public static function isValidClassName( string $i_stClassName ) : bool {
-        return self::tryFromClassName( $i_stClassName ) !== null;
     }
 
 
@@ -289,11 +266,6 @@ enum RecordType: int {
 
     public static function isValidName( string $i_stName ) : bool {
         return self::tryFromName( $i_stName ) !== null;
-    }
-
-
-    public static function nameToClassName( string $i_stName ) : string {
-        return self::fromName( $i_stName )->toClassName();
     }
 
 
@@ -311,20 +283,6 @@ enum RecordType: int {
             return self::fromName( $i_recordType );
         }
         return $i_recordType;
-    }
-
-
-    /**
-     * @param int $i_phpId PHP DNS constant ID (e.g., DNS_A, DNS_CNAME, etc.)
-     * @return string The corresponding class name (e.g., 'JDWX\DNSQuery\RR\A', 'JDWX\DNSQuery\RR\CNAME', etc.)
-     * @throws RecordTypeException
-     */
-    public static function phpIdToClassName( int $i_phpId ) : string {
-        $className = self::tryPhpIdToClassName( $i_phpId );
-        if ( is_string( $className ) ) {
-            return $className;
-        }
-        throw new RecordTypeException( "Unknown PHP DNS constant: {$i_phpId}" );
     }
 
 
@@ -356,16 +314,6 @@ enum RecordType: int {
     }
 
 
-    public static function tryClassNameToId( string $i_stClassName ) : ?int {
-        return self::tryFromClassName( $i_stClassName )?->value;
-    }
-
-
-    public static function tryClassNameToName( string $i_stClassName ) : ?string {
-        return self::tryFromClassName( $i_stClassName )?->name;
-    }
-
-
     public static function tryConsume( BufferInterface $i_buffer ) : ?self {
         return self::tryFrom( $i_buffer->consumeUINT16() );
     }
@@ -379,19 +327,6 @@ enum RecordType: int {
         }
         $id = unpack( 'n', $i_bin )[ 1 ];
         return self::tryFrom( $id );
-    }
-
-
-    public static function tryFromClassName( string $i_stClassName ) : ?self {
-        if ( ALL::class === $i_stClassName ) {
-            return self::ANY;
-        }
-        if ( ! is_a( $i_stClassName, RR::class, true ) ) {
-            return null;
-        }
-        $r = explode( '\\', $i_stClassName );
-        $i_stClassName = array_pop( $r );
-        return self::tryFromName( $i_stClassName );
     }
 
 
@@ -440,32 +375,13 @@ enum RecordType: int {
     }
 
 
-    public static function tryIdToClassName( int $i_id ) : ?string {
-        return self::tryFrom( $i_id )?->toClassName();
-    }
-
-
     public static function tryIdToName( int $i_id ) : ?string {
         return self::tryFrom( $i_id )?->name;
     }
 
 
-    public static function tryNameToClassName( string $i_stName ) : ?string {
-        return self::tryFromName( $i_stName )?->toClassName();
-    }
-
-
     public static function tryNameToId( string $i_stName ) : ?int {
         return self::tryFromName( $i_stName )?->value;
-    }
-
-
-    public static function tryPhpIdToClassName( int $i_phpId ) : ?string {
-        if ( DNS_ALL === $i_phpId ) {
-            return ALL::class;
-        }
-        $type = self::tryFromPhpId( $i_phpId );
-        return $type?->toClassName() ?? null;
     }
 
 
@@ -490,15 +406,6 @@ enum RecordType: int {
 
     public function toBinary() : string {
         return pack( 'n', $this->value );
-    }
-
-
-    public function toClassName() : string {
-        $className = 'JDWX\\DNSQuery\\RR\\' . $this->name;
-        if ( class_exists( $className ) ) {
-            return $className;
-        }
-        throw new RecordTypeException( "Record type {$this->name} is unimplemented." );
     }
 
 

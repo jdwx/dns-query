@@ -11,22 +11,14 @@ use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
-use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 class OpaqueQuestion extends AbstractQuestion {
 
 
-    public function __construct( array $name, private int $uType, private int $uClass ) {
-        parent::__construct( $name );
-    }
-
-
-    public static function fromBuffer( BufferInterface $i_buffer ) : self {
-        $rName = $i_buffer->consumeNameArray();
-        $uType = $i_buffer->consumeUINT16();
-        $uClass = $i_buffer->consumeUINT16();
-        return new self( $rName, $uType, $uClass );
+    /** @param list<string>|string $i_name */
+    public function __construct( array|string $i_name, private int $uType, private int $uClass ) {
+        parent::__construct( $i_name );
     }
 
 
@@ -47,13 +39,13 @@ class OpaqueQuestion extends AbstractQuestion {
     }
 
 
-    public function setClass( int|string|RecordClass $class ) : void {
-        $this->uClass = RecordClass::normalize( $class )->value;
+    public function setClass( int|string|RecordClass $i_class ) : void {
+        $this->uClass = RecordClass::normalize( $i_class )->value;
     }
 
 
-    public function setType( int|string|RecordType $type ) : void {
-        $this->uType = RecordType::normalize( $type )->value;
+    public function setType( int|string|RecordType $i_type ) : void {
+        $this->uType = RecordType::normalize( $i_type )->value;
     }
 
 

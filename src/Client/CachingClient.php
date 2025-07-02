@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Client;
 use JDWX\DNSQuery\Cache\MessageCache;
 use JDWX\DNSQuery\Cache\MessageCacheInterface;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 use Psr\SimpleCache\CacheInterface;
 
 
@@ -39,7 +40,7 @@ class CachingClient extends AbstractClient {
         $this->stLastKey = '';
         if ( ! empty( $stKey ) && $this->cache->has( $stKey ) ) {
             $msg = $this->cache->get( $stKey );
-            unset( $this->rIDMap[ $msg->id ] );
+            unset( $this->rIDMap[ $msg->id() ] );
             return $msg;
         }
         $msg = $this->clientBackend->receiveResponse( $i_id, $i_nuTimeoutSeconds, $i_nuTimeoutMicroSeconds );
@@ -51,8 +52,8 @@ class CachingClient extends AbstractClient {
     }
 
 
-    public function sendRequest( Message $i_request ) : void {
-        $this->rIDMap[ $i_request->id ] = $this->stLastKey = $this->cache::hash( $i_request );
+    public function sendRequest( MessageInterface $i_request ) : void {
+        $this->rIDMap[ $i_request->id() ] = $this->stLastKey = $this->cache::hash( $i_request );
         $this->clientBackend->sendRequest( $i_request );
         // TODO: Implement sendRequest() method.
     }

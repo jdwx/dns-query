@@ -48,7 +48,7 @@ enum AA: int {
             $i_aa = self::from( $i_aa );
         }
         if ( is_string( $i_aa ) ) {
-            $i_aa = self::tryFromName( $i_aa );
+            $i_aa = self::fromName( $i_aa );
         }
         return $i_aa;
     }

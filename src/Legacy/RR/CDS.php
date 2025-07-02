@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\RR;
+namespace JDWX\DNSQuery\Legacy\RR;
 
 
 /**
@@ -31,4 +31,6 @@ namespace JDWX\DNSQuery\RR;
  *
  */
 class CDS extends DS {
+
+
 }

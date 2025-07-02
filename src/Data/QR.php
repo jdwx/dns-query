@@ -68,6 +68,11 @@ enum QR: int {
     }
 
 
+    public function toFlag() : string {
+        return $this === QR::RESPONSE ? 'qr ' : '';
+    }
+
+
     public function toFlagWord() : int {
         return $this->value ? 32768 : 0;
     }

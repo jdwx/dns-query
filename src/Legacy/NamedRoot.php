@@ -8,10 +8,10 @@ namespace JDWX\DNSQuery\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
+use JDWX\DNSQuery\Legacy\RR\A;
 use JDWX\DNSQuery\Legacy\RR\AAAA;
+use JDWX\DNSQuery\Legacy\RR\NS;
 use JDWX\DNSQuery\Legacy\RR\RR;
-use JDWX\DNSQuery\RR\A;
-use JDWX\DNSQuery\RR\NS;
 
 
 /** This class allows querying a named.root file for IP information about root name servers. */

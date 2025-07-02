@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Message;
 
 
 use JDWX\DNSQuery\Data\AA;
+use JDWX\DNSQuery\Data\FlagWord;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\QR;
 use JDWX\DNSQuery\Data\RA;
@@ -15,6 +16,7 @@ use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Data\TC;
 use JDWX\DNSQuery\Data\ZBits;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 
 
 class Header implements HeaderInterface {
@@ -22,45 +24,58 @@ class Header implements HeaderInterface {
 
     private int $id;
 
-    private ReturnCode $rCode;
+    private FlagWord $flagWord;
 
-    private QR $qr = QR::QUERY;
+    private int $qdCount;
 
-    private OpCode $opCode;
+    private int $anCount;
 
-    private AA $aa;
+    private int $nsCount;
 
-    private TC $tc;
-
-    private RD $rd;
-
-    private RA $ra;
-
-    private ZBits $zBits;
+    private int $arCount;
 
 
-    public function __construct( ?int                  $i_id = null,
-                                 int|string|QR         $i_qr = QR::QUERY,
-                                 int|string|OpCode     $i_opCode = OpCode::QUERY,
-                                 bool|int|string|AA    $i_aa = AA::NON_AUTHORITATIVE,
-                                 bool|int|string|TC    $i_tc = TC::NOT_TRUNCATED,
-                                 bool|int|string|RD    $i_rd = RD::RECURSION_DESIRED,
-                                 bool|int|string|RA    $i_ra = RA::RECURSION_NOT_AVAILABLE,
-                                 int|ZBits             $i_z = 0,
-                                 int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) {
+    /**
+     * @param int|null $i_id
+     * @param int|FlagWord $i_flagWord
+     * @param int|list<ResourceRecordInterface> $i_qdCount
+     * @param int|list<ResourceRecordInterface> $i_anCount
+     * @param int|list<ResourceRecordInterface> $i_nsCount
+     * @param int|list<ResourceRecordInterface> $i_arCount
+     */
+    public function __construct( ?int         $i_id = null,
+                                 int|FlagWord $i_flagWord = 0,
+                                 int|array    $i_qdCount = 0,
+                                 int|array    $i_anCount = 0,
+                                 int|array    $i_nsCount = 0,
+                                 int|array    $i_arCount = 0 ) {
         if ( is_int( $i_id ) ) {
             $this->setId( $i_id );
         } else {
             $this->setRandomId();
         }
-        $this->setQR( $i_qr );
-        $this->setOpCode( $i_opCode );
-        $this->setAA( $i_aa );
-        $this->setTC( $i_tc );
-        $this->setRD( $i_rd );
-        $this->setRA( $i_ra );
-        $this->setZ( $i_z );
-        $this->setRCode( $i_rc );
+        $this->flagWord = FlagWord::normalize( $i_flagWord );
+
+        if ( is_array( $i_qdCount ) ) {
+            $i_qdCount = count( $i_qdCount );
+        }
+        $this->qdCount = (int) $i_qdCount;
+
+        if ( is_array( $i_anCount ) ) {
+            $i_anCount = count( $i_anCount );
+        }
+        $this->anCount = (int) $i_anCount;
+
+        if ( is_array( $i_nsCount ) ) {
+            $i_nsCount = count( $i_nsCount );
+        }
+        $this->nsCount = (int) $i_nsCount;
+
+        if ( is_array( $i_arCount ) ) {
+            $i_arCount = count( $i_arCount );
+        }
+        $this->arCount = (int) $i_arCount;
+
     }
 
 
@@ -74,30 +89,20 @@ class Header implements HeaderInterface {
     public static function response( HeaderInterface $i_reply, ReturnCode $i_rc ) : Header {
         return new self(
             $i_reply->id(),
-            $i_reply->qrValue(),
-            $i_reply->opcodeValue(),
-            $i_reply->aaValue(),
-            $i_reply->tcValue(),
-            $i_reply->rdValue(),
-            $i_reply->raValue(),
-            $i_reply->zValue(),
-            $i_rc
+            $i_reply->flagWord()->setQR( QR::RESPONSE )->setRCode( $i_rc ),
+            $i_reply->getQDCount(),
         );
     }
 
 
     public function __toString() : string {
-        $st = ';; ' . ( $this->qr === QR::QUERY ? 'Query' : 'Query Response' ) . "\n";
+        $st = ';; ' . ( $this->flagWord->qr === QR::QUERY ? 'Query' : 'Query Response' ) . "\n";
         $st .= ';; ->>HEADER<<- opcode: ' . $this->opcode()
             . ', status: ' . $this->rCode()
             . ', id: ' . $this->id . "\n";
-        $st .= ';; flags: ' . ( $this->qr === QR::RESPONSE ? 'qr ' : '' )
-            . trim( $this->aa->toFlag()
-                . $this->tc->toFlag()
-                . $this->rd->toFlag()
-                . $this->ra->toFlag()
-            )
-            . '; z: ' . $this->zBits->bits;
+        $st .= ';; flags: '
+            . $this->flagWord->flagString()
+            . '; z: ' . $this->flagWord->zBits->bits;
         return $st;
     }
 
@@ -112,20 +117,33 @@ class Header implements HeaderInterface {
     }
 
 
-    public function getAA() : AA {
-        return $this->aa;
+    public function flagWord() : FlagWord {
+        return $this->getFlagWord();
     }
 
 
-    public function getFlagWord() : int {
-        return $this->qr->toFlagWord()
-            | $this->opCode->toFlagWord()
-            | $this->aa->toFlagWord()
-            | $this->tc->toFlagWord()
-            | $this->rd->toFlagWord()
-            | $this->ra->toFlagWord()
-            | $this->zBits->toFlagWord()
-            | $this->rCode->toFlagWord();
+    public function flagWordValue() : int {
+        return $this->flagWord->value();
+    }
+
+
+    public function getAA() : AA {
+        return $this->flagWord->aa;
+    }
+
+
+    public function getANCount() : int {
+        return $this->anCount;
+    }
+
+
+    public function getARCount() : int {
+        return $this->arCount;
+    }
+
+
+    public function getFlagWord() : FlagWord {
+        return $this->flagWord;
     }
 
 
@@ -134,38 +152,48 @@ class Header implements HeaderInterface {
     }
 
 
+    public function getNSCount() : int {
+        return $this->nsCount;
+    }
+
+
     public function getOpCode() : OpCode {
-        return $this->opCode;
+        return $this->flagWord->opCode;
+    }
+
+
+    public function getQDCount() : int {
+        return $this->qdCount;
     }
 
 
     public function getQR() : QR {
-        return $this->qr;
+        return $this->flagWord->qr;
     }
 
 
     public function getRA() : RA {
-        return $this->ra;
+        return $this->flagWord->ra;
     }
 
 
     public function getRCode() : ReturnCode {
-        return $this->rCode;
+        return $this->flagWord->rCode;
     }
 
 
     public function getRD() : RD {
-        return $this->rd;
+        return $this->flagWord->rd;
     }
 
 
     public function getTC() : TC {
-        return $this->tc;
+        return $this->flagWord->tc;
     }
 
 
     public function getZ() : ZBits {
-        return $this->zBits;
+        return $this->flagWord->zBits;
     }
 
 
@@ -225,7 +253,22 @@ class Header implements HeaderInterface {
 
 
     public function setAA( bool|int|string|AA $i_aa ) : void {
-        $this->aa = AA::normalize( $i_aa );
+        $this->flagWord->aa = AA::normalize( $i_aa );
+    }
+
+
+    public function setANCount( int $i_uANCount ) : void {
+        $this->anCount = $i_uANCount;
+    }
+
+
+    public function setARCount( int $i_uARCount ) : void {
+        $this->arCount = $i_uARCount;
+    }
+
+
+    public function setFlagWord( int $i_uFlagWord ) : void {
+        $this->flagWord = FlagWord::fromFlagWord( $i_uFlagWord );
     }
 
 
@@ -234,28 +277,38 @@ class Header implements HeaderInterface {
     }
 
 
+    public function setNSCount( int $i_uNSCount ) : void {
+        $this->nsCount = $i_uNSCount;
+    }
+
+
     public function setOpCode( bool|int|string|OpCode $i_opCode ) : void {
-        $this->opCode = OpCode::normalize( $i_opCode );
+        $this->flagWord->opCode = OpCode::normalize( $i_opCode );
+    }
+
+
+    public function setQDCount( int $i_uQDCount ) : void {
+        $this->qdCount = $i_uQDCount;
     }
 
 
     public function setQR( bool|int|string|QR $i_qr ) : void {
-        $this->qr = QR::normalize( $i_qr );
+        $this->flagWord->setQR( $i_qr );
     }
 
 
     public function setRA( bool|int|string|RA $i_ra ) : void {
-        $this->ra = RA::normalize( $i_ra );
+        $this->flagWord->ra = RA::normalize( $i_ra );
     }
 
 
     public function setRCode( int|string|ReturnCode $i_rc ) : void {
-        $this->rCode = ReturnCode::normalize( $i_rc );
+        $this->flagWord->setRCode( $i_rc );
     }
 
 
     public function setRD( bool|int|string|RD $i_rd ) : void {
-        $this->rd = RD::normalize( $i_rd );
+        $this->flagWord->rd = RD::normalize( $i_rd );
     }
 
 
@@ -265,12 +318,12 @@ class Header implements HeaderInterface {
 
 
     public function setTC( bool|int|string|TC $i_tc ) : void {
-        $this->tc = TC::normalize( $i_tc );
+        $this->flagWord->tc = TC::normalize( $i_tc );
     }
 
 
     public function setZ( int|ZBits $i_z ) : void {
-        $this->zBits = ZBits::normalize( $i_z );
+        $this->flagWord->zBits = ZBits::normalize( $i_z );
     }
 
 

@@ -35,6 +35,11 @@ final class DomainName {
     }
 
 
+    /**
+     * @param list<string>|string $i_name
+     * @param list<string> $i_rOrigin
+     * @return list<string>
+     */
     public static function normalize( array|string $i_name, array $i_rOrigin = [] ) : array {
         if ( is_string( $i_name ) ) {
             $i_name = self::parse( $i_name, $i_rOrigin );

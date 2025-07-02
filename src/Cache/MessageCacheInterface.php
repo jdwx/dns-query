@@ -10,7 +10,8 @@ namespace JDWX\DNSQuery\Cache;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Question\Question;
+use JDWX\DNSQuery\Message\MessageInterface;
+use JDWX\DNSQuery\Question\QuestionInterface;
 
 
 /** The interface for response packet caching. */
@@ -19,11 +20,11 @@ interface MessageCacheInterface {
 
     /** Create cache hash key for a request packet.
      *
-     * @param Message|Question $i_msg Request message to hash
+     * @param MessageInterface|QuestionInterface $i_msg Request message to hash
      *
      * @return string The hashed key
      */
-    public static function hash( Message|Question $i_msg ) : string;
+    public static function hash( MessageInterface|QuestionInterface $i_msg ) : string;
 
 
     /**
@@ -43,7 +44,7 @@ interface MessageCacheInterface {
      *
      * @return ?Message The cached response if found, otherwise null
      */
-    public function get( string $i_key ) : ?Message;
+    public function get( string $i_key ) : ?MessageInterface;
 
 
     /**
@@ -51,11 +52,11 @@ interface MessageCacheInterface {
      *
      * @param string $i_key Key to look up in the local cache
      *
-     * @return Message The cached response
+     * @return MessageInterface The cached response
      *
      * @throws Exception If the key is not found
      */
-    public function getEx( string $i_key ) : Message;
+    public function getEx( string $i_key ) : MessageInterface;
 
 
     /**
@@ -73,11 +74,11 @@ interface MessageCacheInterface {
      * Add a new key/response pair to the cache
      *
      * @param string $i_key Key for the new response
-     * @param Message $i_msg Response to store in cache
+     * @param MessageInterface $i_msg Response to store in cache
      *
      * @return void
      */
-    public function put( string $i_key, Message $i_msg ) : void;
+    public function put( string $i_key, MessageInterface $i_msg ) : void;
 
 
 }

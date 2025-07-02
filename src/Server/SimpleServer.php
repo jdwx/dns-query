@@ -7,9 +7,14 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Server;
 
 
+use JDWX\DNSQuery\Codecs\CodecInterface;
+use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
+use JDWX\DNSQuery\Transport\BufferInterface;
+use JDWX\DNSQuery\Transport\TransportBuffer;
 use JDWX\DNSQuery\Transport\TransportInterface;
 use JDWX\DNSQuery\Transport\UdpTransport;
 
@@ -28,12 +33,15 @@ class SimpleServer {
     /** @var callable|null */
     private $requestHandler = null;
 
-    private int $uDefaultTimeoutSeconds = 5;
+    private CodecInterface $codec;
 
-    private int $uDefaultTimeoutMicroSeconds = 0;
+    private BufferInterface $buffer;
 
 
-    public function __construct( private readonly TransportInterface $transport ) {}
+    public function __construct( private readonly TransportInterface $transport ) {
+        $this->codec = new RFC1035Codec();
+        $this->buffer = new TransportBuffer( $this->transport );
+    }
 
 
     /**
@@ -66,7 +74,7 @@ class SimpleServer {
 
             // Add the provided records as answers
             foreach ( $i_rRecords as $record ) {
-                $response->answer[] = $record;
+                $response->addAnswer( $record );
             }
 
             return $response;
@@ -88,11 +96,11 @@ class SimpleServer {
      * Listen for requests in a loop until the specified number of requests
      * have been handled or a timeout occurs.
      */
-    public function handleRequests( int $maxRequests = 1, ?int $timeoutSeconds = null, ?int $timeoutMicroSeconds = null ) : int {
+    public function handleRequests( int $maxRequests = 1 ) : int {
         $handledCount = 0;
 
         while ( $handledCount < $maxRequests ) {
-            if ( ! $this->handleSingleRequest( $timeoutSeconds, $timeoutMicroSeconds ) ) {
+            if ( ! $this->handleSingleRequest() ) {
                 break;
             }
             $handledCount++;
@@ -106,18 +114,16 @@ class SimpleServer {
      * Listen for a single request and handle it.
      * Returns true if a request was handled, false if timeout occurred.
      */
-    public function handleSingleRequest( ?int $timeoutSeconds = null, ?int $timeoutMicroSeconds = null ) : bool {
-        $timeoutSeconds ??= $this->uDefaultTimeoutSeconds;
-        $timeoutMicroSeconds ??= $this->uDefaultTimeoutMicroSeconds;
+    public function handleSingleRequest() : bool {
 
-        $request = $this->transport->receiveRequest( $timeoutSeconds, $timeoutMicroSeconds );
+        $request = $this->codec->decode( $this->buffer );
         if ( $request === null ) {
-            return false; // Timeout
+            return false;
         }
 
         $response = $this->processRequest( $request );
         if ( $response !== null ) {
-            $this->transport->sendResponse( $response );
+            $this->transport->send( $this->codec->encode( $response ) );
         }
 
         return true;
@@ -134,18 +140,9 @@ class SimpleServer {
 
 
     /**
-     * Set default timeout values for receiving requests.
-     */
-    public function setTimeout( int $seconds, int $microSeconds = 0 ) : void {
-        $this->uDefaultTimeoutSeconds = $seconds;
-        $this->uDefaultTimeoutMicroSeconds = $microSeconds;
-    }
-
-
-    /**
      * Process a request and generate a response.
      */
-    protected function processRequest( Message $request ) : ?Message {
+    protected function processRequest( MessageInterface $request ) : ?MessageInterface {
         if ( $this->requestHandler !== null ) {
             return call_user_func( $this->requestHandler, $request );
         }

@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\RR;
+namespace JDWX\DNSQuery\Legacy\RR;
 
 
 use JDWX\DNSQuery\Data\RecordType;
@@ -13,7 +13,6 @@ use JDWX\DNSQuery\Legacy\Lookups;
 use JDWX\DNSQuery\Legacy\Packet\Packet;
 use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
 use JDWX\DNSQuery\Legacy\PrivateKey;
-use JDWX\DNSQuery\Legacy\RR\RR;
 
 
 /**

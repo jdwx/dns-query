@@ -9,9 +9,9 @@ namespace JDWX\DNSQuery\Legacy;
 
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
+use JDWX\DNSQuery\Legacy\RR\A;
 use JDWX\DNSQuery\Legacy\RR\AAAA;
-use JDWX\DNSQuery\RR\A;
-use JDWX\DNSQuery\RR\CNAME;
+use JDWX\DNSQuery\Legacy\RR\CNAME;
 
 
 /** Starts from a set of root name servers and goes through each step of the resolution process

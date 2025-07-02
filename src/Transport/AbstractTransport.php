@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Transport;
 
 
 use JDWX\DNSQuery\Codecs\CodecInterface;
-use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 
 
 abstract class AbstractTransport implements TransportInterface {
@@ -17,27 +17,27 @@ abstract class AbstractTransport implements TransportInterface {
     public function __construct( private readonly CodecInterface $codec ) {}
 
 
-    public function receiveRequest() : ?Message {
+    public function receiveRequest() : ?MessageInterface {
         return $this->receiveMessage();
     }
 
 
-    public function receiveResponse() : ?Message {
+    public function receiveResponse() : ?MessageInterface {
         return $this->receiveMessage();
     }
 
 
-    public function sendRequest( Message $i_request ) : void {
+    public function sendRequest( MessageInterface $i_request ) : void {
         $this->sendMessage( $i_request );
     }
 
 
-    public function sendResponse( Message $i_response ) : void {
+    public function sendResponse( MessageInterface $i_response ) : void {
         $this->sendMessage( $i_response );
     }
 
 
-    protected function receiveMessage() : ?Message {
+    protected function receiveMessage() : ?MessageInterface {
         $packet = $this->receive();
         if ( ! is_string( $packet ) ) {
             return null;
@@ -47,7 +47,7 @@ abstract class AbstractTransport implements TransportInterface {
     }
 
 
-    protected function sendMessage( Message $i_msg ) : void {
+    protected function sendMessage( MessageInterface $i_msg ) : void {
         $packet = $this->codec->encode( $i_msg );
         $this->send( $packet );
     }

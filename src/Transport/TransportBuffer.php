@@ -7,13 +7,12 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-class TransportBuffer implements BufferInterface {
+class TransportBuffer extends AbstractBuffer {
 
 
-    use BufferTrait;
-
-
-    public function __construct( private readonly TransportInterface $transport ) {}
+    public function __construct( private readonly TransportInterface $transport ) {
+        parent::__construct();
+    }
 
 
     protected function fetchData() : ?string {

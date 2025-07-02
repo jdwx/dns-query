@@ -49,6 +49,9 @@ interface BufferInterface {
     public function getData() : string;
 
 
+    public function readyCheck() : bool;
+
+
     public function seek( int $i_uOffset, int $i_iWhence = SEEK_SET ) : void;
 
 

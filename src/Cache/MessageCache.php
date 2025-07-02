@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\Cache;
 
 use JDWX\ArrayCache\ArrayCache;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -55,7 +56,7 @@ class MessageCache extends AbstractCache implements MessageCacheInterface {
     /**
      * @throws InvalidArgumentException
      */
-    protected function putWithTTL( string $i_key, Message $i_msg, int $i_ttl ) : void {
+    protected function putWithTTL( string $i_key, MessageInterface $i_msg, int $i_ttl ) : void {
         $this->cache->set( $i_key, $i_msg, $i_ttl );
     }
 

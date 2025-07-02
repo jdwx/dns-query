@@ -20,7 +20,6 @@ require __DIR__ . '/../vendor/autoload.php';
     # not how it actually works.
 
     $codec = new RFC1035Codec();
-    // $xpt = new PseudowireTransport( $codec );
     $xpt = new UdpTransport( '1.1.1.1' );
 
     # Client sends request
@@ -28,7 +27,7 @@ require __DIR__ . '/../vendor/autoload.php';
     echo HexDump::dump( $codec->encode( $request ) ), "\n";
     echo $request;
 
-    $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt );
+    $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt, $codec );
     $client->sendRequest( $request );
 
     /*

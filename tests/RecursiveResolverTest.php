@@ -10,8 +10,8 @@ namespace JDWX\DNSQuery\Tests;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Packet\ResponsePacket;
 use JDWX\DNSQuery\Legacy\RecursiveResolver;
-use JDWX\DNSQuery\RR\A;
-use JDWX\DNSQuery\RR\CNAME;
+use JDWX\DNSQuery\Legacy\RR\A;
+use JDWX\DNSQuery\Legacy\RR\CNAME;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

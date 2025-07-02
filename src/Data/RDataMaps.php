@@ -50,12 +50,23 @@ final class RDataMaps {
 
     /** @return array<string, RDataType> */
     public static function map( int|string|RecordType $i_type ) : array {
-        $i_type = RecordType::normalize( $i_type );
-        $value = $i_type->value;
-        if ( ! isset( self::MAP_LIST[ $value ] ) ) {
-            throw new RecordException( "No RData map for record type {$i_type->name}" );
+        $map = self::tryMap( $i_type );
+        if ( $map !== null ) {
+            return $map;
         }
-        return self::MAP_LIST[ $i_type->value ];
+        throw new RecordException( "No RData map for record type {$i_type}" );
+    }
+
+
+    /** @return array<string, RDataType>|null */
+    public static function tryMap( int|string|RecordType $i_type ) : ?array {
+        try {
+            $i_type = RecordType::normalize( $i_type );
+        } catch ( RecordException ) {
+            return null;
+        }
+        $value = $i_type->value;
+        return self::MAP_LIST[ $value ] ?? null;
     }
 
 

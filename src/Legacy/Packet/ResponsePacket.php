@@ -9,10 +9,10 @@ namespace JDWX\DNSQuery\Legacy\Packet;
 
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\LegacyQuestion;
+use JDWX\DNSQuery\Legacy\RR\A;
 use JDWX\DNSQuery\Legacy\RR\AAAA;
+use JDWX\DNSQuery\Legacy\RR\NS;
 use JDWX\DNSQuery\Legacy\RR\RR;
-use JDWX\DNSQuery\RR\A;
-use JDWX\DNSQuery\RR\NS;
 
 
 /**

@@ -23,6 +23,7 @@ interface QuestionInterface extends \Stringable {
     public function getClass() : RecordClass;
 
 
+    /** @return list<string> */
     public function getName() : array;
 
 
@@ -32,13 +33,14 @@ interface QuestionInterface extends \Stringable {
     public function name() : string;
 
 
-    public function setClass( int|string|RecordClass $class ) : void;
+    public function setClass( int|string|RecordClass $i_class ) : void;
 
 
-    public function setName( array|string $name ) : void;
+    /** @param list<string>|string $i_name */
+    public function setName( array|string $i_name ) : void;
 
 
-    public function setType( int|string|RecordType $type ) : void;
+    public function setType( int|string|RecordType $i_type ) : void;
 
 
     public function type() : string;

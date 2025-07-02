@@ -12,12 +12,10 @@ use JDWX\DNSQuery\Binary;
 use OutOfBoundsException;
 
 
-trait BufferTrait {
+abstract class AbstractBuffer implements BufferInterface {
 
 
-    private int $uOffset = 0;
-
-    private string $stData = '';
+    public function __construct( protected string $stData = '', private int $uOffset = 0 ) {}
 
 
     public function atEnd() : bool {
@@ -150,6 +148,14 @@ trait BufferTrait {
 
     public function length() : int {
         return strlen( $this->stData );
+    }
+
+
+    public function readyCheck() : bool {
+        if ( $this->uOffset < strlen( $this->stData ) ) {
+            return true;
+        }
+        return $this->tryFill();
     }
 
 

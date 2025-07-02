@@ -18,7 +18,7 @@ use JDWX\DNSQuery\Transport\BufferInterface;
 interface CodecInterface {
 
 
-    public function decode( BufferInterface $i_buffer ) : MessageInterface;
+    public function decode( BufferInterface $i_buffer ) : ?MessageInterface;
 
 
     public function encode( MessageInterface $i_msg ) : string;
