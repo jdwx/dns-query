@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 
 /** Test the TransportManager class. */
 #[CoversClass( TransportManager::class )]
-final class TransportManagerTest extends TestCase {
+final class TransportManagerTestDisabled extends TestCase {
 
 
     /**

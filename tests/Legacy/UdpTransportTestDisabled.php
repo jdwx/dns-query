@@ -4,14 +4,13 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Lookups;
 use JDWX\DNSQuery\Legacy\Network\UdpTransport;
 use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
-use JDWX\DNSQuery\Tests\Legacy\ResolverTestDisabled;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
@@ -19,7 +18,7 @@ use ReflectionObject;
 
 
 #[CoversClass( UdpTransport::class )]
-final class UdpTransportTest extends TestCase {
+final class UdpTransportTestDisabled extends TestCase {
 
 
     /**

@@ -24,7 +24,7 @@ final class OptRecordTest extends TestCase {
 
     public function testAddOption() : void {
         $opt = new OptResourceRecord();
-        self::assertCount( 0, $opt->getRDataValue( 'options' ) );
+        self::assertCount( 0, $opt->tryGetRDataValue( 'options' ) );
 
         $option = new Option( 10, 'test-data' );
         $opt->addOption( $option );
@@ -210,14 +210,14 @@ final class OptRecordTest extends TestCase {
 
     public function testGetRDataValue() : void {
         $opt = new OptResourceRecord();
-        $options = $opt->getRDataValue( 'options' );
+        $options = $opt->tryGetRDataValue( 'options' );
         self::assertIsArray( $options );
     }
 
 
     public function testGetRDataValueInvalidKey() : void {
         $opt = new OptResourceRecord();
-        self::assertNull( $opt->getRDataValue( 'invalid' ) );
+        self::assertNull( $opt->tryGetRDataValue( 'invalid' ) );
     }
 
 

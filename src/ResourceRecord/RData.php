@@ -7,17 +7,15 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
-use ArrayAccess;
-use Countable;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\Strict\TypeIs;
 
 
-/** @implements ArrayAccess<string, mixed> */
-class RData implements RDataInterface, ArrayAccess, Countable {
+class RData extends AbstractRData {
 
 
     /** @var array<string, RDataType> */
@@ -76,14 +74,9 @@ class RData implements RDataInterface, ArrayAccess, Countable {
     }
 
 
-    public function count() : int {
-        return count( $this->rDataMap );
-    }
-
-
     public function getValue( string $i_stKey ) : mixed {
         if ( ! $this->hasValue( $i_stKey ) ) {
-            throw new \LogicException( "RData key \"{$i_stKey}\" does not exist in the record." );
+            throw new \LogicException( "Invalid RData key: \"{$i_stKey}\"" );
         }
         return $this->rDataValues[ $i_stKey ];
     }
@@ -97,15 +90,6 @@ class RData implements RDataInterface, ArrayAccess, Countable {
     /** @return array<string, RDataType> */
     public function map() : array {
         return $this->rDataMap;
-    }
-
-
-    /**
-     * @param string $offset
-     * @suppress PhanTypeMismatchDeclaredParamNullable
-     */
-    public function offsetExists( mixed $offset ) : bool {
-        return $this->hasValue( TypeIs::string( $offset ) );
     }
 
 
@@ -128,14 +112,9 @@ class RData implements RDataInterface, ArrayAccess, Countable {
     }
 
 
-    public function offsetUnset( mixed $offset ) : void {
-        throw new \LogicException( 'Cannot unset RData values in a resource record.' );
-    }
-
-
     public function setValue( string $i_stKey, mixed $i_value ) : void {
         if ( ! $this->hasValue( $i_stKey ) ) {
-            throw new \LogicException( "RData key \"{$i_stKey}\" does not exist in the record." );
+            throw new RecordDataException( "Invalid RData key: \"{$i_stKey}\"" );
         }
         $this->rDataValues[ $i_stKey ] = $i_value;
     }
@@ -144,6 +123,11 @@ class RData implements RDataInterface, ArrayAccess, Countable {
     /** @return array<string, mixed> */
     public function toArray() : array {
         return $this->rDataValues;
+    }
+
+
+    protected function validKeys() : array {
+        return array_keys( $this->rDataMap );
     }
 
 

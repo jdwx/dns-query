@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
-class OpaqueRData implements RDataInterface {
+class OpaqueRData extends AbstractRData {
 
 
     public function __construct( public string $stData ) {}
@@ -18,8 +18,32 @@ class OpaqueRData implements RDataInterface {
     }
 
 
+    public function offsetGet( mixed $offset ) : ?string {
+        if ( 'rdata' !== $offset ) {
+            return null;
+        }
+        return $this->stData;
+    }
+
+
+    public function offsetSet( mixed $offset, mixed $value ) : void {
+        if ( 'rdata' !== $offset ) {
+            throw new \InvalidArgumentException( "Invalid RData key: \"{$offset}\"" );
+        }
+        if ( ! is_string( $value ) ) {
+            throw new \InvalidArgumentException( 'Value must be a string, ' . get_debug_type( $value ) . ' given' );
+        }
+        $this->stData = $value;
+    }
+
+
     public function toArray() : array {
         return [ 'rdata' => $this->stData ];
+    }
+
+
+    protected function validKeys() : array {
+        return [ 'rdata' ];
     }
 
 

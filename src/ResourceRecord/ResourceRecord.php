@@ -196,7 +196,7 @@ class ResourceRecord extends AbstractResourceRecord {
 
     public function getClass() : RecordClass {
         return RecordClass::tryFrom( $this->uClass ) ??
-            throw new RecordClassException( "Invalid record class: {$this->uClass}" );
+            throw new RecordClassException( "Unknown record class: {$this->uClass}" );
     }
 
 
@@ -217,7 +217,7 @@ class ResourceRecord extends AbstractResourceRecord {
 
     public function getType() : RecordType {
         return RecordType::tryFrom( $this->uType ) ??
-            throw new RecordTypeException( "Invalid record type: {$this->uType}" );
+            throw new RecordTypeException( "Unknown record type: {$this->uType}" );
     }
 
 
@@ -248,7 +248,7 @@ class ResourceRecord extends AbstractResourceRecord {
 
 
     public function setTTL( int $i_uTTL ) : void {
-        if ( $i_uTTL < 0 || $i_uTTL > 2147483647 ) {
+        if ( $i_uTTL < 0 || $i_uTTL > 4_294_967_295 ) {
             throw new RecordException( "Invalid TTL {$i_uTTL}" );
         }
         $this->uTTL = $i_uTTL;

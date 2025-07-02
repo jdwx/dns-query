@@ -7,17 +7,15 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 
-use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
-use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord\AbstractResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
-use JDWX\DNSQuery\Transport\Buffer;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +30,7 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'example.com', 'AAAA', 'IN', 3600,
             [ 'address' => '2001:db8::1' ] );
         self::assertSame( 'AAAA', $rr->type() );
-        self::assertSame( '2001:db8::1', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '2001:db8::1', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
@@ -47,7 +45,7 @@ final class ResourceRecordTest extends TestCase {
     public function testArrayAccessGet() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
-        self::assertSame( '192.0.2.123', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '192.0.2.123', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
@@ -56,7 +54,7 @@ final class ResourceRecordTest extends TestCase {
         $binaryData = "\x00\x01\x02\x03\xFF\xFE\xFD\x00";
         $record = new ResourceRecord( [ 'binary', 'test' ], 254, 1, 300, $binaryData );
 
-        self::assertSame( $binaryData, $record->getRDataValue( 'rdata' ) );
+        self::assertSame( $binaryData, $record->tryGetRDataValue( 'rdata' ) );
 
         $array = $record->toArray();
         self::assertSame( $binaryData, $array[ 'rdata' ] );
@@ -67,7 +65,7 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'www.example.com', 'CNAME', 'IN', 3600,
             [ 'cname' => [ 'canonical', 'example', 'com' ] ] );
         self::assertSame( 'CNAME', $rr->type() );
-        self::assertSame( [ 'canonical', 'example', 'com' ], $rr->getRDataValue( 'cname' ) );
+        self::assertSame( [ 'canonical', 'example', 'com' ], $rr->tryGetRDataValue( 'cname' ) );
     }
 
 
@@ -83,7 +81,7 @@ final class ResourceRecordTest extends TestCase {
 
         // When class is unknown, it throws an exception when trying to get the name
         self::expectException( RecordClassException::class );
-        self::expectExceptionMessage( 'Invalid record class: 99999' );
+        self::expectExceptionMessage( 'Unknown record class: 99999' );
 
         $record->class();
     }
@@ -131,7 +129,7 @@ final class ResourceRecordTest extends TestCase {
     public function testConstructWithRDataValues() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
-        self::assertSame( '192.0.2.123', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '192.0.2.123', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
@@ -164,7 +162,7 @@ final class ResourceRecordTest extends TestCase {
         self::assertSame( $type, $record->typeValue() );
         self::assertSame( $class, $record->classValue() );
         self::assertSame( $ttl, $record->getTTL() );
-        self::assertSame( $data, $record->getRDataValue( 'rdata' ) );
+        self::assertSame( $data, $record->tryGetRDataValue( 'rdata' ) );
     }
 
 
@@ -184,7 +182,7 @@ final class ResourceRecordTest extends TestCase {
         self::assertSame( 255, $record->typeValue() );
         self::assertSame( 1, $record->classValue() );
         self::assertSame( 300, $record->getTTL() );
-        self::assertSame( 'test data', $record->getRDataValue( 'rdata' ) );
+        self::assertSame( 'test data', $record->tryGetRDataValue( 'rdata' ) );
     }
 
 
@@ -201,11 +199,11 @@ final class ResourceRecordTest extends TestCase {
         self::assertSame( 'A', $rr->type() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 3600, $rr->ttl() );
-        self::assertSame( '192.0.2.1', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '192.0.2.1', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
-    public function testFromArrayInvalidNameFormat() : void {
+    public function testFromArrayForInvalidNameFormat() : void {
         $data = [
             'name' => 123, // Invalid name format
             'type' => 'A',
@@ -218,15 +216,27 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
+    public function testFromArrayForMinimalARecord() : void {
+        $data = [ 'name' => 'foo', 'type' => 'A', 'address' => '1.2.3.4' ];
+
+        $record = ResourceRecord::fromArray( $data );
+
+        self::assertSame( [ 'foo' ], $record->getName() );
+        self::assertSame( RecordType::A, $record->getType() );
+        self::assertSame( RecordClass::IN, $record->getClass() );
+        self::assertGreaterThan( 0, $record->getTTL() );
+        self::assertSame( '1.2.3.4', $record->tryGetRDataValue( 'address' ) );
+    }
+
+
     public function testFromArrayMissingClass() : void {
         $data = [
             'name' => 'example.com',
             'type' => 'A',
             'address' => '192.0.2.1',
         ];
-        self::expectException( RecordException::class );
-        self::expectExceptionMessage( 'Missing required field: class' );
-        ResourceRecord::fromArray( $data );
+        $rr = ResourceRecord::fromArray( $data );
+        self::assertSame( RecordClass::IN, $rr->getClass() );
     }
 
 
@@ -237,7 +247,7 @@ final class ResourceRecordTest extends TestCase {
             'address' => '192.0.2.1',
         ];
         self::expectException( RecordException::class );
-        self::expectExceptionMessage( 'Missing required field: type' );
+        self::expectExceptionMessage( 'Missing record type' );
         ResourceRecord::fromArray( $data );
     }
 
@@ -255,20 +265,7 @@ final class ResourceRecordTest extends TestCase {
         self::assertSame( 100, $record->typeValue() );
         self::assertSame( RecordClass::IN, $record->getClass() );
         self::assertGreaterThan( 0, $record->getTTL() );
-        self::assertSame( '', $record->getRDataValue( 'rdata' ) );
-    }
-
-
-    public function testFromArrayWithDefaults() : void {
-        $data = [];
-
-        $record = ResourceRecord::fromArray( $data );
-
-        self::assertSame( [], $record->getName() );
-        self::assertSame( 0, $record->typeValue() );
-        self::assertSame( 0, $record->classValue() );
-        self::assertSame( 0, $record->getTTL() );
-        self::assertSame( '', $record->stData );
+        self::assertSame( '', $record->tryGetRDataValue( 'rdata' ) );
     }
 
 
@@ -287,7 +284,7 @@ final class ResourceRecordTest extends TestCase {
         self::assertSame( 'A', $rr->type() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 3600, $rr->ttl() );
-        self::assertSame( '192.0.2.1', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '192.0.2.1', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
@@ -303,66 +300,27 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testFromBuffer() : void {
-        // Create a buffer with DNS wire format data
-        // Name: example.com (compressed format would be: 07 65 78 61 6D 70 6C 65 03 63 6F 6D 00)
-        $wireData = "\x07example\x03com\x00" . // Name
-            "\x00\x01" .                 // Type (A record = 1)
-            "\x00\x01" .                 // Class (IN = 1)
-            "\x00\x00\x0E\x10" .         // TTL (3600)
-            "\x00\x04" .                 // RD Length (4 bytes)
-            "\x01\x02\x03\x04";          // RData (1.2.3.4)
-
-        $buffer = new Buffer( $wireData );
-        $record = ResourceRecord::fromBuffer( $buffer );
-
-        self::assertSame( [ 'example', 'com' ], $record->getName() );
-        self::assertSame( 1, $record->typeValue() );
-        self::assertSame( 1, $record->classValue() );
-        self::assertSame( 3600, $record->getTTL() );
-        self::assertSame( "\x01\x02\x03\x04", $record->stData );
-    }
-
-
-    public function testFromString() : void {
-        $wireData = "\x07example\x03com\x00" . // Name
-            "\x00\xFF" .                 // Type (unknown = 255)
-            "\x00\x01" .                 // Class (IN = 1)
-            "\x00\x00\x01\x2C" .         // TTL (300)
-            "\x00\x05" .                 // RD Length (5 bytes)
-            'hello';                     // RData
-
-        $record = ResourceRecord::fromString( $wireData );
-
-        self::assertSame( [ 'example', 'com' ], $record->getName() );
-        self::assertSame( 255, $record->typeValue() );
-        self::assertSame( 1, $record->classValue() );
-        self::assertSame( 300, $record->getTTL() );
-        self::assertSame( 'hello', $record->stData );
-    }
-
-
     public function testFromString2() : void {
         $rr = ResourceRecord::fromString( 'test.example.com. 3600 IN A 192.0.2.123' );
         self::assertSame( 'test.example.com', $rr->name() );
         self::assertSame( 3600, $rr->ttl() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'A', $rr->type() );
-        self::assertSame( '192.0.2.123', $rr->getRDataValue( 'address' )->value );
+        self::assertSame( '192.0.2.123', $rr->tryGetRDataValue( 'address' ) );
 
         $rr = ResourceRecord::fromString( 'test.example.com. "3600" "In" a 192.0.2.123' );
         self::assertSame( 'test.example.com', $rr->name() );
         self::assertSame( 3600, $rr->ttl() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'A', $rr->type() );
-        self::assertSame( '192.0.2.123', $rr->getRDataValue( 'address' )->value );
+        self::assertSame( '192.0.2.123', $rr->tryGetRDataValue( 'address' ) );
 
         $rr = ResourceRecord::fromString( 'test.example.com A 192.0.2.123' );
         self::assertSame( 'test.example.com', $rr->name() );
         self::assertGreaterThan( 0, $rr->ttl() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'A', $rr->type() );
-        self::assertSame( '192.0.2.123', $rr->getRDataValue( 'address' )->value );
+        self::assertSame( '192.0.2.123', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
@@ -481,21 +439,21 @@ final class ResourceRecordTest extends TestCase {
     public function testFromStringForQuotesEmpty() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT "" "This is a test" ""' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ '', 'This is a test', '' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ '', 'This is a test', '' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesMixed() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT foo "bar" baz' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ 'foo', 'bar', 'baz' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ 'foo', 'bar', 'baz' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesMixed2() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT foo "bar baz" qux' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ 'foo', 'bar baz', 'qux' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ 'foo', 'bar baz', 'qux' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
@@ -509,49 +467,49 @@ final class ResourceRecordTest extends TestCase {
     public function testFromStringForQuotesWithEmbeddedNewline() : void {
         $rr = ResourceRecord::fromString( "example.com. 3600 IN TXT \"This is a test with\nan embedded newline.\"" );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ "This is a test with\nan embedded newline." ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ "This is a test with\nan embedded newline." ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesWithEmbeddedNull() : void {
         $rr = ResourceRecord::fromString( "example.com. 3600 IN TXT \"This is a test with\0an embedded null.\"" );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ "This is a test with\0an embedded null." ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ "This is a test with\0an embedded null." ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesWithEmbeddedTab() : void {
         $rr = ResourceRecord::fromString( "example.com. 3600 IN TXT \"This is a test with\ta tab.\"" );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ "This is a test with\ta tab." ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ "This is a test with\ta tab." ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesWithEscapedBackslash() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT "This is a test with an \\ escaped backslash"' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ 'This is a test with an \\ escaped backslash' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ 'This is a test with an \\ escaped backslash' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesWithEscapedQuote() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT "This is a test \\"with an escaped quote."' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ 'This is a test "with an escaped quote.' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ 'This is a test "with an escaped quote.' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesWithEscapedQuote2() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT "\\"escaped quote\\""' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ '"escaped quote"' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ '"escaped quote"' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
     public function testFromStringForQuotesWithEscapedQuotes() : void {
         $rr = ResourceRecord::fromString( 'example.com. 3600 IN TXT "This is a test \\"with escaped quotes\\"."' );
         self::assertTrue( $rr->isType( 'TXT' ) );
-        self::assertSame( [ 'This is a test "with escaped quotes".' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ 'This is a test "with escaped quotes".' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
@@ -624,54 +582,30 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
         $rData = $rr->getRData();
-        self::assertArrayHasKey( 'address', $rData );
-        self::assertInstanceOf( RDataValue::class, $rData[ 'address' ] );
-        self::assertSame( '192.0.2.123', $rData[ 'address' ]->value );
-    }
-
-
-    public function testGetRDataThrowsException() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support getRData()' );
-
-        $record->getRData();
+        self::assertTrue( isset( $rData[ 'address' ] ) );
+        self::assertSame( '192.0.2.123', $rData[ 'address' ] );
     }
 
 
     public function testGetRDataValue() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
-        $value = $rr->getRDataValue( 'address' );
-        self::assertInstanceOf( RDataValue::class, $value );
-        self::assertSame( '192.0.2.123', $value->value );
-    }
-
-
-    public function testGetRDataValueExThrowsException() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support getRDataValueEx()' );
-
-        $record->getRDataValueEx( 'any' );
+        $value = $rr->tryGetRDataValue( 'address' );
+        self::assertSame( '192.0.2.123', $value );
     }
 
 
     public function testGetRDataValueMissing() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
-        self::assertNull( $rr->getRDataValue( 'nonexistent' ) );
+        self::assertNull( $rr->tryGetRDataValue( 'nonexistent' ) );
     }
 
 
     public function testGetRDataValueThrowsException() : void {
         $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support getRDataValue()' );
-
+        self::assertSame( 'data', $record->getRDataValue( 'rdata' ) );
+        self::expectException( RecordDataException::class );
         $record->getRDataValue( 'any' );
     }
 
@@ -786,8 +720,8 @@ final class ResourceRecordTest extends TestCase {
             'exchange' => [ 'mail', 'example', 'com' ],
         ] );
         self::assertSame( 'MX', $rr->type() );
-        self::assertSame( 10, $rr->getRDataValue( 'preference' ) );
-        self::assertSame( [ 'mail', 'example', 'com' ], $rr->getRDataValue( 'exchange' ) );
+        self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
+        self::assertSame( [ 'mail', 'example', 'com' ], $rr->tryGetRDataValue( 'exchange' ) );
     }
 
 
@@ -795,7 +729,7 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'example.com', 'NS', 'IN', 3600,
             [ 'nsdname' => [ 'ns1', 'example', 'com' ] ] );
         self::assertSame( 'NS', $rr->type() );
-        self::assertSame( [ 'ns1', 'example', 'com' ], $rr->getRDataValue( 'nsdname' ) );
+        self::assertSame( [ 'ns1', 'example', 'com' ], $rr->tryGetRDataValue( 'nsdname' ) );
     }
 
 
@@ -813,84 +747,11 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testOffsetExists() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        // ResourceRecord doesn't have RData fields, so nothing should exist
-        self::assertFalse( isset( $record[ 'address' ] ) );
-        self::assertFalse( isset( $record[ 'any' ] ) );
-        self::assertFalse( isset( $record[ '0' ] ) );
-    }
-
-
-    public function testOffsetExists2() : void {
-        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
-            [ 'address' => '1.2.3.4' ] );
-        self::assertTrue( isset( $rr->getRData()[ 'address' ] ) );
-        self::assertFalse( isset( $rr->getRData()[ 'nonexistent' ] ) );
-    }
-
-
-    public function testOffsetGet() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        // Should throw exception as ResourceRecord doesn't support RData access
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support getRDataValueEx()' );
-
-        $value = $record[ 'address' ];
-        unset( $value );
-    }
-
-
-    public function testOffsetGet2() : void {
-        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
-            [ 'address' => '1.2.3.4' ] );
-        self::assertSame( '1.2.3.4', $rr->getRDataValue( 'address' ) );
-    }
-
-
-    public function testOffsetSet() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support setRDataValue()' );
-
-        $record[ 'address' ] = 'value';
-    }
-
-
-    public function testOffsetSet2() : void {
-        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
-            [ 'address' => '1.2.3.4' ] );
-        $rr->getRData()[ 'address' ] = '5.6.7.8';
-        self::assertSame( '5.6.7.8', $rr->getRDataValueEx( 'address' )->value );
-    }
-
-
-    public function testOffsetUnset() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'Cannot unset RData values in a resource record.' );
-
-        unset( $record[ 'address' ] );
-    }
-
-
-    public function testOffsetUnset2() : void {
-        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
-            [ 'address' => '1.2.3.4' ] );
-        self::expectException( LogicException::class );
-        unset( $rr->getRData()[ 'address' ] );
-    }
-
-
     public function testPTRRecord() : void {
         $rr = new ResourceRecord( '1.2.0.192.in-addr.arpa', 'PTR', 'IN', 3600,
             [ 'ptrdname' => [ 'example', 'com' ] ] );
         self::assertSame( 'PTR', $rr->type() );
-        self::assertSame( [ 'example', 'com' ], $rr->getRDataValue( 'ptrdname' ) );
+        self::assertSame( [ 'example', 'com' ], $rr->tryGetRDataValue( 'ptrdname' ) );
     }
 
 
@@ -905,13 +766,13 @@ final class ResourceRecordTest extends TestCase {
             'minimum' => 86400,
         ] );
         self::assertSame( 'SOA', $rr->type() );
-        self::assertSame( [ 'ns1', 'example', 'com' ], $rr->getRDataValue( 'mname' ) );
-        self::assertSame( [ 'admin', 'example', 'com' ], $rr->getRDataValue( 'rname' ) );
-        self::assertSame( 2023010101, $rr->getRDataValue( 'serial' ) );
-        self::assertSame( 3600, $rr->getRDataValue( 'refresh' ) );
-        self::assertSame( 1800, $rr->getRDataValue( 'retry' ) );
-        self::assertSame( 604800, $rr->getRDataValue( 'expire' ) );
-        self::assertSame( 86400, $rr->getRDataValue( 'minimum' ) );
+        self::assertSame( [ 'ns1', 'example', 'com' ], $rr->tryGetRDataValue( 'mname' ) );
+        self::assertSame( [ 'admin', 'example', 'com' ], $rr->tryGetRDataValue( 'rname' ) );
+        self::assertSame( 2023010101, $rr->tryGetRDataValue( 'serial' ) );
+        self::assertSame( 3600, $rr->tryGetRDataValue( 'refresh' ) );
+        self::assertSame( 1800, $rr->tryGetRDataValue( 'retry' ) );
+        self::assertSame( 604800, $rr->tryGetRDataValue( 'expire' ) );
+        self::assertSame( 86400, $rr->tryGetRDataValue( 'minimum' ) );
     }
 
 
@@ -972,15 +833,15 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
         $rr->setRDataValue( 'address', '192.0.2.124' );
-        self::assertSame( '192.0.2.124', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '192.0.2.124', $rr->tryGetRDataValue( 'address' ) );
     }
 
 
     public function testSetRDataValueInvalidKey() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
-        self::expectException( InvalidArgumentException::class );
-        self::expectExceptionMessage( 'Invalid RData key: invalid' );
+        self::expectException( RecordDataException::class );
+        self::expectExceptionMessage( 'Invalid RData key' );
         $rr->setRDataValue( 'invalid', 'value' );
     }
 
@@ -989,7 +850,7 @@ final class ResourceRecordTest extends TestCase {
         $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
 
         self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support setRDataValue()' );
+        self::expectExceptionMessage( 'Invalid RData key' );
 
         $record->setRDataValue( 'any', 'value' );
     }
@@ -1016,8 +877,8 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
         self::expectException( RecordException::class );
-        self::expectExceptionMessage( 'Invalid TTL 2147483648' );
-        $rr->setTTL( 2147483648 );
+        self::expectExceptionMessage( 'Invalid TTL' );
+        $rr->setTTL( 20_000_000_000 );
     }
 
 
@@ -1033,7 +894,7 @@ final class ResourceRecordTest extends TestCase {
         $rr = new ResourceRecord( 'example.com', 'TXT', 'IN', 3600,
             [ 'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ] ] );
         self::assertSame( 'TXT', $rr->type() );
-        self::assertSame( [ 'v=spf1', 'include:_spf.example.com', '~all' ], $rr->getRDataValue( 'text' ) );
+        self::assertSame( [ 'v=spf1', 'include:_spf.example.com', '~all' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
@@ -1072,13 +933,14 @@ final class ResourceRecordTest extends TestCase {
         self::assertArrayHasKey( 'type', $array );
         self::assertArrayHasKey( 'class', $array );
         self::assertArrayHasKey( 'ttl', $array );
-        self::assertArrayHasKey( 'rdata', $array );
+        self::assertArrayNotHasKey( 'rdata', $array );
+        self::assertArrayHasKey( 'address', $array );
 
         self::assertSame( 'example.com', $array[ 'name' ] );
         self::assertSame( 'A', $array[ 'type' ] );
         self::assertSame( 'IN', $array[ 'class' ] );
         self::assertSame( 3600, $array[ 'ttl' ] );
-        self::assertSame( '192.0.2.123', $array[ 'rdata' ][ 'address' ] );
+        self::assertSame( '192.0.2.123', $array[ 'address' ] );
     }
 
 
@@ -1090,8 +952,8 @@ final class ResourceRecordTest extends TestCase {
         $array = $rr->toArray();
 
         self::assertSame( 'MX', $array[ 'type' ] );
-        self::assertSame( 10, $array[ 'rdata' ][ 'preference' ] );
-        self::assertSame( [ 'mail', 'example', 'com' ], $array[ 'rdata' ][ 'exchange' ] );
+        self::assertSame( 10, $array[ 'preference' ] );
+        self::assertSame( [ 'mail', 'example', 'com' ], $array[ 'exchange' ] );
     }
 
 
@@ -1135,6 +997,12 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
+    public function testToStringForOpaque() : void {
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
+        self::assertSame( 'test 300 IN A 64617461', strval( $record ) );
+    }
+
+
     public function testToStringMXRecord() : void {
         $rr = new ResourceRecord( 'example.com', 'MX', 'IN', 3600, [
             'preference' => 10,
@@ -1159,17 +1027,6 @@ final class ResourceRecordTest extends TestCase {
         self::assertStringContainsString( 'IN', $string );
         self::assertStringContainsString( 'TXT', $string );
         self::assertStringContainsString( 'v=spf1', $string );
-    }
-
-
-    public function testToStringThrowsException() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
-        self::expectExceptionMessage( 'ResourceRecord does not support __toString()' );
-
-        $x = (string) $record;
-        unset( $x );
     }
 
 

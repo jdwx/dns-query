@@ -113,7 +113,7 @@ class OptResourceRecord extends ResourceRecord {
 
     /** @return list<Option> */
     public function options() : array {
-        return $this->getRDataValue( 'options' );
+        return $this->tryGetRDataValue( 'options' );
     }
 
 
@@ -156,7 +156,7 @@ class OptResourceRecord extends ResourceRecord {
 
 
     public function tryOption( int $i_uIndex ) : ?Option {
-        $options = $this->getRDataValue( 'options' );
+        $options = $this->tryGetRDataValue( 'options' );
         return $options[ $i_uIndex ] ?? null;
     }
 

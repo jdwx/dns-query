@@ -64,7 +64,7 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 207, $msg->getAnswer()[ 0 ]->ttl() );
         self::assertSame(
             'www.example.com-v4.edgesuite.net',
-            join( '.', $msg->getAnswer()[ 0 ]->getRDataValue( 'cname' ) )
+            join( '.', $msg->getAnswer()[ 0 ]->tryGetRDataValue( 'cname' ) )
         );
 
         self::assertSame( 'www.example.com-v4.edgesuite.net', $msg->getAnswer()[ 1 ]->name() );
@@ -73,20 +73,20 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 21507, $msg->getAnswer()[ 1 ]->ttl() );
         self::assertSame(
             'a1422.dscr.akamai.net',
-            join( '.', $msg->getAnswer()[ 1 ]->getRDataValue( 'cname' ) )
+            join( '.', $msg->getAnswer()[ 1 ]->tryGetRDataValue( 'cname' ) )
         );
 
         self::assertSame( 'a1422.dscr.akamai.net', $msg->getAnswer()[ 2 ]->name() );
         self::assertSame( 'A', $msg->getAnswer()[ 2 ]->type() );
         self::assertSame( 'IN', $msg->getAnswer()[ 2 ]->class() );
         self::assertSame( 17, $msg->getAnswer()[ 2 ]->ttl() );
-        self::assertSame( '23.40.60.56', $msg->getAnswer()[ 2 ]->getRDataValue( 'address' ) );
+        self::assertSame( '23.40.60.56', $msg->getAnswer()[ 2 ]->tryGetRDataValue( 'address' ) );
 
         self::assertSame( 'a1422.dscr.akamai.net', $msg->getAnswer()[ 3 ]->name() );
         self::assertSame( 'A', $msg->getAnswer()[ 3 ]->type() );
         self::assertSame( 'IN', $msg->getAnswer()[ 3 ]->class() );
         self::assertSame( 17, $msg->getAnswer()[ 3 ]->ttl() );
-        self::assertSame( '23.40.60.40', $msg->getAnswer()[ 3 ]->getRDataValue( 'address' ) );
+        self::assertSame( '23.40.60.40', $msg->getAnswer()[ 3 ]->tryGetRDataValue( 'address' ) );
 
         self::assertCount( 0, $msg->getAuthority() );
         self::assertCount( 0, $msg->getAdditional() );
@@ -96,7 +96,7 @@ final class RFC1035CodecTest extends TestCase {
         assert( $opt instanceof OptResourceRecord );
         self::assertSame( 0, $opt->version() );
         self::assertSame( 1232, $opt->payloadSize() );
-        self::assertSame( [], $opt->getRDataValue( 'options' ) );
+        self::assertSame( [], $opt->tryGetRDataValue( 'options' ) );
 
     }
 
@@ -162,21 +162,21 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 0x1234, $message->answer( 0 )->typeValue() );
         self::assertSame( 0x5678, $message->answer( 0 )->classValue() );
         self::assertSame( 0x2030405, $message->answer( 0 )->ttl() );
-        self::assertSame( "\x03\x04\x05\x06", $message->answer( 0 )->getRDataValue( 'rdata' ) );
+        self::assertSame( "\x03\x04\x05\x06", $message->answer( 0 )->tryGetRDataValue( 'rdata' ) );
 
         self::assertCount( 1, $message->getAuthority() );
         self::assertSame( [ 'foo', 'bar', 'baz' ], $message->authority( 0 )->getName() );
         self::assertSame( 0x2345, $message->authority( 0 )->typeValue() );
         self::assertSame( 0x6789, $message->authority( 0 )->classValue() );
         self::assertSame( 0x12131415, $message->authority( 0 )->getTTL() );
-        self::assertSame( "\x43\x21", $message->authority( 0 )->getRDataValue( 'rdata' ) );
+        self::assertSame( "\x43\x21", $message->authority( 0 )->tryGetRDataValue( 'rdata' ) );
 
         self::assertCount( 1, $message->getAdditional() );
         self::assertSame( [ 'qux', 'bar', 'baz' ], $message->additional( 0 )->getName() );
         self::assertSame( 0x3456, $message->additional( 0 )->typeValue() );
         self::assertSame( 0x789a, $message->additional( 0 )->classValue() );
         self::assertSame( 0x11121314, $message->additional( 0 )->getTTL() );
-        self::assertSame( "\x01\x02\x03", $message->additional( 0 )->getRDataValue( 'rdata' ) );
+        self::assertSame( "\x01\x02\x03", $message->additional( 0 )->tryGetRDataValue( 'rdata' ) );
 
     }
 
@@ -380,8 +380,9 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 'A', $rr->type() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 0x1234567, $rr->ttl() );
-        self::assertSame( '1.2.3.4', $rr->getRDataValue( 'address' ) );
+        self::assertSame( '1.2.3.4', $rr->tryGetRDataValue( 'address' ) );
         self::assertSame( $uEndOfRR, $buffer->tell() );
+        self::assertSame( 'Qux', $buffer->consume( 3 ) );
     }
 
 
@@ -408,7 +409,7 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 1232, $rr->payloadSize() );
         self::assertSame( 0, $rr->version() );
 
-        $options = $rr->getRDataValue( 'options' );
+        $options = $rr->tryGetRDataValue( 'options' );
         self::assertCount( 1, $options );
         self::assertSame( 10, $options[ 0 ]->code ); // COOKIE
         self::assertSame( "\x01\x02\x03\x04\x05\x06\x07\x08", $options[ 0 ]->data );

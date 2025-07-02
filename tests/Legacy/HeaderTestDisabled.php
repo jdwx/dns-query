@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 
 /** Test the Header class. */
 #[CoversClass( Header::class )]
-final class HeaderTest extends TestCase {
+final class HeaderTestDisabled extends TestCase {
 
 
     /** Generate a header to use for testing.

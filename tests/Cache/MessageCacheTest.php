@@ -34,7 +34,7 @@ final class MessageCacheTest extends TestCase {
         $xx = $cache->get( 'foo' );
         $ans = $xx->getAnswer()[ 0 ];
         self::assertTrue( $ans->isType( 'MX' ) );
-        self::assertEquals( [ 'smtp', 'example', 'com' ], $ans->getRDataValue( 'exchange' ) );
+        self::assertEquals( [ 'smtp', 'example', 'com' ], $ans->tryGetRDataValue( 'exchange' ) );
     }
 
 

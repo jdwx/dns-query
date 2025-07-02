@@ -314,8 +314,8 @@ final class SimpleServerTest extends TestCase {
 
         // Check that answers match the provided records
         $answers = $response->getAnswer();
-        self::assertSame( '1.2.3.4', $answers[ 0 ]->getRDataValue( 'address' ) );
-        self::assertSame( '5.6.7.8', $answers[ 1 ]->getRDataValue( 'address' ) );
+        self::assertSame( '1.2.3.4', $answers[ 0 ]->tryGetRDataValue( 'address' ) );
+        self::assertSame( '5.6.7.8', $answers[ 1 ]->tryGetRDataValue( 'address' ) );
     }
 
 

@@ -30,44 +30,31 @@ interface ResourceRecordInterface extends Stringable {
 
     public function getRData() : RDataInterface;
 
-
-    public function getRDataValue( string $i_stKey ) : mixed;
-
-
     public function getTTL() : int;
-
 
     public function getType() : RecordType;
 
-
     public function isClass( int|string|RecordClass $i_class ) : bool;
-
 
     public function isType( int|string|RecordType $i_type ) : bool;
 
-
     public function name() : string;
 
-
     public function setClass( int|string|RecordClass $i_class ) : void;
-
 
     /** @param list<string>|string $i_name */
     public function setName( array|string $i_name ) : void;
 
-
     public function setRData( string|RDataInterface $i_rData ) : void;
-
 
     public function setTTL( int $i_uTTL ) : void;
 
-
     public function setType( int|string|RecordType $i_type ) : void;
-
 
     /** @return array<string, mixed> */
     public function toArray( bool $i_bNameAsArray = false ) : array;
 
+    public function tryGetRDataValue( string $i_stKey ) : mixed;
 
     public function ttl() : int;
 
