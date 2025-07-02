@@ -10,10 +10,12 @@ namespace JDWX\DNSQuery\Tests\Codecs;
 use JDWX\DNSQuery\Codecs\SerializeCodec;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Transport\Buffer;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
-class SerializeCodecTest extends TestCase {
+#[CoversClass( SerializeCodec::class )]
+final class SerializeCodecTest extends TestCase {
 
 
     public function testCodec() : void {
