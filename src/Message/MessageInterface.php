@@ -36,10 +36,10 @@ interface MessageInterface extends Stringable {
     /** @return list<ResourceRecordInterface> */
     public function getAuthority() : array;
 
+    public function getOpt() : ?OptResourceRecord;
 
     /** @return list<QuestionInterface> */
     public function getQuestion() : array;
-
 
     public function header() : HeaderInterface;
 

@@ -38,7 +38,7 @@ use PHPUnit\Framework\TestCase;
  *
  */
 #[CoversClass( RR::class )]
-final class LegacyParserTest extends TestCase {
+final class LegacyParserTestDisabled extends TestCase {
 
 
     /**

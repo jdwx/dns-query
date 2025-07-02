@@ -19,7 +19,6 @@ use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\Question\OpaqueQuestion;
 use JDWX\DNSQuery\Question\QuestionInterface;
-use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord\OpaqueRData;
 use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\RData;
@@ -60,9 +59,11 @@ class RFC1035Codec implements CodecInterface {
 
     /**
      * @param array<string, RDataType> $i_rDataMap
-     * @return array<string, RDataValue>
+     * @param BufferInterface $i_buffer
+     * @param int $i_uEndOfRData
+     * @return RDataInterface
      */
-    public static function decodeRData( array $i_rDataMap, BufferInterface $i_buffer, int $i_uEndOfRData ) : array {
+    public static function decodeRData( array $i_rDataMap, BufferInterface $i_buffer, int $i_uEndOfRData ) : RDataInterface {
         $rData = [];
 
         /** @noinspection PhpLoopCanBeConvertedToArrayMapInspection */
@@ -73,7 +74,7 @@ class RFC1035Codec implements CodecInterface {
         assert( $uOffset === $i_uEndOfRData,
             "Offset after reading RData ({$uOffset}) does not equal end of RData ({$i_uEndOfRData})."
         );
-        return $rData;
+        return new RData( $i_rDataMap, $rData );
     }
 
 
@@ -106,8 +107,8 @@ class RFC1035Codec implements CodecInterface {
 
 
     public static function decodeRDataValue( RDataType $i_rdt, BufferInterface $i_buffer,
-                                             int       $i_uEndOfRData ) : RDataValue {
-        $data = match ( $i_rdt ) {
+                                             int       $i_uEndOfRData ) : mixed {
+        return match ( $i_rdt ) {
             RDataType::CharacterString => $i_buffer->consumeLabel(),
             RDataType::CharacterStringList => self::decodeRDataCharacterStringList( $i_buffer, $i_uEndOfRData ),
             RDataType::DomainName => $i_buffer->consumeNameArray(),
@@ -118,24 +119,31 @@ class RFC1035Codec implements CodecInterface {
             RDataType::UINT16 => $i_buffer->consumeUINT16(),
             RDataType::UINT32 => $i_buffer->consumeUINT32(),
         };
-        return new RDataValue( $i_rdt, $data );
     }
 
 
     public static function decodeResourceRecord( BufferInterface $i_buffer ) : ResourceRecordInterface {
         $r = [
             'name' => $i_buffer->consumeName(),
-            'type' => RecordType::consume( $i_buffer ),
+            'type' => $i_buffer->consumeUINT16(),
             'class' => $i_buffer->consumeUINT16(),
             'ttl' => $i_buffer->consumeUINT32(),
         ];
         $uRDLength = $i_buffer->consumeUINT16();
         $uRDOffset = $i_buffer->tell();
-        $rData = self::decodeRData( RDataMaps::map( $r[ 'type' ] ), $i_buffer, $uRDOffset + $uRDLength );
+
+        $map = RDataMaps::tryMap( $r[ 'type' ] );
+        if ( is_array( $map ) ) {
+            $rData = self::decodeRData( RDataMaps::map( $r[ 'type' ] ), $i_buffer, $uRDOffset + $uRDLength );
+        } else {
+            $stData = $i_buffer->consume( $uRDLength );
+            $rData = new OpaqueRData( $stData );
+        }
+
         assert( $i_buffer->tell() - $uRDOffset === $uRDLength );
         $r[ 'rdata' ] = $rData;
 
-        if ( $r[ 'type' ] === RecordType::OPT ) {
+        if ( RecordType::OPT->is( $r[ 'type' ] ) ) {
             return OptResourceRecord::fromArray( $r );
         }
         return ResourceRecord::fromArray( $r );

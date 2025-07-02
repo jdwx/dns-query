@@ -275,14 +275,11 @@ enum RecordType: int {
 
 
     public static function normalize( int|string|self $i_recordType ) : self {
-        if ( is_int( $i_recordType ) ) {
-            return self::tryFrom( $i_recordType )
-                ?? throw new RecordTypeException( "Invalid record type ID: {$i_recordType}" );
+        $x = self::tryNormalize( $i_recordType );
+        if ( $x instanceof self ) {
+            return $x;
         }
-        if ( is_string( $i_recordType ) ) {
-            return self::fromName( $i_recordType );
-        }
-        return $i_recordType;
+        throw new RecordTypeException( "Invalid record type ID: {$i_recordType}" );
     }
 
 
@@ -385,6 +382,17 @@ enum RecordType: int {
     }
 
 
+    public static function tryNormalize( int|string|self $i_recordType ) : ?self {
+        if ( is_int( $i_recordType ) ) {
+            return self::tryFrom( $i_recordType );
+        }
+        if ( is_string( $i_recordType ) ) {
+            return self::tryFromName( $i_recordType );
+        }
+        return $i_recordType;
+    }
+
+
     public static function tryPhpIdToId( int $i_phpId ) : ?int {
         return self::tryFromPhpId( $i_phpId )?->value;
     }
@@ -399,7 +407,7 @@ enum RecordType: int {
 
 
     public function is( int|string|self $i_value ) : bool {
-        $i_value = self::normalize( $i_value );
+        $i_value = self::tryNormalize( $i_value );
         return $this === $i_value;
     }
 

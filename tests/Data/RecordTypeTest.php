@@ -9,13 +9,6 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
-use JDWX\DNSQuery\Legacy\Packet\Packet;
-use JDWX\DNSQuery\Legacy\RR\A;
-use JDWX\DNSQuery\Legacy\RR\ALL;
-use JDWX\DNSQuery\Legacy\RR\ANY;
-use JDWX\DNSQuery\Legacy\RR\DS;
-use JDWX\DNSQuery\Legacy\RR\MX;
-use JDWX\DNSQuery\Legacy\RR\RR;
 use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -23,28 +16,6 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass( RecordType::class )]
 final class RecordTypeTest extends TestCase {
-
-
-    public function testClassNameToId() : void {
-        self::assertSame( RecordType::A->value, RecordType::classNameToId( A::class ) );
-        self::assertSame( RecordType::ANY->value, RecordType::classNameToId( ALL::class ) );
-        self::assertSame( RecordType::ANY->value, RecordType::classNameToId( ANY::class ) );
-        self::assertSame( RecordType::DS->value, RecordType::classNameToId( DS::class ) );
-        self::assertSame( RecordType::MX->value, RecordType::classNameToId( MX::class ) );
-        self::expectException( RecordTypeException::class );
-        RecordType::classNameToId( 'Foo' );
-    }
-
-
-    public function testClassNameToName() : void {
-        self::assertSame( 'A', RecordType::classNameToName( A::class ) );
-        self::assertSame( 'ANY', RecordType::classNameToName( ALL::class ) );
-        self::assertSame( 'ANY', RecordType::classNameToName( ANY::class ) );
-        self::assertSame( 'DS', RecordType::classNameToName( DS::class ) );
-        self::assertSame( 'MX', RecordType::classNameToName( MX::class ) );
-        self::expectException( RecordTypeException::class );
-        RecordType::classNameToName( $this::class );
-    }
 
 
     public function testConsume() : void {
@@ -88,61 +59,6 @@ final class RecordTypeTest extends TestCase {
     }
 
 
-    public function testFromClassName() : void {
-        self::assertSame( RecordType::A, RecordType::fromClassName( A::class ) );
-        self::assertSame( RecordType::ANY, RecordType::fromClassName( ALL::class ) );
-        self::assertSame( RecordType::ANY, RecordType::fromClassName( ANY::class ) );
-        self::assertSame( RecordType::DS, RecordType::fromClassName( DS::class ) );
-        self::assertSame( RecordType::MX, RecordType::fromClassName( MX::class ) );
-    }
-
-
-    public function testFromClassNameForNonExistentClass() : void {
-        self::expectException( RecordTypeException::class );
-        self::expectExceptionMessage( 'Unknown record class' );
-        RecordType::fromClassName( 'Foo' );
-    }
-
-
-    public function testFromClassNameForNonRRClass() : void {
-        self::expectException( RecordTypeException::class );
-        self::expectExceptionMessage( 'Unknown record class' );
-        RecordType::fromClassName( $this::class );
-    }
-
-
-    public function testFromClassNameForUnknownRR() : void {
-
-        $rr = new class() extends RR {
-
-
-            protected function rrToString() : string {
-                return '';
-            }
-
-
-            protected function rrGet( Packet $i_packet ) : ?string {
-                return null;
-            }
-
-
-            protected function rrSet( Packet $i_packet ) : bool {
-                return false;
-            }
-
-
-            protected function rrFromString( array $i_rData ) : bool {
-                return false;
-            }
-
-
-        };
-        self::expectException( RecordTypeException::class );
-        self::expectExceptionMessage( 'Unknown record class' );
-        RecordType::fromClassName( $rr::class );
-    }
-
-
     public function testFromName() : void {
         self::assertSame( RecordType::A, RecordType::fromName( 'A' ) );
         self::assertSame( RecordType::CNAME, RecordType::fromName( 'CnAmE' ) );
@@ -164,14 +80,6 @@ final class RecordTypeTest extends TestCase {
         self::assertSame( RecordType::MX, RecordType::fromPhpId( DNS_MX ) );
         self::expectException( RecordTypeException::class );
         RecordType::fromPhpId( 9999 );
-    }
-
-
-    public function testIdToClassName() : void {
-        self::assertSame( A::class, RecordType::idToClassName( RecordType::A->value ) );
-        self::assertSame( ANY::class, RecordType::idToClassName( RecordType::ANY->value ) );
-        self::expectException( RecordTypeException::class );
-        RecordType::idToClassName( 9999 );
     }
 
 
@@ -197,13 +105,6 @@ final class RecordTypeTest extends TestCase {
     }
 
 
-    public function testIsValidClassName() : void {
-        self::assertTrue( RecordType::isValidClassName( A::class ) );
-        self::assertFalse( RecordType::isValidClassName( $this::class ) );
-        self::assertFalse( RecordType::isValidClassName( 'Foo' ) );
-    }
-
-
     public function testIsValidId() : void {
         self::assertTrue( RecordType::isValidId( RecordType::A->value ) );
         self::assertFalse( RecordType::isValidId( 9999 ) );
@@ -214,15 +115,6 @@ final class RecordTypeTest extends TestCase {
         self::assertTrue( RecordType::isValidName( '*' ) );
         self::assertTrue( RecordType::isValidName( 'A' ) );
         self::assertFalse( RecordType::isValidName( 'FOO' ) );
-    }
-
-
-    public function testNameToClassName() : void {
-        self::assertSame( A::class, RecordType::nameToClassName( 'A' ) );
-        self::assertSame( ANY::class, RecordType::nameToClassName( 'Any' ) );
-        self::assertSame( MX::class, RecordType::nameToClassName( 'mx' ) );
-        self::expectException( RecordTypeException::class );
-        RecordType::nameToClassName( 'FOO' );
     }
 
 
@@ -257,14 +149,6 @@ final class RecordTypeTest extends TestCase {
     }
 
 
-    public function testPhpIdToClassName() : void {
-        self::assertSame( A::class, RecordType::phpIdToClassName( DNS_A ) );
-        self::assertSame( ANY::class, RecordType::phpIdToClassName( DNS_ANY ) );
-        self::expectException( RecordTypeException::class );
-        RecordType::phpIdToClassName( 9999 );
-    }
-
-
     public function testPhpIdToId() : void {
         self::assertSame( RecordType::A->value, RecordType::phpIdToId( DNS_A ) );
         self::assertSame( RecordType::ANY->value, RecordType::phpIdToId( DNS_ANY ) );
@@ -283,34 +167,6 @@ final class RecordTypeTest extends TestCase {
 
     public function testToBinary() : void {
         self::assertSame( pack( 'n', RecordType::A->value ), RecordType::A->toBinary() );
-    }
-
-
-    public function testToClassName() : void {
-        self::assertSame( A::class, RecordType::A->toClassName() );
-        self::assertSame( ANY::class, RecordType::ANY->toClassName() );
-        self::expectException( RecordTypeException::class );
-        RecordType::ZZZ_TEST_ONLY_DO_NOT_USE->toClassName();
-    }
-
-
-    public function testTryClassNameToId() : void {
-        self::assertSame( RecordType::A->value, RecordType::tryClassNameToId( A::class ) );
-        self::assertSame( RecordType::ANY->value, RecordType::tryClassNameToId( ALL::class ) );
-        self::assertSame( RecordType::ANY->value, RecordType::tryClassNameToId( ANY::class ) );
-        self::assertSame( RecordType::DS->value, RecordType::tryClassNameToId( DS::class ) );
-        self::assertSame( RecordType::MX->value, RecordType::tryClassNameToId( MX::class ) );
-        self::assertNull( RecordType::tryClassNameToId( 'Foo' ) );
-    }
-
-
-    public function testTryClassNameToName() : void {
-        self::assertSame( 'A', RecordType::tryClassNameToName( A::class ) );
-        self::assertSame( 'ANY', RecordType::tryClassNameToName( ALL::class ) );
-        self::assertSame( 'ANY', RecordType::tryClassNameToName( ANY::class ) );
-        self::assertSame( 'DS', RecordType::tryClassNameToName( DS::class ) );
-        self::assertSame( 'MX', RecordType::tryClassNameToName( MX::class ) );
-        self::assertNull( RecordType::tryClassNameToName( $this::class ) );
     }
 
 
@@ -338,17 +194,6 @@ final class RecordTypeTest extends TestCase {
     }
 
 
-    public function testTryFromClassName() : void {
-        self::assertSame( RecordType::A, RecordType::tryFromClassName( A::class ) );
-        self::assertSame( RecordType::ANY, RecordType::tryFromClassName( ALL::class ) );
-        self::assertSame( RecordType::ANY, RecordType::tryFromClassName( ANY::class ) );
-        self::assertSame( RecordType::DS, RecordType::tryFromClassName( DS::class ) );
-        self::assertSame( RecordType::MX, RecordType::tryFromClassName( MX::class ) );
-        self::assertNull( RecordType::tryFromClassName( $this::class ) );
-        self::assertNull( RecordType::tryFromClassName( 'Foo' ) );
-    }
-
-
     public function testTryFromName() : void {
         self::assertSame( RecordType::A, RecordType::tryFromName( 'A', true ) );
         self::assertSame( RecordType::CNAME, RecordType::tryFromName( 'CnAmE' ) );
@@ -361,35 +206,15 @@ final class RecordTypeTest extends TestCase {
     }
 
 
-    public function testTryIdToClassName() : void {
-        self::assertSame( A::class, RecordType::tryIdToClassName( RecordType::A->value ) );
-        self::assertNull( RecordType::tryIdToClassName( 9999 ) );
-    }
-
-
     public function testTryIdToName() : void {
         self::assertSame( 'A', RecordType::tryIdToName( RecordType::A->value ) );
         self::assertNull( RecordType::tryIdToName( 9999 ) );
     }
 
 
-    public function testTryNameToClassName() : void {
-        self::assertSame( A::class, RecordType::tryNameToClassName( 'A' ) );
-        self::assertNull( RecordType::tryNameToClassName( 'FOO' ) );
-    }
-
-
     public function testTryNameToId() : void {
         self::assertSame( RecordType::A->value, RecordType::tryNameToId( 'A' ) );
         self::assertNull( RecordType::tryNameToId( 'FOO' ) );
-    }
-
-
-    public function testTryPhpIdToClassName() : void {
-        self::assertSame( A::class, RecordType::tryPhpIdToClassName( DNS_A ) );
-        self::assertSame( ALL::class, RecordType::tryPhpIdToClassName( DNS_ALL ) );
-        self::assertSame( ANY::class, RecordType::tryPhpIdToClassName( DNS_ANY ) );
-        self::assertNull( RecordType::tryPhpIdToClassName( 9999 ) );
     }
 
 

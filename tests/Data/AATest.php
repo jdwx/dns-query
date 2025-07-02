@@ -31,12 +31,12 @@ final class AATest extends TestCase {
 
 
     public function testNormalize() : void {
-        self::assertSame( AA::NON_AUTHORITATIVE, AA::NON_AUTHORITATIVE->normalize( false ) );
-        self::assertSame( AA::AUTHORITATIVE, AA::AUTHORITATIVE->normalize( true ) );
-        self::assertSame( AA::NON_AUTHORITATIVE, AA::NON_AUTHORITATIVE->normalize( 0 ) );
-        self::assertSame( AA::AUTHORITATIVE, AA::AUTHORITATIVE->normalize( 1 ) );
-        self::assertSame( AA::NON_AUTHORITATIVE, AA::NON_AUTHORITATIVE->normalize( 'noaa' ) );
-        self::assertSame( AA::AUTHORITATIVE, AA::AUTHORITATIVE->normalize( 'aa' ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::normalize( false ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::normalize( true ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::normalize( 0 ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::normalize( 1 ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::normalize( 'noaa' ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::normalize( 'aa' ) );
     }
 
 

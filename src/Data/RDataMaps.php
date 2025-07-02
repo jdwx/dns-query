@@ -54,6 +54,9 @@ final class RDataMaps {
         if ( $map !== null ) {
             return $map;
         }
+        if ( $i_type instanceof RecordType ) {
+            $i_type = $i_type->name;
+        }
         throw new RecordException( "No RData map for record type {$i_type}" );
     }
 

@@ -4,9 +4,8 @@
 declare( strict_types = 1 );
 
 
+use JDWX\DNSQuery\Transport\AbstractBuffer;
 use JDWX\DNSQuery\Transport\Buffer;
-use JDWX\DNSQuery\Transport\BufferInterface;
-use JDWX\DNSQuery\Transport\BufferTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -173,14 +172,11 @@ final class BufferTest extends TestCase {
 
 
     public function testTryFillForData() : void {
-        $buffer = new class( 'Foo', 'Bar' ) implements BufferInterface {
-
-
-            use BufferTrait;
+        $buffer = new class( 'Foo', 'Bar' ) extends AbstractBuffer {
 
 
             public function __construct( string $i_stData, private ?string $nstMoreData ) {
-                $this->stData = $i_stData;
+                parent::__construct( $i_stData );
             }
 
 

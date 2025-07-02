@@ -8,21 +8,44 @@ namespace JDWX\DNSQuery\ResourceRecord;
 
 
 use ArrayAccess;
+use Countable;
+use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
+use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\Strict\TypeIs;
 
 
 /** @implements ArrayAccess<string, mixed> */
-class RData implements RDataInterface, ArrayAccess {
+class RData implements RDataInterface, ArrayAccess, Countable {
+
+
+    /** @var array<string, RDataType> */
+    public array $rDataMap;
+
+    /** @var array<string, mixed> */
+    public array $rDataValues = [];
 
 
     /**
-     * @param array<string, RDataType> $rDataMap
-     * @param array<string, mixed> $rDataValues
+     * @param array<string, RDataType>|int|string|RecordType $i_rDataMap
+     * @param array<string, mixed> $i_rDataValues
      *
      */
-    public function __construct( public array $rDataMap, public array $rDataValues ) {}
+    public function __construct( array|int|string|RecordType $i_rDataMap, array $i_rDataValues ) {
+        if ( ! is_array( $i_rDataMap ) ) {
+            $i_rDataMap = RDataMaps::map( $i_rDataMap );
+        }
+        $this->rDataMap = $i_rDataMap;
+        foreach ( $this->rDataMap as $stName => $rdt ) {
+            /** @phpstan-ignore function.alreadyNarrowedType, instanceof.alwaysTrue */
+            assert( $rdt instanceof RDataType );
+            if ( ! isset( $i_rDataValues[ $stName ] ) ) {
+                throw new RecordException( "Missing RData value for {$stName} in record" );
+            }
+            $this->rDataValues[ $stName ] = $i_rDataValues[ $stName ];
+        }
+    }
 
 
     /**
@@ -50,6 +73,11 @@ class RData implements RDataInterface, ArrayAccess {
             $st .= ' ' . $rdt->format( $this->rDataValues[ $stName ] );
         }
         return trim( $st );
+    }
+
+
+    public function count() : int {
+        return count( $this->rDataMap );
     }
 
 

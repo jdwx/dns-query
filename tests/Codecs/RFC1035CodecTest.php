@@ -15,8 +15,8 @@ use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\Question\Question;
-use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\RData;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -49,50 +49,147 @@ final class RFC1035CodecTest extends TestCase {
         $codec = new RFC1035Codec();
         $msg = $codec->decode( $buffer );
 
-        self::assertSame( 56866, $msg->id );
-        self::assertSame( OpCode::QUERY, $msg->opcode );
+        self::assertSame( 56866, $msg->header()->id() );
+        self::assertSame( 'QUERY', $msg->header()->opcode() );
 
-        self::assertCount( 1, $msg->question );
-        self::assertSame( 'www.example.com', $msg->question[ 0 ]->stName );
-        self::assertSame( 'A', $msg->question[ 0 ]->type->name );
-        self::assertSame( 'IN', $msg->question[ 0 ]->class->name );
+        self::assertCount( 1, $msg->getQuestion() );
+        self::assertSame( 'www.example.com', $msg->getQuestion()[ 0 ]->name() );
+        self::assertSame( 'A', $msg->getQuestion()[ 0 ]->type() );
+        self::assertSame( 'IN', $msg->getQuestion()[ 0 ]->class() );
 
-        self::assertCount( 4, $msg->answer );
-        self::assertSame( 'www.example.com', $msg->answer[ 0 ]->name() );
-        self::assertSame( 'CNAME', $msg->answer[ 0 ]->type() );
-        self::assertSame( 'IN', $msg->answer[ 0 ]->class() );
-        self::assertSame( 207, $msg->answer[ 0 ]->ttl() );
+        self::assertCount( 4, $msg->getAnswer() );
+        self::assertSame( 'www.example.com', $msg->getAnswer()[ 0 ]->name() );
+        self::assertSame( 'CNAME', $msg->getAnswer()[ 0 ]->type() );
+        self::assertSame( 'IN', $msg->getAnswer()[ 0 ]->class() );
+        self::assertSame( 207, $msg->getAnswer()[ 0 ]->ttl() );
         self::assertSame(
             'www.example.com-v4.edgesuite.net',
-            join( '.', $msg->answer[ 0 ][ 'cname' ] )
+            join( '.', $msg->getAnswer()[ 0 ]->getRDataValue( 'cname' ) )
         );
 
-        self::assertSame( 'www.example.com-v4.edgesuite.net', $msg->answer[ 1 ]->name() );
-        self::assertSame( 'CNAME', $msg->answer[ 1 ]->type() );
-        self::assertSame( 'IN', $msg->answer[ 1 ]->class() );
-        self::assertSame( 21507, $msg->answer[ 1 ]->ttl() );
+        self::assertSame( 'www.example.com-v4.edgesuite.net', $msg->getAnswer()[ 1 ]->name() );
+        self::assertSame( 'CNAME', $msg->getAnswer()[ 1 ]->type() );
+        self::assertSame( 'IN', $msg->getAnswer()[ 1 ]->class() );
+        self::assertSame( 21507, $msg->getAnswer()[ 1 ]->ttl() );
         self::assertSame(
             'a1422.dscr.akamai.net',
-            join( '.', $msg->answer[ 1 ][ 'cname' ] )
+            join( '.', $msg->getAnswer()[ 1 ]->getRDataValue( 'cname' ) )
         );
 
-        self::assertSame( 'a1422.dscr.akamai.net', $msg->answer[ 2 ]->name() );
-        self::assertSame( 'A', $msg->answer[ 2 ]->type() );
-        self::assertSame( 'IN', $msg->answer[ 2 ]->class() );
-        self::assertSame( 17, $msg->answer[ 2 ]->ttl() );
-        self::assertSame( '23.40.60.56', $msg->answer[ 2 ][ 'address' ] );
+        self::assertSame( 'a1422.dscr.akamai.net', $msg->getAnswer()[ 2 ]->name() );
+        self::assertSame( 'A', $msg->getAnswer()[ 2 ]->type() );
+        self::assertSame( 'IN', $msg->getAnswer()[ 2 ]->class() );
+        self::assertSame( 17, $msg->getAnswer()[ 2 ]->ttl() );
+        self::assertSame( '23.40.60.56', $msg->getAnswer()[ 2 ]->getRDataValue( 'address' ) );
 
-        self::assertSame( 'a1422.dscr.akamai.net', $msg->answer[ 3 ]->name() );
-        self::assertSame( 'A', $msg->answer[ 3 ]->type() );
-        self::assertSame( 'IN', $msg->answer[ 3 ]->class() );
-        self::assertSame( 17, $msg->answer[ 3 ]->ttl() );
-        self::assertSame( '23.40.60.40', $msg->answer[ 3 ][ 'address' ] );
+        self::assertSame( 'a1422.dscr.akamai.net', $msg->getAnswer()[ 3 ]->name() );
+        self::assertSame( 'A', $msg->getAnswer()[ 3 ]->type() );
+        self::assertSame( 'IN', $msg->getAnswer()[ 3 ]->class() );
+        self::assertSame( 17, $msg->getAnswer()[ 3 ]->ttl() );
+        self::assertSame( '23.40.60.40', $msg->getAnswer()[ 3 ]->getRDataValue( 'address' ) );
 
-        $opt = $msg->opt[ 0 ];
+        self::assertCount( 0, $msg->getAuthority() );
+        self::assertCount( 0, $msg->getAdditional() );
+        self::assertSame( 1, $msg->header()->getARCount() );
+
+        $opt = $msg->getOpt();
         assert( $opt instanceof OptResourceRecord );
         self::assertSame( 0, $opt->version() );
         self::assertSame( 1232, $opt->payloadSize() );
-        self::assertSame( [], $opt[ 'options' ] );
+        self::assertSame( [], $opt->getRDataValue( 'options' ) );
+
+    }
+
+
+    public function testDecode2() : void {
+        $stPacket =
+            "\x01\x02" # ID
+            . "\03\x04" # Flags
+            . "\x00\x01" # QDCount
+            . "\x00\x01" # ANCount
+            . "\x00\x01" # NSCount
+            . "\x00\x01"; # ARCount
+
+        # Question Section
+        $stPacket .=
+            "\x03bar\03baz\x00" # Question Name
+            . "\x12\x34" # Type
+            . "\x56\x78"; # Class
+
+        # Answer Section
+        $stPacket .=
+            "\xc0\x0c" # Pointer to Question Name
+            . "\x12\x34" # Answer Type
+            . "\x56\x78" # Answer Class
+            . "\x02\x03\x04\x05" # TTL
+            . "\x00\x04" # RDLENGTH
+            . "\x03\x04\x05\x06"; # RDATA
+
+        # Authority Section
+        $stPacket .=
+            "\x03foo\xc0\x0c" # Pointer to Question Name
+            . "\x23\x45" # Authority Type
+            . "\x67\x89" # Authority Class
+            . "\x12\x13\x14\x15" # TTL
+            . "\x00\x02" # RDLENGTH
+            . "\x43\x21"; # RDATA
+
+        # Additional Section
+        $stPacket .=
+            "\x03qux\xc0\x0c" # Pointer to Question Name
+            . "\x34\x56" # Additional Type
+            . "\x78\x9a" # Additional Class
+            . "\x11\x12\x13\x14" # TTL
+            . "\x00\x03" # RDLENGTH
+            . "\x01\x02\x03"; # RDATA
+
+        $buffer = new Buffer( $stPacket );
+        $codec = new RFC1035Codec();
+        $message = $codec->decode( $buffer );
+
+        self::assertSame( 0x0102, $message->id() );
+        self::assertSame( 0x0304, $message->header()->flagWordValue() );
+
+        self::assertCount( 1, $message->getQuestion() );
+        self::assertSame( 1, $message->header()->getQDCount() );
+        self::assertSame( [ 'bar', 'baz' ], $message->question()->getName() );
+        self::assertSame( 0x1234, $message->question()->typeValue() );
+        self::assertSame( 0x5678, $message->question()->classValue() );
+
+        self::assertCount( 1, $message->getAnswer() );
+        self::assertSame( 1, $message->header()->getANCount() );
+        self::assertSame( [ 'bar', 'baz' ], $message->answer( 0 )->getName() );
+        self::assertSame( 0x1234, $message->answer( 0 )->typeValue() );
+        self::assertSame( 0x5678, $message->answer( 0 )->classValue() );
+        self::assertSame( 0x2030405, $message->answer( 0 )->ttl() );
+        self::assertSame( "\x03\x04\x05\x06", $message->answer( 0 )->getRDataValue( 'rdata' ) );
+
+        self::assertCount( 1, $message->getAuthority() );
+        self::assertSame( [ 'foo', 'bar', 'baz' ], $message->authority( 0 )->getName() );
+        self::assertSame( 0x2345, $message->authority( 0 )->typeValue() );
+        self::assertSame( 0x6789, $message->authority( 0 )->classValue() );
+        self::assertSame( 0x12131415, $message->authority( 0 )->getTTL() );
+        self::assertSame( "\x43\x21", $message->authority( 0 )->getRDataValue( 'rdata' ) );
+
+        self::assertCount( 1, $message->getAdditional() );
+        self::assertSame( [ 'qux', 'bar', 'baz' ], $message->additional( 0 )->getName() );
+        self::assertSame( 0x3456, $message->additional( 0 )->typeValue() );
+        self::assertSame( 0x789a, $message->additional( 0 )->classValue() );
+        self::assertSame( 0x11121314, $message->additional( 0 )->getTTL() );
+        self::assertSame( "\x01\x02\x03", $message->additional( 0 )->getRDataValue( 'rdata' ) );
+
+    }
+
+
+    public function testDecodeQuestion() : void {
+        $stQuestion = "\x03bar\03baz\x00\x03foo\xC0\x00\x12\x34\x56\x78qux";
+        $buffer = new Buffer( $stQuestion );
+        $buffer->seek( 9 );
+        $question = RFC1035Codec::decodeQuestion( $buffer );
+        self::assertSame( [ 'foo', 'bar', 'baz' ], $question->getName() );
+        self::assertSame( 0x1234, $question->typeValue() );
+        self::assertSame( 0x5678, $question->classValue() );
+        self::assertSame( 'qux', $buffer->consume( 3 ) );
 
     }
 
@@ -108,15 +205,11 @@ final class RFC1035CodecTest extends TestCase {
             'baz' => RDataType::IPv4Address,
         ];
         $r = RFC1035Codec::decodeRData( $rDataMap, $buffer, $uEndOfRData );
+        assert( $r instanceof RData );
 
-        self::assertSame( RDataType::CharacterString, $r[ 'foo' ]->type );
-        self::assertSame( 'Bar', $r[ 'foo' ]->value );
-
-        self::assertSame( RDataType::UINT16, $r[ 'bar' ]->type );
-        self::assertSame( 0x0102, $r[ 'bar' ]->value );
-
-        self::assertSame( RDataType::IPv4Address, $r[ 'baz' ]->type );
-        self::assertSame( '3.4.5.6', $r[ 'baz' ]->value );
+        self::assertSame( 'Bar', $r[ 'foo' ] );
+        self::assertSame( 0x0102, $r[ 'bar' ] );
+        self::assertSame( '3.4.5.6', $r[ 'baz' ] );
 
         self::assertCount( 3, $r );
 
@@ -171,7 +264,7 @@ final class RFC1035CodecTest extends TestCase {
         $buffer->seek( 3 );
         $uEndOfRData = $buffer->length();
         $r = RFC1035Codec::decodeRDataValue( RDataType::CharacterString, $buffer, $uEndOfRData );
-        self::assertSame( 'Bar', $r->value );
+        self::assertSame( 'Bar', $r );
         self::assertSame( $uEndOfRDataValue, $buffer->tell() );
     }
 
@@ -182,12 +275,12 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRDataValue1 = $buffer->append( "\x03Qux\xC0\x07" );
         $uEndOfRDataValue2 = $buffer->length();
         $uEndOfRData = $buffer->append( 'QuuxCorge' );
-        $rdv = RFC1035Codec::decodeRDataValue( RDataType::DomainName, $buffer, $uEndOfRData );
-        self::assertSame( [ 'Bar', 'Baz' ], $rdv->value );
+        $value = RFC1035Codec::decodeRDataValue( RDataType::DomainName, $buffer, $uEndOfRData );
+        self::assertSame( [ 'Bar', 'Baz' ], $value );
         self::assertSame( $uEndOfRDataValue1, $buffer->tell() );
 
-        $rdv = RFC1035Codec::decodeRDataValue( RDataType::DomainName, $buffer, $uEndOfRData );
-        self::assertSame( [ 'Qux', 'Baz' ], $rdv->value );
+        $value = RFC1035Codec::decodeRDataValue( RDataType::DomainName, $buffer, $uEndOfRData );
+        self::assertSame( [ 'Qux', 'Baz' ], $value );
         self::assertSame( $uEndOfRDataValue2, $buffer->tell() );
     }
 
@@ -199,7 +292,7 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRData = $buffer->length();
 
         $rdv = RFC1035Codec::decodeRDataValue( RDataType::IPv4Address, $buffer, $uEndOfRData );
-        self::assertSame( '1.2.3.4', $rdv->value );
+        self::assertSame( '1.2.3.4', $rdv );
         self::assertSame( $uEndOfRDataValue, $buffer->tell() );
     }
 
@@ -211,7 +304,7 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRData = $buffer->length();
 
         $rdv = RFC1035Codec::decodeRDataValue( RDataType::IPv6Address, $buffer, $uEndOfRData );
-        self::assertSame( '2001:db8::1', $rdv->value );
+        self::assertSame( '2001:db8::1', $rdv );
         self::assertSame( $uEndOfRDataValue, $buffer->tell() );
     }
 
@@ -222,11 +315,10 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRDataValue = $buffer->append( 'Quux' );
         $uEndOfRData = $buffer->length();
 
-        $rdv = RFC1035Codec::decodeRDataValue( RDataType::Option, $buffer, $uEndOfRData );
-        self::assertSame( RDataType::Option, $rdv->type );
-        assert( $rdv->value instanceof Option );
-        self::assertSame( 0x102, $rdv->value->code );
-        self::assertSame( 'BarBazQux', $rdv->value->data );
+        $option = RFC1035Codec::decodeRDataValue( RDataType::Option, $buffer, $uEndOfRData );
+        assert( $option instanceof Option );
+        self::assertSame( 0x102, $option->code );
+        self::assertSame( 'BarBazQux', $option->data );
         self::assertSame( $uEndOfRDataValue, $buffer->tell() );
     }
 
@@ -236,19 +328,18 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRData = $buffer->append( 'Quux' );
         $buffer->seek( 3 );
 
-        $rdv = RFC1035Codec::decodeRDataValue( RDataType::OptionList, $buffer, $uEndOfRData );
-        self::assertSame( RDataType::OptionList, $rdv->type );
-        assert( is_array( $rdv->value ) );
-        self::assertCount( 3, $rdv->value );
+        $optionList = RFC1035Codec::decodeRDataValue( RDataType::OptionList, $buffer, $uEndOfRData );
+        assert( is_array( $optionList ) );
+        self::assertCount( 3, $optionList );
 
-        self::assertSame( 0x102, $rdv->value[ 0 ]->code );
-        self::assertSame( 'Bar', $rdv->value[ 0 ]->data );
+        self::assertSame( 0x102, $optionList[ 0 ]->code );
+        self::assertSame( 'Bar', $optionList[ 0 ]->data );
 
-        self::assertSame( 0x123, $rdv->value[ 1 ]->code );
-        self::assertSame( 'Baz', $rdv->value[ 1 ]->data );
+        self::assertSame( 0x123, $optionList[ 1 ]->code );
+        self::assertSame( 'Baz', $optionList[ 1 ]->data );
 
-        self::assertSame( 0x234, $rdv->value[ 2 ]->code );
-        self::assertSame( 'Qux', $rdv->value[ 2 ]->data );
+        self::assertSame( 0x234, $optionList[ 2 ]->code );
+        self::assertSame( 'Qux', $optionList[ 2 ]->data );
 
         self::assertSame( $uEndOfRData, $buffer->tell() );
     }
@@ -260,8 +351,8 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRDataValue = $buffer->append( 'Bar' );
         $uEndOfRData = $buffer->length();
 
-        $rdv = RFC1035Codec::decodeRDataValue( RDataType::UINT16, $buffer, $uEndOfRData );
-        self::assertSame( 0x1234, $rdv->value );
+        $u = RFC1035Codec::decodeRDataValue( RDataType::UINT16, $buffer, $uEndOfRData );
+        self::assertSame( 0x1234, $u );
         self::assertSame( $uEndOfRDataValue, $buffer->tell() );
     }
 
@@ -272,8 +363,8 @@ final class RFC1035CodecTest extends TestCase {
         $uEndOfRDataValue = $buffer->append( 'Bar' );
         $uEndOfRData = $buffer->length();
 
-        $rdv = RFC1035Codec::decodeRDataValue( RDataType::UINT32, $buffer, $uEndOfRData );
-        self::assertSame( 0x12345678, $rdv->value );
+        $u = RFC1035Codec::decodeRDataValue( RDataType::UINT32, $buffer, $uEndOfRData );
+        self::assertSame( 0x12345678, $u );
         self::assertSame( $uEndOfRDataValue, $buffer->tell() );
     }
 
@@ -289,7 +380,7 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 'A', $rr->type() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 0x1234567, $rr->ttl() );
-        self::assertSame( '1.2.3.4', $rr[ 'address' ] );
+        self::assertSame( '1.2.3.4', $rr->getRDataValue( 'address' ) );
         self::assertSame( $uEndOfRR, $buffer->tell() );
     }
 
@@ -317,7 +408,7 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 1232, $rr->payloadSize() );
         self::assertSame( 0, $rr->version() );
 
-        $options = $rr[ 'options' ];
+        $options = $rr->getRDataValue( 'options' );
         self::assertCount( 1, $options );
         self::assertSame( 10, $options[ 0 ]->code ); // COOKIE
         self::assertSame( "\x01\x02\x03\x04\x05\x06\x07\x08", $options[ 0 ]->data );
@@ -326,20 +417,23 @@ final class RFC1035CodecTest extends TestCase {
 
     public function testEncode() : void {
         $codec = new RFC1035Codec();
-        $msg = new Message();
-        $msg->id = 0x1234;
-        $msg->opcode = OpCode::QUERY;
-        $msg->rd = RD::RECURSION_DESIRED;
-        $msg->question[] = new Question( 'test', 'A', 'IN' );
+
+        // Create a request message using the factory method
+        $msg = Message::request( new Question( 'test', 'A', 'IN' ) );
+
+        // Update header properties
+        $msg->header()->setId( 0x1234 );
+        $msg->header()->setOpCode( OpCode::QUERY );
+        $msg->header()->setRD( RD::RECURSION_DESIRED );
 
         // Add an answer record
-        $msg->answer[] = new ResourceRecord(
+        $msg->addAnswer( new ResourceRecord(
             'test',
             'A',
             'IN',
             300,
-            [ 'address' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ) ]
-        );
+            new RData( 'A', [ 'address' => '1.2.3.4' ] )
+        ) );
 
         $st = $codec->encode( $msg );
 
@@ -348,7 +442,7 @@ final class RFC1035CodecTest extends TestCase {
         $st = substr( $st, 2 );
         self::assertStringStartsWith( "\x01\x00", $st ); // Flags (RD=1)
         $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x00\x01", $st ); // Question Count
+        self::assertStringStartsWith( HexDump::escape( "\x00\x01" ), HexDump::escape( $st ) ); // Question Count
         $st = substr( $st, 2 );
         self::assertStringStartsWith( "\x00\x01", $st ); // Answer Count
         $st = substr( $st, 2 );
@@ -366,7 +460,7 @@ final class RFC1035CodecTest extends TestCase {
         $st = substr( $st, 2 );
 
         // Answer
-        self::assertStringStartsWith( "\x04test\x00", $st ); // Name (uncompressed)
+        self::assertStringStartsWith( HexDump::escape( "\x04test\x00" ), HexDump::escape( $st ) ); // Name (uncompressed)
         $st = substr( $st, 6 );
         self::assertStringStartsWith( "\x00\x01", $st ); // Type A
         $st = substr( $st, 2 );
@@ -386,14 +480,15 @@ final class RFC1035CodecTest extends TestCase {
             'bar' => RDataType::UINT16,
             'baz' => RDataType::IPv4Address,
         ];
-        $rData = [
-            'foo' => new RDataValue( RDataType::CharacterString, 'Test' ),
-            'bar' => new RDataValue( RDataType::UINT16, 0x1234 ),
-            'baz' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ),
+        $rDataValues = [
+            'foo' => 'Test',
+            'bar' => 0x1234,
+            'baz' => '1.2.3.4',
         ];
+        $rData = new RData( $rDataMap, $rDataValues );
         $rLabelMap = [];
         $uOffset = 10;
-        $st = RFC1035Codec::encodeRData( $rDataMap, $rLabelMap, $uOffset, $rData );
+        $st = RFC1035Codec::encodeRData( $rData, $rLabelMap, $uOffset );
         self::assertSame( "\x04Test\x12\x34\x01\x02\x03\x04", $st );
         self::assertSame( 21, $uOffset ); // 10 + 5 + 2 + 4
     }
@@ -426,8 +521,7 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForCharacterString() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::CharacterString, 'Test string' );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::CharacterString, 'Test string', $rLabelMap, $uOffset );
         self::assertSame( "\x0bTest string", $st );
     }
 
@@ -435,8 +529,7 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForCharacterStringList() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::CharacterStringList, [ 'Foo', 'Bar', 'Baz' ] );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::CharacterStringList, [ 'Foo', 'Bar', 'Baz' ], $rLabelMap, $uOffset );
         self::assertSame( "\x03Foo\x03Bar\x03Baz", $st );
     }
 
@@ -444,16 +537,14 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForDomainName() : void {
         $rLabelMap = [];
         $uOffset = 3;
-        $rdv = new RDataValue( RDataType::DomainName, [ 'example', 'com' ] );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::DomainName, [ 'example', 'com' ], $rLabelMap, $uOffset );
         $uOffset += strlen( $st );
         self::assertSame( "\x07example\x03com\x00", $st );
         self::assertSame( 3, array_values( $rLabelMap )[ 0 ] ); // Offset for 'example'
         self::assertSame( 11, array_values( $rLabelMap )[ 1 ] ); // Offset for 'com'
         self::assertCount( 2, $rLabelMap );
 
-        $rdv = new RDataValue( RDataType::DomainName, [ 'sub', 'domain', 'example', 'com' ] );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::DomainName, [ 'sub', 'domain', 'example', 'com' ], $rLabelMap, $uOffset );
         self::assertSame( HexDump::escape( "\x03sub\x06domain\xc0\x03" ), HexDump::escape( $st ) );
     }
 
@@ -461,8 +552,7 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForIPv4() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::IPv4Address, '1.2.3.4' );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::IPv4Address, '1.2.3.4', $rLabelMap, $uOffset );
         self::assertSame( "\x01\x02\x03\x04", $st );
     }
 
@@ -470,8 +560,7 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForIPv6() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::IPv6Address, '2001:db8::1' );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::IPv6Address, '2001:db8::1', $rLabelMap, $uOffset );
         self::assertSame( "\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", $st );
     }
 
@@ -479,8 +568,7 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForOption() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::Option, new Option( 0x123, 'Test data' ) );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::Option, new Option( 0x123, 'Test data' ), $rLabelMap, $uOffset );
         self::assertSame( "\x01\x23\x00\x09Test data", $st );
     }
 
@@ -488,11 +576,10 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForOptionList() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::OptionList, [
+        $st = RFC1035Codec::encodeRDataValue( RDataType::OptionList, [
             new Option( 0x123, 'Test data' ),
             new Option( 0x456, 'More data' ),
-        ] );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        ], $rLabelMap, $uOffset );
         self::assertSame( "\x01\x23\x00\x09Test data\x04\x56\x00\x09More data", $st );
     }
 
@@ -500,8 +587,7 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForUINT16() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::UINT16, 0x1234 );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::UINT16, 0x1234, $rLabelMap, $uOffset );
         self::assertSame( "\x12\x34", $st );
     }
 
@@ -509,19 +595,19 @@ final class RFC1035CodecTest extends TestCase {
     public function testEncodeRDataValueForUINT32() : void {
         $rLabelMap = [];
         $uOffset = 0;
-        $rdv = new RDataValue( RDataType::UINT32, 0x12345678 );
-        $st = RFC1035Codec::encodeRDataValue( $rdv, $rLabelMap, $uOffset );
+        $st = RFC1035Codec::encodeRDataValue( RDataType::UINT32, 0x12345678, $rLabelMap, $uOffset );
         self::assertSame( "\x12\x34\x56\x78", $st );
     }
 
 
     public function testEncodeResourceRecord() : void {
+        $rData = new RData( 'A', [ 'address' => '1.2.3.4' ] );
         $rr = new ResourceRecord(
             [ 'example', 'com' ],
             'A',
             'IN',
             300,
-            [ 'address' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ) ]
+            $rData
         );
         $rLabelMap = [];
         $uOffset = 12;

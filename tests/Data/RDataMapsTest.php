@@ -26,4 +26,16 @@ class RDataMapsTest extends TestCase {
     }
 
 
+    public function testTryMap() : void {
+        $r = RDataMaps::tryMap( 'A' );
+        self::assertSame( [ 'address' => RDataType::IPv4Address ], $r );
+
+        $r = RDataMaps::tryMap( RecordType::AAAA );
+        self::assertSame( [ 'address' => RDataType::IPv6Address ], $r );
+
+        $r = RDataMaps::tryMap( RecordType::ZZZ_TEST_ONLY_DO_NOT_USE );
+        self::assertNull( $r );
+    }
+
+
 }

@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Transport\UdpTransport;
+use JDWX\DNSQuery\Transport\SocketTransport;
 
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -20,7 +20,7 @@ require __DIR__ . '/../vendor/autoload.php';
     # not how it actually works.
 
     $codec = new RFC1035Codec();
-    $xpt = new UdpTransport( '1.1.1.1' );
+    $xpt = SocketTransport::udp( '1.1.1.1' );
 
     # Client sends request
     $request = Message::request( 'example.com', 'A' );
@@ -47,6 +47,10 @@ require __DIR__ . '/../vendor/autoload.php';
 
     # Client receives response
     $response = $client->receiveResponse();
+    if ( ! $response instanceof Message ) {
+        echo "No response received.\n";
+        return;
+    }
     echo HexDump::dump( $codec->encode( $response ) ), "\n";
     echo $response;
 

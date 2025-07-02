@@ -26,15 +26,15 @@ final class MessageCacheTest extends TestCase {
         $req = Message::request( 'example.com', 'MX', 'IN' );
         $rsp = Message::response( $req );
         $mx = ResourceRecord::fromString( 'example.com 3600 IN MX 10 smtp.example.com' );
-        $rsp->answer[] = $mx;
+        $rsp->addAnswer( $mx );
 
         $cache->put( 'foo', $rsp );
 
         self::assertTrue( $cache->has( 'foo' ) );
         $xx = $cache->get( 'foo' );
-        $ans = $xx->answer[ 0 ];
+        $ans = $xx->getAnswer()[ 0 ];
         self::assertTrue( $ans->isType( 'MX' ) );
-        self::assertEquals( [ 'smtp', 'example', 'com' ], $ans[ 'exchange' ] );
+        self::assertEquals( [ 'smtp', 'example', 'com' ], $ans->getRDataValue( 'exchange' ) );
     }
 
 

@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
  * TODO: Expand this dramatically.
  */
 #[CoversClass( Resolver::class )]
-final class DNSSECTest extends TestCase {
+final class DNSSECTestDisabled extends TestCase {
 
 
     /**

@@ -50,11 +50,6 @@ class OptResourceRecord extends ResourceRecord {
     }
 
 
-    public function classValue() : int {
-        return $this->payloadSize();
-    }
-
-
     public function getClass() : RecordClass {
         throw new LogicException( 'OPT records do not have a class.' );
     }

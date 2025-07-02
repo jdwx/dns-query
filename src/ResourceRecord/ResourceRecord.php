@@ -70,7 +70,7 @@ class ResourceRecord extends AbstractResourceRecord {
 
 
     /** @param array<string, mixed> $i_data */
-    public static function fromArray( array $i_data ) : self {
+    public static function fromArray( array $i_data ) : static {
         $rRequiredFields = [ 'type', 'class' ];
         foreach ( $rRequiredFields as $stField ) {
             if ( ! isset( $i_data[ $stField ] ) ) {
@@ -85,8 +85,13 @@ class ResourceRecord extends AbstractResourceRecord {
             : null;
 
         $rData = $i_data[ 'rdata' ] ?? $i_data;
+        if ( ! $rData instanceof RDataInterface ) {
+            $map = RDataMaps::map( $uType );
+            $rData = new RData( $map, $rData );
+        }
 
-        return new self(
+        /** @phpstan-ignore new.static */
+        return new static(
             $rName,
             $uType,
             $uClass,
@@ -246,6 +251,11 @@ class ResourceRecord extends AbstractResourceRecord {
             'ttl' => $this->uTTL,
         ];
         return array_merge( $rOut, $this->rData->toArray() );
+    }
+
+
+    public function typeValue() : int {
+        return $this->uType;
     }
 
 

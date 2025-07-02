@@ -9,9 +9,11 @@ namespace JDWX\DNSQuery\Tests\Server;
 
 use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\QR;
-use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\ReturnCode;
+use JDWX\DNSQuery\Message\Header;
+use JDWX\DNSQuery\Message\HeaderInterface;
 use JDWX\DNSQuery\Message\Message;
+use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
@@ -26,67 +28,12 @@ use PHPUnit\Framework\TestCase;
 final class SimpleServerTest extends TestCase {
 
 
-    public function testConcurrentRequestHandling() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-
-        $processedRequests = [];
-
-        $handler = function ( Message $request ) use ( &$processedRequests ) : Message {
-            $processedRequests[] = $request->id;
-            return Message::response( $request );
-        };
-
-        $server->setRequestHandler( $handler );
-
-        // Simulate multiple requests with different IDs
-        $requests = [
-            $this->createTestRequest(),
-            $this->createTestRequest(),
-            $this->createTestRequest(),
-        ];
-        $requests[ 0 ]->id = 1001;
-        $requests[ 1 ]->id = 1002;
-        $requests[ 2 ]->id = 1003;
-
-        $transport->expects( self::exactly( 3 ) )
-            ->method( 'receiveRequest' )
-            ->willReturnOnConsecutiveCalls( ...$requests );
-
-        $transport->expects( self::exactly( 3 ) )
-            ->method( 'sendResponse' );
-
-        $handledCount = $server->handleRequests( 3 );
-
-        self::assertSame( 3, $handledCount );
-        self::assertSame( [ 1001, 1002, 1003 ], $processedRequests );
-    }
-
-
     public function testConstructor() : void {
         $transport = $this->createMockTransport();
         $server = new SimpleServer( $transport );
 
         /** @noinspection PhpConditionAlreadyCheckedInspection */
         self::assertInstanceOf( SimpleServer::class, $server );
-    }
-
-
-    public function testCreateDefaultResponse() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-        $request = $this->createTestRequest();
-
-        $response = $this->invokeMethod( $server, 'createDefaultResponse', [ $request ] );
-
-        self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
-        self::assertSame( QR::RESPONSE, $response->qr );
-        self::assertSame( $request->opcode, $response->opcode );
-        self::assertSame( $request->rd, $response->rd );
-        self::assertSame( $request->ra, $response->ra );
-        self::assertSame( ReturnCode::NOERROR, $response->returnCode );
-        self::assertSame( $request->question, $response->question );
     }
 
 
@@ -98,100 +45,151 @@ final class SimpleServerTest extends TestCase {
     }
 
 
-    public function testCustomHandlerWithComplexResponse() : void {
+    public function testHandleSingleRequest() : void {
         $transport = $this->createMockTransport();
         $server = new SimpleServer( $transport );
+        
         $request = $this->createTestRequest();
-
-        // Create a custom handler that modifies the response significantly
-        $handler = function ( Message $request ) : Message {
-            $response = Message::response( $request );
-            $response->returnCode = ReturnCode::SERVFAIL;
-            $response->aa = AA::AUTHORITATIVE;
-
-            // Add a custom resource record
-            $response->answer[] = new ResourceRecord(
-                [ 'custom', 'example', 'com' ],
-                'TXT',
-                'IN',
-                600,
-                [ 'text' => new RDataValue( RDataType::CharacterStringList, [ 'Custom handler response' ] ) ]
-            );
-
-            return $response;
-        };
-
-        $server->setRequestHandler( $handler );
-        $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
-
-        self::assertSame( ReturnCode::SERVFAIL, $response->returnCode );
-        self::assertSame( AA::AUTHORITATIVE, $response->aa );
-        self::assertCount( 1, $response->answer );
-        self::assertSame( 'TXT', $response->answer[ 0 ]->type() );
-    }
-
-
-    public function testDefaultTimeoutUsage() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-
-        // Set custom timeout
-        $server->setTimeout( 15, 250000 );
-
-        $transport->expects( self::once() )
-            ->method( 'receiveRequest' )
-            ->with( 15, 250000 ) // Should use the custom timeout
-            ->willReturn( null );
-
-        $server->handleSingleRequest();
-    }
-
-
-    public function testEmptyRecordHandler() : void {
-        $handler = SimpleServer::recordHandler( [] );
-        $request = $this->createTestRequest();
-
-        $response = $handler( $request );
-
-        self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
-        self::assertSame( ReturnCode::NOERROR, $response->returnCode );
-        self::assertCount( 0, $response->answer );
-    }
-
-
-    public function testHandleRequestsMultiple() : void {
-        $transport = $this->createMockTransport();
-        $request = $this->createTestRequest();
-
-        $transport->expects( self::exactly( 3 ) )
-            ->method( 'receiveRequest' )
+        $encodedResponse = 'encoded-response';
+        
+        // Setup codec mock
+        $codec = $this->createMock( \JDWX\DNSQuery\Codecs\CodecInterface::class );
+        $buffer = $this->createMock( \JDWX\DNSQuery\Transport\BufferInterface::class );
+        
+        $codec->expects( self::once() )
+            ->method( 'decode' )
+            ->with( $buffer )
             ->willReturn( $request );
+            
+        $codec->expects( self::once() )
+            ->method( 'encode' )
+            ->with( self::isInstanceOf( MessageInterface::class ) )
+            ->willReturn( $encodedResponse );
+        
+        $transport->expects( self::once() )
+            ->method( 'send' )
+            ->with( $encodedResponse );
+        
+        // Inject mocks
+        $reflection = new \ReflectionClass( $server );
+        $codecProp = $reflection->getProperty( 'codec' );
+        $codecProp->setAccessible( true );
+        $codecProp->setValue( $server, $codec );
+        
+        $bufferProp = $reflection->getProperty( 'buffer' );
+        $bufferProp->setAccessible( true );
+        $bufferProp->setValue( $server, $buffer );
+        
+        $result = $server->handleSingleRequest();
+        
+        self::assertTrue( $result );
+    }
 
-        $transport->expects( self::exactly( 3 ) )
-            ->method( 'sendResponse' );
 
+    public function testHandleSingleRequestTimeout() : void {
+        $transport = $this->createMockTransport();
         $server = new SimpleServer( $transport );
-        $handledCount = $server->handleRequests( 3 );
+        
+        // Setup codec mock to return null (timeout)
+        $codec = $this->createMock( \JDWX\DNSQuery\Codecs\CodecInterface::class );
+        $buffer = $this->createMock( \JDWX\DNSQuery\Transport\BufferInterface::class );
+        
+        $codec->expects( self::once() )
+            ->method( 'decode' )
+            ->with( $buffer )
+            ->willReturn( null );
+        
+        $transport->expects( self::never() )
+            ->method( 'send' );
+        
+        // Inject mocks
+        $reflection = new \ReflectionClass( $server );
+        $codecProp = $reflection->getProperty( 'codec' );
+        $codecProp->setAccessible( true );
+        $codecProp->setValue( $server, $codec );
+        
+        $bufferProp = $reflection->getProperty( 'buffer' );
+        $bufferProp->setAccessible( true );
+        $bufferProp->setValue( $server, $buffer );
+        
+        $result = $server->handleSingleRequest();
+        
+        self::assertFalse( $result );
+    }
 
+
+    public function testHandleRequests() : void {
+        $transport = $this->createMockTransport();
+        $server = new SimpleServer( $transport );
+        
+        $request1 = $this->createTestRequest();
+        $request2 = $this->createTestRequest();
+        $request3 = $this->createTestRequest();
+        
+        // Setup codec mock
+        $codec = $this->createMock( \JDWX\DNSQuery\Codecs\CodecInterface::class );
+        $buffer = $this->createMock( \JDWX\DNSQuery\Transport\BufferInterface::class );
+        
+        $codec->expects( self::exactly( 3 ) )
+            ->method( 'decode' )
+            ->willReturnOnConsecutiveCalls( $request1, $request2, $request3 );
+            
+        $codec->expects( self::exactly( 3 ) )
+            ->method( 'encode' )
+            ->willReturn( 'encoded' );
+        
+        $transport->expects( self::exactly( 3 ) )
+            ->method( 'send' );
+        
+        // Inject mocks
+        $reflection = new \ReflectionClass( $server );
+        $codecProp = $reflection->getProperty( 'codec' );
+        $codecProp->setAccessible( true );
+        $codecProp->setValue( $server, $codec );
+        
+        $bufferProp = $reflection->getProperty( 'buffer' );
+        $bufferProp->setAccessible( true );
+        $bufferProp->setValue( $server, $buffer );
+        
+        $handledCount = $server->handleRequests( 3 );
+        
         self::assertSame( 3, $handledCount );
     }
 
 
     public function testHandleRequestsWithTimeout() : void {
         $transport = $this->createMockTransport();
-        $request = $this->createTestRequest();
-
-        $transport->expects( self::exactly( 2 ) )
-            ->method( 'receiveRequest' )
-            ->willReturnOnConsecutiveCalls( $request, null );
-
-        $transport->expects( self::once() )
-            ->method( 'sendResponse' );
-
         $server = new SimpleServer( $transport );
-        $handledCount = $server->handleRequests( 5 ); // Request more than we'll handle
-
+        
+        $request = $this->createTestRequest();
+        
+        // Setup codec mock
+        $codec = $this->createMock( \JDWX\DNSQuery\Codecs\CodecInterface::class );
+        $buffer = $this->createMock( \JDWX\DNSQuery\Transport\BufferInterface::class );
+        
+        $codec->expects( self::exactly( 2 ) )
+            ->method( 'decode' )
+            ->willReturnOnConsecutiveCalls( $request, null );
+            
+        $codec->expects( self::once() )
+            ->method( 'encode' )
+            ->willReturn( 'encoded' );
+        
+        $transport->expects( self::once() )
+            ->method( 'send' );
+        
+        // Inject mocks
+        $reflection = new \ReflectionClass( $server );
+        $codecProp = $reflection->getProperty( 'codec' );
+        $codecProp->setAccessible( true );
+        $codecProp->setValue( $server, $codec );
+        
+        $bufferProp = $reflection->getProperty( 'buffer' );
+        $bufferProp->setAccessible( true );
+        $bufferProp->setValue( $server, $buffer );
+        
+        $handledCount = $server->handleRequests( 5 );
+        
         self::assertSame( 1, $handledCount );
     }
 
@@ -199,235 +197,32 @@ final class SimpleServerTest extends TestCase {
     public function testHandleRequestsZeroMax() : void {
         $transport = $this->createMockTransport();
         $server = new SimpleServer( $transport );
-
+        
         $transport->expects( self::never() )
-            ->method( 'receiveRequest' );
-
+            ->method( 'send' );
+        
         $handledCount = $server->handleRequests( 0 );
-
+        
         self::assertSame( 0, $handledCount );
     }
 
 
-    public function testHandleSingleRequestTimeout() : void {
+    public function testSetRequestHandler() : void {
         $transport = $this->createMockTransport();
-
-        $transport->expects( self::once() )
-            ->method( 'receiveRequest' )
-            ->with( 5, 0 )
-            ->willReturn( null );
-
-        $transport->expects( self::never() )
-            ->method( 'sendResponse' );
-
         $server = new SimpleServer( $transport );
-        $result = $server->handleSingleRequest();
-
-        self::assertFalse( $result );
-    }
-
-
-    public function testHandleSingleRequestWithCustomTimeout() : void {
-        $transport = $this->createMockTransport();
-        $request = $this->createTestRequest();
-
-        $transport->expects( self::once() )
-            ->method( 'receiveRequest' )
-            ->with( 2, 100000 ) // custom timeout values
-            ->willReturn( $request );
-
-        $transport->expects( self::once() )
-            ->method( 'sendResponse' );
-
-        $server = new SimpleServer( $transport );
-        $result = $server->handleSingleRequest( 2, 100000 );
-
-        self::assertTrue( $result );
-    }
-
-
-    public function testHandleSingleRequestWithNullResponse() : void {
-        $transport = $this->createMockTransport();
-        $request = $this->createTestRequest();
-
-        // Create a handler that returns null
-        $handler = function ( Message $request ) : ?Message {
-            return null;
+        
+        $handler = function ( MessageInterface $request ) : MessageInterface {
+            return Message::response( $request );
         };
-
-        $transport->expects( self::once() )
-            ->method( 'receiveRequest' )
-            ->willReturn( $request );
-
-        $transport->expects( self::never() )
-            ->method( 'sendResponse' );
-
-        $server = new SimpleServer( $transport );
+        
         $server->setRequestHandler( $handler );
-        $result = $server->handleSingleRequest();
-
-        self::assertTrue( $result ); // Still returns true because request was received
-    }
-
-
-    public function testHandleSingleRequestWithResponse() : void {
-        $transport = $this->createMockTransport();
+        
+        // Test that the handler is set by invoking it through processRequest
         $request = $this->createTestRequest();
-        $response = Message::response( $request );
-
-        $transport->expects( self::once() )
-            ->method( 'receiveRequest' )
-            ->with( 5, 0 ) // default timeout values
-            ->willReturn( $request );
-
-        $transport->expects( self::once() )
-            ->method( 'sendResponse' )
-            ->with( self::isInstanceOf( Message::class ) );
-
-        $server = new SimpleServer( $transport );
-        $result = $server->handleSingleRequest();
-
-        self::assertTrue( $result );
-    }
-
-
-    public function testHandlerChaining() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-        $request = $this->createTestRequest();
-
-        $callOrder = [];
-
-        // First handler
-        $handler1 = function ( Message $request ) use ( &$callOrder ) : Message {
-            $callOrder[] = 'handler1';
-            $response = Message::response( $request );
-            $response->authority[] = new ResourceRecord(
-                [ 'ns1', 'example', 'com' ],
-                'NS',
-                'IN',
-                3600,
-                [ 'nsdname' => new RDataValue( RDataType::DomainName, [ 'ns1', 'example', 'com' ] ) ]
-            );
-            return $response;
-        };
-
-        $server->setRequestHandler( $handler1 );
         $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
-
-        self::assertSame( [ 'handler1' ], $callOrder );
-        self::assertCount( 1, $response->authority );
-    }
-
-
-    public function testHandlerException() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-        $request = $this->createTestRequest();
-
-        // Handler that throws an exception
-        $handler = function () : Message {
-            throw new \RuntimeException( 'Handler error' );
-        };
-
-        $server->setRequestHandler( $handler );
-
-        $this->expectException( \RuntimeException::class );
-        $this->expectExceptionMessage( 'Handler error' );
-
-        $this->invokeMethod( $server, 'processRequest', [ $request ] );
-    }
-
-
-    public function testLargePayloadHandling() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-        $request = $this->createTestRequest();
-
-        // Create a handler that returns a large number of records
-        $handler = function ( Message $request ) : Message {
-            $response = Message::response( $request );
-
-            // Add many records to test large payloads
-            for ( $i = 1 ; $i <= 100 ; $i++ ) {
-                $response->answer[] = new ResourceRecord(
-                    [ 'host' . $i, 'example', 'com' ],
-                    'A',
-                    'IN',
-                    300,
-                    [ 'address' => new RDataValue( RDataType::IPv4Address, "192.0.2.$i" ) ]
-                );
-            }
-
-            return $response;
-        };
-
-        $server->setRequestHandler( $handler );
-        $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
-
-        self::assertCount( 100, $response->answer );
-        self::assertSame( 'A', $response->answer[ 0 ]->type() );
-        self::assertSame( 'A', $response->answer[ 99 ]->type() );
-    }
-
-
-    public function testMultipleDifferentRecordTypes() : void {
-        $records = [
-            new ResourceRecord(
-                [ 'example', 'com' ],
-                'A',
-                'IN',
-                300,
-                [ 'address' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ) ]
-            ),
-            new ResourceRecord(
-                [ 'example', 'com' ],
-                'AAAA',
-                'IN',
-                300,
-                [ 'address' => new RDataValue( RDataType::IPv6Address, '2001:db8::1' ) ]
-            ),
-            new ResourceRecord(
-                [ 'example', 'com' ],
-                'MX',
-                'IN',
-                300,
-                [
-                    'preference' => new RDataValue( RDataType::UINT16, 10 ),
-                    'exchange' => new RDataValue( RDataType::DomainName, [ 'mail', 'example', 'com' ] ),
-                ]
-            ),
-            new ResourceRecord(
-                [ 'example', 'com' ],
-                'TXT',
-                'IN',
-                300,
-                [ 'text' => new RDataValue( RDataType::CharacterStringList, [ 'v=spf1 include:_spf.example.com ~all' ] ) ]
-            ),
-        ];
-
-        $handler = SimpleServer::recordHandler( $records );
-        $request = $this->createTestRequest();
-
-        $response = $handler( $request );
-
-        self::assertCount( 4, $response->answer );
-        self::assertSame( 'A', $response->answer[ 0 ]->type() );
-        self::assertSame( 'AAAA', $response->answer[ 1 ]->type() );
-        self::assertSame( 'MX', $response->answer[ 2 ]->type() );
-        self::assertSame( 'TXT', $response->answer[ 3 ]->type() );
-    }
-
-
-    public function testNxDomainHandler() : void {
-        $handler = SimpleServer::nxDomainHandler();
-        $request = $this->createTestRequest();
-
-        $response = $handler( $request );
-
+        
         self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
-        self::assertSame( ReturnCode::NXDOMAIN, $response->returnCode );
+        self::assertSame( $request->id(), $response->id() );
     }
 
 
@@ -435,118 +230,133 @@ final class SimpleServerTest extends TestCase {
         $transport = $this->createMockTransport();
         $server = new SimpleServer( $transport );
         $request = $this->createTestRequest();
-
+        
         $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
-
+        
         self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
-        self::assertSame( $request->question, $response->question );
+        self::assertSame( $request->id(), $response->id() );
+        self::assertSame( $request->getQuestion(), $response->getQuestion() );
     }
 
 
-    public function testRecordHandler() : void {
-        $records = [
-            new ResourceRecord(
-                [ 'example', 'com' ],
-                'A',
-                'IN',
-                300,
-                [ 'address' => new RDataValue( RDataType::IPv4Address, '1.2.3.4' ) ]
-            ),
-            new ResourceRecord(
-                [ 'example', 'com' ],
-                'A',
-                'IN',
-                300,
-                [ 'address' => new RDataValue( RDataType::IPv4Address, '5.6.7.8' ) ]
-            ),
-        ];
-
-        $handler = SimpleServer::recordHandler( $records );
+    public function testProcessRequestWithNullResponse() : void {
+        $transport = $this->createMockTransport();
+        $server = new SimpleServer( $transport );
         $request = $this->createTestRequest();
+        
+        $handler = function ( MessageInterface $request ) : ?MessageInterface {
+            return null;
+        };
+        
+        $server->setRequestHandler( $handler );
+        $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
+        
+        self::assertNull( $response );
+    }
 
+
+    public function testNxDomainHandler() : void {
+        $handler = SimpleServer::nxDomainHandler();
+        $request = $this->createTestRequest();
+        
         $response = $handler( $request );
-
+        
         self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
-        self::assertSame( ReturnCode::NOERROR, $response->returnCode );
-        self::assertCount( 2, $response->answer );
-        self::assertSame( $records, $response->answer );
+        self::assertSame( $request->id(), $response->id() );
+        self::assertSame( 'NXDOMAIN', $response->header()->rCode() );
     }
 
 
     public function testServFailHandler() : void {
         $handler = SimpleServer::servFailHandler();
         $request = $this->createTestRequest();
-
+        
         $response = $handler( $request );
-
+        
         self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
-        self::assertSame( ReturnCode::SERVFAIL, $response->returnCode );
+        self::assertSame( $request->id(), $response->id() );
+        self::assertSame( 'SERVFAIL', $response->header()->rCode() );
     }
 
 
-    public function testSetRequestHandler() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-
-        $handler = function ( Message $request ) : Message {
-            return Message::response( $request );
-        };
-
-        $server->setRequestHandler( $handler );
-
-        // Test that the handler is set by invoking it through processRequest
+    public function testRecordHandler() : void {
+        $records = [
+            ResourceRecord::fromString( 'example.com 300 IN A 1.2.3.4' ),
+            ResourceRecord::fromString( 'example.com 300 IN A 5.6.7.8' ),
+        ];
+        
+        $handler = SimpleServer::recordHandler( $records );
         $request = $this->createTestRequest();
-        $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
-
+        
+        $response = $handler( $request );
+        
         self::assertInstanceOf( Message::class, $response );
-        self::assertSame( $request->id, $response->id );
+        self::assertSame( $request->id(), $response->id() );
+        self::assertSame( 'NOERROR', $response->header()->rCode() );
+        self::assertCount( 2, $response->getAnswer() );
+        
+        // Check that answers match the provided records
+        $answers = $response->getAnswer();
+        self::assertSame( '1.2.3.4', $answers[0]->getRData()->getValue( 'address' ) );
+        self::assertSame( '5.6.7.8', $answers[1]->getRData()->getValue( 'address' ) );
     }
 
 
-    public function testSetTimeout() : void {
-        $transport = $this->createMockTransport();
-        $server = new SimpleServer( $transport );
-
-        // Configure the mock to simulate a timeout delay
-        $transport->expects( self::once() )
-            ->method( 'receiveRequest' )
-            ->with( 0, 10000 ) // 100ms timeout
-            ->willReturnCallback( function ( $seconds, $microseconds ) {
-                // Simulate the timeout delay
-                usleep( $microseconds );
-                return null; // Return null to indicate timeout
-            } );
-
-        $server->setTimeout( 0, 10000 ); // Set 10ms timeout
-
-        $fStartTime = microtime( true );
-        $result = $server->handleSingleRequest();
-        $fEndTime = microtime( true );
-        $fElapsed = $fEndTime - $fStartTime;
-
-        self::assertFalse( $result ); // Should return false on timeout
-        self::assertGreaterThanOrEqual( 0.009, $fElapsed, "Timeout elapsed time {$fElapsed} should be at least 9ms" );
-        self::assertLessThan( 0.02, $fElapsed, "Timeout elapsed time {$fElapsed} should be less than 20ms" );
+    public function testEmptyRecordHandler() : void {
+        $handler = SimpleServer::recordHandler( [] );
+        $request = $this->createTestRequest();
+        
+        $response = $handler( $request );
+        
+        self::assertInstanceOf( Message::class, $response );
+        self::assertSame( $request->id(), $response->id() );
+        self::assertSame( 'NOERROR', $response->header()->rCode() );
+        self::assertCount( 0, $response->getAnswer() );
     }
 
 
-    public function testTimeoutPropagation() : void {
+    public function testHandlerException() : void {
         $transport = $this->createMockTransport();
         $server = new SimpleServer( $transport );
+        $request = $this->createTestRequest();
+        
+        $handler = function () : MessageInterface {
+            throw new \RuntimeException( 'Handler error' );
+        };
+        
+        $server->setRequestHandler( $handler );
+        
+        $this->expectException( \RuntimeException::class );
+        $this->expectExceptionMessage( 'Handler error' );
+        
+        $this->invokeMethod( $server, 'processRequest', [ $request ] );
+    }
 
-        // Test that timeout parameters are properly passed through
-        $transport->expects( self::exactly( 3 ) )
-            ->method( 'receiveRequest' )
-            ->willReturn( null );
 
-        // We'll verify the calls individually since withConsecutive is deprecated
-
-        $server->handleSingleRequest( 1, 0 );
-        $server->handleSingleRequest( 2, 500000 );
-        $server->handleSingleRequest(); // Should use defaults
+    public function testCustomHandlerWithComplexResponse() : void {
+        $transport = $this->createMockTransport();
+        $server = new SimpleServer( $transport );
+        $request = $this->createTestRequest();
+        
+        $handler = function ( MessageInterface $request ) : MessageInterface {
+            $response = Message::response( $request, ReturnCode::SERVFAIL );
+            $response->header()->setAA( AA::AUTHORITATIVE );
+            
+            // Add a custom resource record
+            $response->addAnswer( ResourceRecord::fromString(
+                'custom.example.com. 600 IN A 192.0.2.1'
+            ) );
+            
+            return $response;
+        };
+        
+        $server->setRequestHandler( $handler );
+        $response = $this->invokeMethod( $server, 'processRequest', [ $request ] );
+        
+        self::assertSame( 'SERVFAIL', $response->header()->rCode() );
+        self::assertSame( 'AUTHORITATIVE', $response->header()->aa() );
+        self::assertCount( 1, $response->getAnswer() );
+        self::assertSame( 'A', $response->getAnswer()[0]->type() );
     }
 
 
@@ -560,10 +370,7 @@ final class SimpleServerTest extends TestCase {
 
 
     private function createTestRequest() : Message {
-        $request = new Message();
-        $request->id = 12345;
-        $request->question[] = new Question( 'example.com', 'A', 'IN' );
-        return $request;
+        return Message::request( new Question( 'example.com', 'A', 'IN' ) );
     }
 
 

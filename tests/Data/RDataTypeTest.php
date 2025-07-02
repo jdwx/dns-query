@@ -21,11 +21,11 @@ final class RDataTypeTest extends TestCase {
     public function testConsume() : void {
         $args = [ 'example.com', 'bar', 'baz' ];
         $rDataValue = RDataType::DomainName->consume( $args );
-        self::assertSame( [ 'example', 'com' ], $rDataValue->value );
+        self::assertSame( [ 'example', 'com' ], $rDataValue );
         self::assertSame( [ 'bar', 'baz' ], $args );
 
         $rDataValue = RDataType::CharacterStringList->consume( $args );
-        self::assertSame( [ 'bar', 'baz' ], $rDataValue->value );
+        self::assertSame( [ 'bar', 'baz' ], $rDataValue );
         self::assertSame( [], $args );
     }
 

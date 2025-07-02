@@ -20,6 +20,11 @@ abstract class AbstractResourceRecord implements ResourceRecordInterface {
     }
 
 
+    public function getRDataValue( string $i_stKey ) : mixed {
+        return $this->getRData()->toArray()[ $i_stKey ];
+    }
+
+
     public function isClass( int|string|RecordClass $i_class ) : bool {
         return $this->getClass()->is( $i_class );
     }

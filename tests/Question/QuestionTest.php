@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests\Message;
+namespace JDWX\DNSQuery\Tests\Question;
 
 
 use JDWX\DNSQuery\Question\Question;

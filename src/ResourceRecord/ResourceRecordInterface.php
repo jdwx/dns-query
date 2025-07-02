@@ -31,6 +31,9 @@ interface ResourceRecordInterface extends Stringable {
     public function getRData() : RDataInterface;
 
 
+    public function getRDataValue( string $i_stKey ) : mixed;
+
+
     public function getTTL() : int;
 
 

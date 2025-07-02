@@ -28,15 +28,15 @@ final class AbstractCacheTest extends TestCase {
         self::assertSame( 12345, AbstractCache::calculateTTL( $msg, 12345 ) );
 
         $rrAnswer = ResourceRecord::fromString( 'foo 3600 IN MX 10 bar' );
-        $msg->answer[] = $rrAnswer;
+        $msg->addAnswer( $rrAnswer );
         self::assertSame( 3600, AbstractCache::calculateTTL( $msg, 12345 ) );
 
         $rrAuthority = ResourceRecord::fromString( 'foo 3500 IN NS bar.baz.' );
-        $msg->authority[] = $rrAuthority;
+        $msg->addAuthority( $rrAuthority );
         self::assertSame( 3500, AbstractCache::calculateTTL( $msg, 12345 ) );
 
         $rrAdditional = ResourceRecord::fromString( 'foo 3400 IN A 1.2.3.4' );
-        $msg->additional[] = $rrAdditional;
+        $msg->addAdditional( $rrAdditional );
         self::assertSame( 3400, AbstractCache::calculateTTL( $msg, 12345 ) );
 
         $rrAnswer->setTTL( 3300 );
@@ -67,8 +67,8 @@ final class AbstractCacheTest extends TestCase {
 
     public function testHash() : void {
         $q1 = new Question( 'example.com', 'A', 'IN' );
-        $q2 = Message::request( 'example.com', 'AAAA', 'IN' );
-        $q3 = Message::request( 'example.com', 'A', 'CH' );
+        $q2 = new Question( 'example.com', 'AAAA', 'IN' );
+        $q3 = new Question( 'example.com', 'A', 'CH' );
         self::assertNotEquals( AbstractCache::hash( $q1 ), AbstractCache::hash( $q2 ) );
         self::assertNotEquals( AbstractCache::hash( $q1 ), AbstractCache::hash( $q3 ) );
         self::assertNotEquals( AbstractCache::hash( $q2 ), AbstractCache::hash( $q3 ) );
@@ -76,7 +76,7 @@ final class AbstractCacheTest extends TestCase {
         $msg = Message::request( $q1 );
         self::assertSame( AbstractCache::hash( $q1 ), AbstractCache::hash( $msg ) );
 
-        $msg->question[] = $q2;
+        $msg->addQuestion( $q2 );
         self::assertNotEquals( AbstractCache::hash( $q1 ), AbstractCache::hash( $msg ) );
         self::assertNotEquals( AbstractCache::hash( $q2 ), AbstractCache::hash( $msg ) );
     }

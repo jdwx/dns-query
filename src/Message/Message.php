@@ -44,6 +44,7 @@ class Message implements MessageInterface {
             $class = RecordClass::normalize( $class );
             $domain = new Question( $domain, $type, $class );
         }
+        $header->setQDCount( 1 );
         return new self( $header, [ $domain ] );
     }
 
