@@ -23,6 +23,9 @@ class OptResourceRecord extends ResourceRecord {
     public const int DEFAULT_PAYLOAD_SIZE = 4096;
 
 
+    /**
+     * @param list<Option>|array<string, list<Option>>|string|Option|RDataInterface $rData
+     */
     public function __construct( array|string                       $rName = [], RecordType|int|string $type = RecordType::OPT,
                                  RecordClass|int|string|null        $class = null, ?int $uTTL = 0,
                                  array|string|Option|RDataInterface $rData = [ 'options' => [] ] ) {
