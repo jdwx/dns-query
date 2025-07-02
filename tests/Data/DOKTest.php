@@ -14,6 +14,20 @@ use PHPUnit\Framework\TestCase;
 class DOKTest extends TestCase {
 
 
+    public function testFromBool() : void {
+        self::assertSame( DOK::DNSSEC_NOT_SUPPORTED, DOK::fromBool( false ) );
+        self::assertSame( DOK::DNSSEC_OK, DOK::fromBool( true ) );
+    }
+
+
+    public function testFromFlagTTL() : void {
+        self::assertSame( DOK::DNSSEC_NOT_SUPPORTED, DOK::fromFlagTTL( 0 ) );
+        self::assertSame( DOK::DNSSEC_OK, DOK::fromFlagTTL( 0x8000 ) );
+        self::assertSame( DOK::DNSSEC_NOT_SUPPORTED, DOK::fromFlagTTL( 0x7FFF ) );
+        self::assertSame( DOK::DNSSEC_OK, DOK::fromFlagTTL( 0xFFFF ) );
+    }
+
+
     public function testNormalize() : void {
         self::assertSame( DOK::DNSSEC_NOT_SUPPORTED, DOK::normalize( false ) );
         self::assertSame( DOK::DNSSEC_OK, DOK::normalize( true ) );

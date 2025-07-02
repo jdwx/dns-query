@@ -30,6 +30,17 @@ final class AATest extends TestCase {
     }
 
 
+    public function testFromName() : void {
+        self::assertSame( AA::AUTHORITATIVE, AA::fromName( 'aa' ) );
+        self::assertSame( AA::AUTHORITATIVE, AA::fromName( 'authoritative' ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::fromName( 'noaa' ) );
+        self::assertSame( AA::NON_AUTHORITATIVE, AA::fromName( 'non_authoritative' ) );
+        self::expectException( \JDWX\DNSQuery\Exceptions\FlagException::class );
+        self::expectExceptionMessage( 'Invalid AA name' );
+        AA::fromName( 'invalid' );
+    }
+
+
     public function testNormalize() : void {
         self::assertSame( AA::NON_AUTHORITATIVE, AA::normalize( false ) );
         self::assertSame( AA::AUTHORITATIVE, AA::normalize( true ) );

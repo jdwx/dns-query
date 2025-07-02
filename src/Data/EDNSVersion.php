@@ -7,12 +7,15 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Exceptions\FlagException;
+
+
 readonly class EDNSVersion {
 
 
     public function __construct( public int $value ) {
         if ( $this->value < 0 || $this->value > 255 ) {
-            throw new \InvalidArgumentException( "EDNS version must be between 0 and 255, got {$this->value}" );
+            throw new FlagException( "EDNS version must be between 0 and 255, got {$this->value}" );
         }
     }
 

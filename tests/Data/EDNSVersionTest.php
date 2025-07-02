@@ -7,8 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
-use InvalidArgumentException;
 use JDWX\DNSQuery\Data\EDNSVersion;
+use JDWX\DNSQuery\Exceptions\FlagException;
 use PHPUnit\Framework\TestCase;
 
 
@@ -19,16 +19,33 @@ class EDNSVersionTest extends TestCase {
         self::assertInstanceOf( EDNSVersion::class, new EDNSVersion( 0 ) );
         self::assertInstanceOf( EDNSVersion::class, new EDNSVersion( 255 ) );
 
-        self::expectException( InvalidArgumentException::class );
+        self::expectException( FlagException::class );
         $x = new EDNSVersion( -1 );
         unset( $x );
     }
 
 
     public function testConstructForTooBigValue() : void {
-        self::expectException( InvalidArgumentException::class );
+        self::expectException( FlagException::class );
         $x = new EDNSVersion( 256 );
         unset( $x );
+    }
+
+
+    public function testFrom() : void {
+        self::assertInstanceOf( EDNSVersion::class, EDNSVersion::from( 0 ) );
+        self::assertInstanceOf( EDNSVersion::class, EDNSVersion::from( 255 ) );
+        self::assertSame( 0, EDNSVersion::from( 0 )->value );
+        self::assertSame( 255, EDNSVersion::from( 255 )->value );
+        self::expectException( FlagException::class );
+        EDNSVersion::from( -1 );
+    }
+
+
+    public function testFromFlagTTL() : void {
+        self::assertSame( 0, EDNSVersion::fromFlagTTL( 0 )->value );
+        self::assertSame( 1, EDNSVersion::fromFlagTTL( 0x10000 )->value ); // 1 << 16
+        self::assertSame( 18, EDNSVersion::fromFlagTTL( 0x120000 )->value ); // 18 << 16
     }
 
 
