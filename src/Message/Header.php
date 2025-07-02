@@ -82,6 +82,7 @@ class Header implements HeaderInterface {
     public static function request( ?int $i_id = null ) : self {
         return new self(
             $i_id ?? random_int( 0, 65535 ),
+            RD::RECURSION_DESIRED->toFlagWord() | OpCode::QUERY->toFlagWord(),
         );
     }
 
