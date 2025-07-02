@@ -17,6 +17,11 @@ readonly class EDNSVersion {
     }
 
 
+    public static function from( int $i_uValue ) : self {
+        return new self( $i_uValue );
+    }
+
+
     public static function fromFlagTTL( int $i_flagTTL ) : self {
         $i_flagTTL &= 0xFF0000; // Mask to get the version bits
         return new self( $i_flagTTL >> 16 ); // Shift right to get the version

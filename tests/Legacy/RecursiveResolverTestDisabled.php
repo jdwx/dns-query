@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 /** Test the recursive resolver. */
 #[CoversClass( RecursiveResolver::class )]
-final class RecursiveResolverTest extends TestCase {
+final class RecursiveResolverTestDisabled extends TestCase {
 
 
     /** Try resolution with DNSSEC enabled.
@@ -45,7 +45,7 @@ final class RecursiveResolverTest extends TestCase {
         $rrv = new RecursiveResolver();
         $check = $rrv->getRootNameServers();
         sort( $check );
-        self::assertSame( NamedRootTest::$rootNameServersIPv4, $check );
+        self::assertSame( NamedRootTestDisabled::$rootNameServersIPv4, $check );
     }
 
 

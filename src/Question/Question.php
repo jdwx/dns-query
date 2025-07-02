@@ -9,51 +9,96 @@ namespace JDWX\DNSQuery\Question;
 
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
-use JDWX\DNSQuery\Transport\BufferInterface;
+use JDWX\DNSQuery\DomainName;
+use JDWX\DNSQuery\Exceptions\RecordClassException;
+use JDWX\DNSQuery\Exceptions\RecordTypeException;
 
 
-class Question extends AbstractQuestion {
+class Question implements QuestionInterface {
 
 
-    private RecordType $type;
+    private int $uType;
 
-    private RecordClass $class;
+
+    private int $uClass;
+
+
+    /** @var list<string> */
+    private array $rName;
 
 
     /** @param list<string>|string $i_name */
     public function __construct( array|string           $i_name, int|string|RecordType $i_type,
-                                 int|string|RecordClass $i_class ) {
-        parent::__construct( $i_name );
-        $this->type = RecordType::normalize( $i_type );
-        $this->class = RecordClass::normalize( $i_class );
+                                 int|string|RecordClass $i_class = RecordClass::IN ) {
+        $this->setName( $i_name );
+        $this->setType( $i_type );
+        $this->setClass( $i_class );
     }
 
 
-    public static function fromBinary( BufferInterface $i_buffer ) : self {
-        $rName = $i_buffer->consumeNameArray();
-        $type = RecordType::from( $i_buffer->consumeUINT16() );
-        $class = RecordClass::from( $i_buffer->consumeUINT16() );
-        return new self( $rName, $type, $class );
+    public function __toString() : string {
+        return $this->name() . ' ' . $this->class() . ' ' . $this->type();
+    }
+
+
+    public function class() : string {
+        return $this->getClass()->name;
+    }
+
+
+    public function classValue() : int {
+        return $this->uClass;
     }
 
 
     public function getClass() : RecordClass {
-        return $this->class;
+        return RecordClass::tryFrom( $this->uClass ) ??
+            throw new RecordClassException( "Invalid record class: {$this->uClass}" );
+    }
+
+
+    /** @return list<string> */
+    public function getName() : array {
+        return $this->rName;
     }
 
 
     public function getType() : RecordType {
-        return $this->type;
+        return RecordType::tryFrom( $this->uType ) ??
+            throw new RecordTypeException( "Invalid record type: {$this->uType}" );
+    }
+
+
+    public function name() : string {
+        return DomainName::format( $this->getName() );
     }
 
 
     public function setClass( int|string|RecordClass $i_class ) : void {
-        $this->class = RecordClass::normalize( $i_class );
+        $this->uClass = RecordClass::anyToId( $i_class );
+    }
+
+
+    /**
+     * @param list<string>|string $i_name
+     */
+    public function setName( array|string $i_name ) : void {
+        $this->rName = DomainName::normalize( $i_name );
     }
 
 
     public function setType( int|string|RecordType $i_type ) : void {
-        $this->type = RecordType::normalize( $i_type );
+        $this->uType = RecordType::anyToId( $i_type );
+    }
+
+
+    public function type() : string {
+        return $this->getType()->name;
+    }
+
+
+    public function typeValue() : int {
+        return $this->uType;
     }
 
 

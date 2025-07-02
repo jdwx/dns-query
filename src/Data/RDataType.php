@@ -56,7 +56,9 @@ enum RDataType: int {
     /** @param list<string> $io_rArgs */
     public function consume( array &$io_rArgs ) : mixed {
         if ( self::CharacterStringList === $this ) {
-            return array_merge( $io_rArgs, [] );
+            $r = array_merge( $io_rArgs, [] );
+            $io_rArgs = [];
+            return $r;
         }
         return $this->parse( array_shift( $io_rArgs ) );
     }

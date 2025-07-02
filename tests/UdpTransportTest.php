@@ -11,6 +11,7 @@ use JDWX\DNSQuery\Exceptions\Exception;
 use JDWX\DNSQuery\Legacy\Lookups;
 use JDWX\DNSQuery\Legacy\Network\UdpTransport;
 use JDWX\DNSQuery\Legacy\Packet\RequestPacket;
+use JDWX\DNSQuery\Tests\Legacy\ResolverTestDisabled;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
@@ -30,7 +31,7 @@ final class UdpTransportTest extends TestCase {
         $udp->sendRequest( $req );
         $rsp = $udp->receiveResponse();
         self::assertSame( $req->header->id, $rsp->header->id );
-        ResolverTest::googleMXResponseCheck( $rsp );
+        ResolverTestDisabled::googleMXResponseCheck( $rsp );
     }
 
 
@@ -49,7 +50,7 @@ final class UdpTransportTest extends TestCase {
         $udp->sendRequest( $req2 );
         $rsp2 = $udp->receiveResponse();
         self::assertSame( $req2->header->id, $rsp2->header->id );
-        ResolverTest::googleMXResponseCheck( $rsp2 );
+        ResolverTestDisabled::googleMXResponseCheck( $rsp2 );
 
     }
 
@@ -130,7 +131,7 @@ final class UdpTransportTest extends TestCase {
         $udp = new UdpTransport( '1.1.1.1', i_localHost: '0.0.0.0', i_localPort: $port );
         $udp->sendRequest( $req );
         $rsp = $udp->receiveResponse();
-        ResolverTest::googleMXResponseCheck( $rsp );
+        ResolverTestDisabled::googleMXResponseCheck( $rsp );
     }
 
 

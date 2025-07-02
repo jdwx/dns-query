@@ -8,14 +8,10 @@ namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 
 use InvalidArgumentException;
-use JDWX\DNSQuery\Data\DOK;
 use JDWX\DNSQuery\Data\EDNSVersion;
 use JDWX\DNSQuery\Data\OptionCode;
-use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
-use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\RDataValue;
 use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -28,14 +24,14 @@ final class OptRecordTest extends TestCase {
 
     public function testAddOption() : void {
         $opt = new OptResourceRecord();
-        self::assertCount( 0, $opt[ 'options' ] );
+        self::assertCount( 0, $opt->getRDataValue( 'options' ) );
 
         $option = new Option( 10, 'test-data' );
         $opt->addOption( $option );
 
-        self::assertCount( 1, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
-        self::assertSame( 'test-data', $opt[ 'options' ][ 0 ]->data );
+        self::assertCount( 1, $opt->options() );
+        self::assertSame( 10, $opt->option( 0 )->code );
+        self::assertSame( 'test-data', $opt->option( 0 )->data );
     }
 
 
@@ -51,31 +47,28 @@ final class OptRecordTest extends TestCase {
         $opt = new OptResourceRecord();
         $opt->addOption( OptionCode::COOKIE, 'cookie-value' );
 
-        self::assertCount( 1, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code ); // COOKIE = 10
-        self::assertSame( 'cookie-value', $opt[ 'options' ][ 0 ]->data );
+        self::assertCount( 1, $opt->options() );
+        self::assertSame( 10, $opt->option( 0 )->code ); // COOKIE = 10
+        self::assertSame( 'cookie-value', $opt->option( 0 )->data );
     }
 
 
     public function testArrayAccess() : void {
-        $options = [
-            new Option( 10, 'test-data' ),
-        ];
-        $opt = new OptResourceRecord( options: $options );
+        $opt = new OptResourceRecord( rData: new Option( 10, 'test-data' ) );
 
         // Test exists
-        self::assertTrue( isset( $opt[ 'options' ] ) );
-        self::assertFalse( isset( $opt[ 'nonexistent' ] ) );
+        self::assertTrue( isset( $opt->getRData()[ 'options' ] ) );
+        self::assertFalse( isset( $opt->getRData()[ 'nonexistent' ] ) );
 
         // Test get
-        self::assertCount( 1, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
-        self::assertSame( 'test-data', $opt[ 'options' ][ 0 ]->data );
+        self::assertCount( 1, $opt->options() );
+        self::assertSame( 10, $opt->option( 0 )->code );
+        self::assertSame( 'test-data', $opt->option( 0 )->data );
     }
 
 
     public function testClassValue() : void {
-        $opt = new OptResourceRecord( uPayloadSize: 1232 );
+        $opt = new OptResourceRecord( class: 1232 );
         self::assertSame( 1232, $opt->classValue() );
     }
 
@@ -88,7 +81,7 @@ final class OptRecordTest extends TestCase {
         self::assertSame( [], $opt->getName() );
         self::assertSame( 4096, $opt->payloadSize() );
         self::assertSame( 0, $opt->version() );
-        self::assertSame( [], $opt[ 'options' ] );
+        self::assertSame( [], $opt->options() );
     }
 
 
@@ -99,42 +92,22 @@ final class OptRecordTest extends TestCase {
         ];
 
         $opt = new OptResourceRecord(
-            ReturnCode::NOERROR,
-            DOK::DNSSEC_OK,
-            1232,
-            1,
+            [],
+            RecordType::OPT,
+            12345,
+            65536,
             $options
         );
 
         self::assertSame( 'OPT', $opt->type() );
-        self::assertSame( 1232, $opt->payloadSize() );
+        self::assertSame( 12345, $opt->payloadSize() );
         self::assertSame( 1, $opt->version() );
-        self::assertCount( 2, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
-        self::assertSame( 'cookie-data', $opt[ 'options' ][ 0 ]->data );
-    }
+        self::assertCount( 2, $opt->options() );
+        self::assertSame( 10, $opt->option( 0 )->code );
+        self::assertSame( 'cookie-data', $opt->option( 0 )->data );
 
-
-    public function testConstructWithRDataValue() : void {
-        $options = [
-            new Option( 10, 'test-data' ),
-        ];
-        $rdataValue = new RDataValue(
-            RDataType::OptionList,
-            $options
-        );
-
-        $opt = new OptResourceRecord(
-            ReturnCode::NOERROR,
-            DOK::DNSSEC_NOT_SUPPORTED,
-            4096,
-            0,
-            $rdataValue
-        );
-
-        self::assertCount( 1, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
-        self::assertSame( 'test-data', $opt[ 'options' ][ 0 ]->data );
+        self::assertSame( 15, $opt->option( 1 )->code );
+        self::assertSame( 'error-data', $opt->option( 1 )->data );
     }
 
 
@@ -144,13 +117,16 @@ final class OptRecordTest extends TestCase {
             'type' => 'OPT',
             'class' => 1232,
             'ttl' => 0,
+            'rdata' => [
+                'options' => [],
+            ],
         ];
 
         $opt = OptResourceRecord::fromArray( $data );
         self::assertSame( 'OPT', $opt->type() );
         self::assertSame( 1232, $opt->payloadSize() );
         self::assertSame( 0, $opt->version() );
-        self::assertSame( [], $opt[ 'options' ] );
+        self::assertSame( [], $opt->options() );
     }
 
 
@@ -170,9 +146,9 @@ final class OptRecordTest extends TestCase {
         ];
 
         $opt = OptResourceRecord::fromArray( $data );
-        self::assertCount( 1, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
-        self::assertSame( 'nested-data', $opt[ 'options' ][ 0 ]->data );
+        self::assertCount( 1, $opt->options() );
+        self::assertSame( 10, $opt->option( 0 )->code );
+        self::assertSame( 'nested-data', $opt->option( 0 )->data );
     }
 
 
@@ -191,9 +167,12 @@ final class OptRecordTest extends TestCase {
         ];
 
         $opt = OptResourceRecord::fromArray( $data );
-        self::assertCount( 2, $opt[ 'options' ] );
-        self::assertSame( 10, $opt[ 'options' ][ 0 ]->code );
-        self::assertSame( 'cookie', $opt[ 'options' ][ 0 ]->data );
+        self::assertCount( 2, $opt->options() );
+        self::assertSame( 10, $opt->option( 0 )->code );
+        self::assertSame( 'cookie', $opt->option( 0 )->data );
+
+        self::assertSame( 15, $opt->option( 1 )->code );
+        self::assertSame( 'error', $opt->option( 1 )->data );
     }
 
 
@@ -213,7 +192,7 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetPayloadSize() : void {
-        $opt = new OptResourceRecord( uPayloadSize: 2048 );
+        $opt = new OptResourceRecord( class: 2048 );
         self::assertSame( 2048, $opt->getPayloadSize() );
         self::assertSame( 2048, $opt->payloadSize() );
     }
@@ -225,17 +204,14 @@ final class OptRecordTest extends TestCase {
 
         self::assertArrayHasKey( 'options', $rData );
 
-        self::assertIsArray( $rData[ 'options' ]->value );
+        self::assertIsArray( $rData[ 'options' ] );
     }
 
 
     public function testGetRDataValue() : void {
         $opt = new OptResourceRecord();
-        $rdataValue = $opt->getRDataValue( 'options' );
-
-        self::assertInstanceOf( RDataValue::class, $rdataValue );
-        self::assertSame( RDataType::OptionList, $rdataValue->type );
-        self::assertIsArray( $rdataValue->value );
+        $options = $opt->getRDataValue( 'options' );
+        self::assertIsArray( $options );
     }
 
 
@@ -246,16 +222,9 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetTTL() : void {
-        $opt = new OptResourceRecord(
-            ReturnCode::SERVFAIL,
-            DOK::DNSSEC_OK,
-            4096,
-            1
-        );
-
-        // TTL is constructed from rCode, the "DO" bit, and version
-        $ttl = $opt->getTTL();
-        self::assertSame( $ttl, $opt->ttl() );
+        $opt = new OptResourceRecord( uTTL: 12345 );
+        self::assertSame( 12345, $opt->getTTL() );
+        self::assertSame( 12345, $opt->ttl() );
     }
 
 
@@ -266,8 +235,10 @@ final class OptRecordTest extends TestCase {
 
 
     public function testGetVersion() : void {
-        $opt = new OptResourceRecord( version: 2 );
+        $opt = new OptResourceRecord();
+        $opt->setVersion( 2 );
         self::assertInstanceOf( EDNSVersion::class, $opt->getVersion() );
+        self::assertEquals( EDNSVersion::from( 2 ), $opt->getVersion() );
         self::assertSame( 2, $opt->version() );
     }
 
@@ -296,12 +267,11 @@ final class OptRecordTest extends TestCase {
 
 
     public function testToArray() : void {
-        $opt = new OptResourceRecord( uPayloadSize: 1232 );
+        $opt = new OptResourceRecord( class: 1232 );
         $array = $opt->toArray();
 
         self::assertArrayHasKey( 'name', $array );
         self::assertArrayHasKey( 'type', $array );
-        self::assertArrayHasKey( 'class', $array );
         self::assertArrayHasKey( 'ttl', $array );
         self::assertArrayHasKey( 'do', $array );
         self::assertArrayHasKey( 'version', $array );
@@ -309,7 +279,6 @@ final class OptRecordTest extends TestCase {
 
         self::assertSame( '', $array[ 'name' ] );
         self::assertSame( 'OPT', $array[ 'type' ] );
-        self::assertSame( 1232, $array[ 'class' ] );
         self::assertSame( 1232, $array[ 'payloadSize' ] );
     }
 

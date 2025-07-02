@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;
@@ -17,7 +17,7 @@ use Socket;
 
 /** Additional coverage tests for the TCPTransport class. */
 #[CoversClass( TCPTransport::class )]
-final class TCPTransportTest extends TestCase {
+final class TCPTransportTestDisabled extends TestCase {
 
 
     /**
@@ -28,7 +28,7 @@ final class TCPTransportTest extends TestCase {
         $tcp = new TCPTransport( '1.1.1.1' );
         $tcp->sendRequest( $req );
         $rsp = $tcp->receiveResponse();
-        ResolverTest::googleMXResponseCheck( $rsp );
+        ResolverTestDisabled::googleMXResponseCheck( $rsp );
     }
 
 

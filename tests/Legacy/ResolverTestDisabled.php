@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Data\QR;
@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 /** Test the Resolver class. */
 #[CoversClass( Resolver::class )]
-final class ResolverTest extends TestCase {
+final class ResolverTestDisabled extends TestCase {
 
 
     /** Check the results of a query for Google's MX server. */

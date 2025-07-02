@@ -7,7 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
-use InvalidArgumentException;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
@@ -20,6 +19,8 @@ use JDWX\Quote\Exception as QuoteException;
 use JDWX\Quote\Operators\DelimiterOperator;
 use JDWX\Quote\Operators\QuoteOperator;
 use JDWX\Quote\Parser;
+use JDWX\Strict\Exceptions\TypeException;
+use JDWX\Strict\TypeIs;
 
 
 class ResourceRecord extends AbstractResourceRecord {
@@ -46,14 +47,14 @@ class ResourceRecord extends AbstractResourceRecord {
      * @param int|string|RecordType $type
      * @param int|string|RecordClass|null $class
      * @param int|null $uTTL
-     * @param string|RDataInterface $rData
+     * @param array<string,mixed>|string|RDataInterface $rData
      */
     public function __construct(
         array|string                $rName,
         int|string|RecordType       $type,
         int|string|RecordClass|null $class = null,
         ?int                        $uTTL = null,
-        string|RDataInterface       $rData = '',
+        array|string|RDataInterface $rData = '',
     ) {
         if ( is_string( $rName ) ) {
             $rName = DomainName::parse( $rName );
@@ -62,8 +63,12 @@ class ResourceRecord extends AbstractResourceRecord {
         $this->setType( $type );
         $this->setClass( $class ?? static::DEFAULT_CLASS );
         $this->setTTL( $uTTL ?? self::$uDefaultTTL );
-        if ( ! $rData instanceof RDataInterface ) {
+        if ( is_string( $rData ) ) {
             $rData = new OpaqueRData( $rData );
+        }
+        if ( is_array( $rData ) ) {
+            $map = RDataMaps::map( $this->uType );
+            $rData = new RData( $map, $rData );
         }
         $this->rData = $rData;
     }
@@ -71,23 +76,36 @@ class ResourceRecord extends AbstractResourceRecord {
 
     /** @param array<string, mixed> $i_data */
     public static function fromArray( array $i_data ) : static {
-        $rRequiredFields = [ 'type', 'class' ];
-        foreach ( $rRequiredFields as $stField ) {
-            if ( ! isset( $i_data[ $stField ] ) ) {
-                throw new InvalidArgumentException( "Missing required field: {$stField}" );
-            }
+        if ( ! isset( $i_data[ 'name' ] ) ) {
+            throw new RecordException( 'Missing name in resource record array' );
         }
-        $rName = DomainName::normalize( $i_data[ 'name' ] ?? [] );
+        if ( ! isset( $i_data[ 'type' ] ) ) {
+            throw new RecordTypeException( 'Missing record type in resource record array' );
+        }
+        try {
+            $rName = DomainName::normalize(
+                TypeIs::stringOrListString( $i_data[ 'name' ], 'name in resource record array' )
+            );
+        } catch ( TypeException $e ) {
+            $stType = get_debug_type( $i_data[ 'name' ] );
+            throw new RecordException( "Invalid record name format: must be string or array: {$stType}", 0, $e );
+        }
         $uType = RecordType::anyToId( $i_data[ 'type' ] );
-        $uClass = RecordClass::anyToId( $i_data[ 'class' ] );
+        $uClass = RecordClass::anyToId( $i_data[ 'class' ] ?? RecordClass::IN );
         $uTTL = isset( $i_data[ 'ttl' ] )
             ? intval( $i_data[ 'ttl' ] )
             : null;
 
         $rData = $i_data[ 'rdata' ] ?? $i_data;
         if ( ! $rData instanceof RDataInterface ) {
-            $map = RDataMaps::map( $uType );
-            $rData = new RData( $map, $rData );
+            $map = RDataMaps::tryMap( $uType );
+            if ( is_array( $map ) ) {
+                $rData = new RData( $map, $rData );
+            } elseif ( is_string( $rData ) ) {
+                $rData = new OpaqueRData( $rData );
+            } else {
+                throw new RecordException( 'Invalid RData type: must be RDataInterface, array, or string' );
+            }
         }
 
         /** @phpstan-ignore new.static */

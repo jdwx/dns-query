@@ -20,7 +20,7 @@ declare( strict_types = 1 );
  */
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Exceptions\Exception;

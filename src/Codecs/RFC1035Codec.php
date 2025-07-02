@@ -17,7 +17,7 @@ use JDWX\DNSQuery\Message\HeaderInterface;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Option;
-use JDWX\DNSQuery\Question\OpaqueQuestion;
+use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\Question\QuestionInterface;
 use JDWX\DNSQuery\ResourceRecord\OpaqueRData;
 use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
@@ -53,7 +53,7 @@ class RFC1035Codec implements CodecInterface {
         $rName = $i_buffer->consumeNameArray();
         $uType = $i_buffer->consumeUINT16();
         $uClass = $i_buffer->consumeUINT16();
-        return new OpaqueQuestion( $rName, $uType, $uClass );
+        return new Question( $rName, $uType, $uClass );
     }
 
 

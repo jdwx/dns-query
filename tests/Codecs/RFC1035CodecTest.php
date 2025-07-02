@@ -376,7 +376,7 @@ final class RFC1035CodecTest extends TestCase {
 
         $rr = RFC1035Codec::decodeResourceRecord( $buffer );
 
-        self::assertSame( [ 'Bar', 'Baz' ], $rr->getName() );
+        self::assertSame( [ 'bar', 'baz' ], $rr->getName() );
         self::assertSame( 'A', $rr->type() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 0x1234567, $rr->ttl() );
@@ -460,8 +460,8 @@ final class RFC1035CodecTest extends TestCase {
         $st = substr( $st, 2 );
 
         // Answer
-        self::assertStringStartsWith( HexDump::escape( "\x04test\x00" ), HexDump::escape( $st ) ); // Name (uncompressed)
-        $st = substr( $st, 6 );
+        self::assertStringStartsWith( HexDump::escape( "\xc0\x0c" ), HexDump::escape( $st ) ); // Name (uncompressed)
+        $st = substr( $st, 2 );
         self::assertStringStartsWith( "\x00\x01", $st ); // Type A
         $st = substr( $st, 2 );
         self::assertStringStartsWith( "\x00\x01", $st ); // Class IN

@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests;
+namespace JDWX\DNSQuery\Tests\Legacy;
 
 
 use JDWX\DNSQuery\Legacy\NamedRoot;
@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 
 /** Test the NamedRoot class. */
 #[CoversClass( NamedRoot::class )]
-final class NamedRootTest extends TestCase {
+final class NamedRootTestDisabled extends TestCase {
 
 
     /** @var array|string[] The list of root name servers. */

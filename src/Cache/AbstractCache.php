@@ -9,9 +9,7 @@ namespace JDWX\DNSQuery\Cache;
 
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\Exception;
-use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\MessageInterface;
-use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\Question\QuestionInterface;
 
 
@@ -73,8 +71,8 @@ abstract class AbstractCache implements MessageCacheInterface {
     }
 
 
-    protected static function preHash( Message|QuestionInterface $i_target ) : string {
-        if ( $i_target instanceof Question ) {
+    protected static function preHash( MessageInterface|QuestionInterface $i_target ) : string {
+        if ( $i_target instanceof QuestionInterface ) {
             return "{$i_target->name()}|{$i_target->type()}|{$i_target->class()}&";
         }
         $st = '';
@@ -86,7 +84,7 @@ abstract class AbstractCache implements MessageCacheInterface {
 
 
     /** @inheritDoc */
-    public function getEx( string $i_key ) : Message {
+    public function getEx( string $i_key ) : MessageInterface {
         $xx = $this->get( $i_key );
         if ( ! is_null( $xx ) ) {
             return $xx;

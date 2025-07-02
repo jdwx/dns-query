@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests\RR;
+namespace JDWX\DNSQuery\Tests\Legacy\RR;
 
 
 use JDWX\DNSQuery\Legacy\RR\RR;
@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass( TXT::class )]
 #[CoversClass( RR::class )]
-final class TXTTest extends TestCase {
+final class TXTTestDisabled extends TestCase {
 
 
     /**

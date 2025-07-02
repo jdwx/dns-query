@@ -35,11 +35,11 @@ class Message implements MessageInterface {
                                  private ?OptResourceRecord       $opt = null ) {}
 
 
-    public static function request( string|Question        $domain,
-                                    int|string|RecordType  $type = RecordType::ANY,
-                                    int|string|RecordClass $class = RecordClass::IN ) : self {
+    public static function request( string|QuestionInterface $domain,
+                                    int|string|RecordType    $type = RecordType::ANY,
+                                    int|string|RecordClass   $class = RecordClass::IN ) : self {
         $header = Header::request();
-        if ( ! $domain instanceof Question ) {
+        if ( ! $domain instanceof QuestionInterface ) {
             $type = RecordType::normalize( $type );
             $class = RecordClass::normalize( $class );
             $domain = new Question( $domain, $type, $class );
