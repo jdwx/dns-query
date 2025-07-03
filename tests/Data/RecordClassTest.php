@@ -25,6 +25,7 @@ final class RecordClassTest extends TestCase {
         self::assertSame( RecordClass::IN->value, RecordClass::anyToId( RecordClass::IN->value ) );
         self::assertSame( RecordClass::IN->value, RecordClass::anyToId( 'in' ) );
         self::assertSame( 12345, RecordClass::anyToId( 12345 ) );
+        self::assertSame( 12345, RecordClass::anyToId( 'CLASS12345' ) );
     }
 
 
@@ -91,7 +92,7 @@ final class RecordClassTest extends TestCase {
 
     public function testIdToNameForInvalid() : void {
         self::expectException( RecordClassException::class );
-        RecordClass::idToName( 999 );
+        RecordClass::idToName( -1 );
     }
 
 
@@ -101,6 +102,7 @@ final class RecordClassTest extends TestCase {
         self::assertSame( 'HS', RecordClass::idToName( 4 ) );
         self::assertSame( 'NONE', RecordClass::idToName( 254 ) );
         self::assertSame( 'ANY', RecordClass::idToName( 255 ) );
+        self::assertSame( 'CLASS999', RecordClass::idToName( 999 ) );
     }
 
 

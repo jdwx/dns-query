@@ -302,7 +302,7 @@ class ResourceRecord implements ResourceRecordInterface {
         $rOut = [
             'name' => $i_bNameAsArray ? $this->getName() : $this->name(),
             'type' => $this->type(),
-            'class' => $this->class(),
+            'class' => RecordClass::anyToName( $this->classValue() ),
             'ttl' => $this->uTTL,
         ];
         return array_merge( $rOut, $this->rData->toArray() );

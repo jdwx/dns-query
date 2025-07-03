@@ -30,8 +30,25 @@ enum RecordClass: int {
         if ( is_int( $i_value ) ) {
             return $i_value;
         }
+        if ( is_string( $i_value ) && preg_match( '/^CLASS(\d+)$/i', $i_value, $matches ) ) {
+            $u = intval( $matches[ 1 ] );
+            if ( $u >= 0 && $u <= 65535 ) {
+                return $u;
+            }
+        }
         $i_value = self::normalize( $i_value );
         return $i_value->value;
+    }
+
+
+    public static function anyToName( int|string|self $i_value ) : string {
+        if ( is_int( $i_value ) ) {
+            return self::idToName( $i_value );
+        }
+        if ( is_string( $i_value ) ) {
+            return $i_value;
+        }
+        return $i_value->name;
     }
 
 
@@ -56,6 +73,12 @@ enum RecordClass: int {
         if ( $x instanceof self ) {
             return $x;
         }
+        if ( preg_match( '/CLASS(\d+)/i', $i_stName, $matches ) ) {
+            $x = self::tryFrom( intval( $matches[ 1 ] ) );
+            if ( $x instanceof self ) {
+                return $x;
+            }
+        }
         throw new RecordClassException( "Invalid record class name: {$i_stName}" );
     }
 
@@ -65,7 +88,10 @@ enum RecordClass: int {
         if ( is_string( $name ) ) {
             return $name;
         }
-        throw new RecordClassException( "Invalid record class ID: {$i_id}" );
+        if ( $i_id < 0 || $i_id > 65535 ) {
+            throw new RecordClassException( "Invalid record class ID: {$i_id}" );
+        }
+        return "CLASS{$i_id}";
     }
 
 

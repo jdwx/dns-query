@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\RDataMaps;
+use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use JDWX\DNSQuery\Transport\Buffer;
@@ -40,6 +41,18 @@ class RRTypesTest extends TestCase {
     public function testA() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.1' ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'A',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'address' => '192.0.2.1',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN A 192.0.2.1' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'A', $rr->type() );
         self::assertSame( '192.0.2.1', $rr->tryGetRDataValue( 'address' ) );
     }
@@ -48,6 +61,18 @@ class RRTypesTest extends TestCase {
     public function testAAAA() : void {
         $rr = new ResourceRecord( 'example.com', 'AAAA', 'IN', 3600,
             [ 'address' => '2001:db8::1' ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'AAAA',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'address' => '2001:db8::1',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN AAAA 2001:db8::1' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'AAAA', $rr->type() );
         self::assertSame( '2001:db8::1', $rr->tryGetRDataValue( 'address' ) );
     }
@@ -58,6 +83,19 @@ class RRTypesTest extends TestCase {
             'subtype' => 1,
             'hostname' => [ 'afs', 'example', 'com' ],
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'AFSDB',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'subtype' => 1,
+            'hostname' => [ 'afs', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN AFSDB 1 afs.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'AFSDB', $rr->type() );
         self::assertSame( 1, $rr->tryGetRDataValue( 'subtype' ) );
         self::assertSame( [ 'afs', 'example', 'com' ], $rr->tryGetRDataValue( 'hostname' ) );
@@ -67,6 +105,18 @@ class RRTypesTest extends TestCase {
     public function testALIAS() : void {
         $rr = new ResourceRecord( 'example.com', 'ALIAS', 'IN', 3600,
             [ 'alias' => [ 'target', 'example', 'com' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'ALIAS',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'alias' => [ 'target', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN ALIAS target.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'ALIAS', $rr->type() );
         self::assertSame( [ 'target', 'example', 'com' ], $rr->tryGetRDataValue( 'alias' ) );
     }
@@ -78,6 +128,20 @@ class RRTypesTest extends TestCase {
             'tag' => 'issue',
             'value' => 'letsencrypt.org',
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'CAA',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'flags' => 0,
+            'tag' => 'issue',
+            'value' => 'letsencrypt.org',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN CAA 0 issue letsencrypt.org' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'CAA', $rr->type() );
         self::assertSame( 0, $rr->tryGetRDataValue( 'flags' ) );
         self::assertSame( 'issue', $rr->tryGetRDataValue( 'tag' ) );
@@ -88,6 +152,18 @@ class RRTypesTest extends TestCase {
     public function testCNAME() : void {
         $rr = new ResourceRecord( 'www.example.com', 'CNAME', 'IN', 3600,
             [ 'cname' => [ 'canonical', 'example', 'com' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'www', 'example', 'com' ],
+            'type' => 'CNAME',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'cname' => [ 'canonical', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'www.example.com 3600 IN CNAME canonical.example.com' );
+        self::assertSame( [ 'www', 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'CNAME', $rr->type() );
         self::assertSame( [ 'canonical', 'example', 'com' ], $rr->tryGetRDataValue( 'cname' ) );
     }
@@ -96,6 +172,18 @@ class RRTypesTest extends TestCase {
     public function testDNAME() : void {
         $rr = new ResourceRecord( 'example.com', 'DNAME', 'IN', 3600,
             [ 'dname' => [ 'target', 'example', 'net' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'DNAME',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'dname' => [ 'target', 'example', 'net' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN DNAME target.example.net' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'DNAME', $rr->type() );
         self::assertSame( [ 'target', 'example', 'net' ], $rr->tryGetRDataValue( 'dname' ) );
     }
@@ -106,6 +194,19 @@ class RRTypesTest extends TestCase {
             'cpu' => 'Intel',
             'os' => 'Linux',
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'HINFO',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'cpu' => 'Intel',
+            'os' => 'Linux',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN HINFO Intel Linux' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'HINFO', $rr->type() );
         self::assertSame( 'Intel', $rr->tryGetRDataValue( 'cpu' ) );
         self::assertSame( 'Linux', $rr->tryGetRDataValue( 'os' ) );
@@ -117,6 +218,19 @@ class RRTypesTest extends TestCase {
             'isdnAddress' => '150862028003217',
             'sa' => '004',
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'ISDN',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'isdnAddress' => '150862028003217',
+            'sa' => '004',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN ISDN 150862028003217 004' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'ISDN', $rr->type() );
         self::assertSame( '150862028003217', $rr->tryGetRDataValue( 'isdnAddress' ) );
         self::assertSame( '004', $rr->tryGetRDataValue( 'sa' ) );
@@ -128,6 +242,19 @@ class RRTypesTest extends TestCase {
             'preference' => 10,
             'exchange' => 'kdc.example.com',
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'KX',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'preference' => 10,
+            'exchange' => 'kdc.example.com',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN KX 10 kdc.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'KX', $rr->type() );
         self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
         self::assertSame( 'kdc.example.com', $rr->tryGetRDataValue( 'exchange' ) );
@@ -161,14 +288,58 @@ class RRTypesTest extends TestCase {
     public function testNS() : void {
         $rr = new ResourceRecord( 'example.com', 'NS', 'IN', 3600,
             [ 'nsdname' => [ 'ns1', 'example', 'com' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'NS',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'nsdname' => [ 'ns1', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN NS ns1.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'NS', $rr->type() );
         self::assertSame( [ 'ns1', 'example', 'com' ], $rr->tryGetRDataValue( 'nsdname' ) );
+    }
+
+
+    public function testOPT() : void {
+        $opt = new Option( 1, 'Foo' );
+        $rr = new ResourceRecord( '', 'OPT', 12345, 0x8000, [
+            'options' => [ $opt ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [],
+            'type' => 'OPT',
+            'class' => 'CLASS12345',
+            'ttl' => 0x8000,
+            'options' => [ $opt ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        self::assertSame( [], $rr->getName() );
+        self::assertSame( 0x8000, $rr->getTTL() );
+        self::assertSame( 12345, $rr->classValue() );
+        self::assertSame( 'OPT', $rr->type() );
+
     }
 
 
     public function testPTR() : void {
         $rr = new ResourceRecord( '1.2.0.192.in-addr.arpa', 'PTR', 'IN', 3600,
             [ 'ptrdname' => [ 'example', 'com' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ '1', '2', '0192', 'in-addr', 'arpa' ],
+            'type' => 'PTR',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'ptrdname' => [ 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, '1.2.0192.in-addr.arpa 3600 IN PTR example.com' );
+        self::assertSame( [ '1', '2', '0192', 'in-addr', 'arpa' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'PTR', $rr->type() );
         self::assertSame( [ 'example', 'com' ], $rr->tryGetRDataValue( 'ptrdname' ) );
     }
@@ -180,6 +351,20 @@ class RRTypesTest extends TestCase {
             'map822' => [ 'mail', 'example', 'com' ],
             'mapX400' => [ 'x400', 'example', 'com' ],
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'PX',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'preference' => 10,
+            'map822' => [ 'mail', 'example', 'com' ],
+            'mapX400' => [ 'x400', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN PX 10 mail.example.com x400.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'PX', $rr->type() );
         self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
         self::assertSame( [ 'mail', 'example', 'com' ], $rr->tryGetRDataValue( 'map822' ) );
@@ -192,6 +377,19 @@ class RRTypesTest extends TestCase {
             'mboxDName' => [ 'admin', 'example', 'com' ],
             'txtDName' => [ 'contact', 'example', 'com' ],
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'RP',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'mboxDName' => [ 'admin', 'example', 'com' ],
+            'txtDName' => [ 'contact', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN RP admin.example.com contact.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'RP', $rr->type() );
         self::assertSame( [ 'admin', 'example', 'com' ], $rr->tryGetRDataValue( 'mboxDName' ) );
         self::assertSame( [ 'contact', 'example', 'com' ], $rr->tryGetRDataValue( 'txtDName' ) );
@@ -203,6 +401,19 @@ class RRTypesTest extends TestCase {
             'preference' => 10,
             'intermediateHost' => [ 'router', 'example', 'com' ],
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'RT',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'preference' => 10,
+            'intermediateHost' => [ 'router', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN RT 10 router.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'RT', $rr->type() );
         self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
         self::assertSame( [ 'router', 'example', 'com' ], $rr->tryGetRDataValue( 'intermediateHost' ) );
@@ -219,6 +430,24 @@ class RRTypesTest extends TestCase {
             'expire' => 604800,
             'minimum' => 86400,
         ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'SOA',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'mname' => [ 'ns1', 'example', 'com' ],
+            'rname' => [ 'admin', 'example', 'com' ],
+            'serial' => 2023010101,
+            'refresh' => 3600,
+            'retry' => 1800,
+            'expire' => 604800,
+            'minimum' => 86400,
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN SOA ns1.example.com admin.example.com 2023010101 3600 1800 604800 86400' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'SOA', $rr->type() );
         self::assertSame( [ 'ns1', 'example', 'com' ], $rr->tryGetRDataValue( 'mname' ) );
         self::assertSame( [ 'admin', 'example', 'com' ], $rr->tryGetRDataValue( 'rname' ) );
@@ -273,6 +502,18 @@ class RRTypesTest extends TestCase {
     public function testX25() : void {
         $rr = new ResourceRecord( 'example.com', 'X25', 'IN', 3600,
             [ 'psdnAddress' => '311061700956' ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'X25',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'psdnAddress' => '311061700956',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN X25 311061700956' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'X25', $rr->type() );
         self::assertSame( '311061700956', $rr->tryGetRDataValue( 'psdnAddress' ) );
     }
