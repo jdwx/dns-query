@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 
 use JDWX\DNSQuery\Data\TC;
+use JDWX\DNSQuery\Exceptions\FlagException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,16 @@ final class TCTest extends TestCase {
         self::assertSame( TC::TRUNCATED, TC::fromFlagWord( 0x0200 ) );
         self::assertSame( TC::NOT_TRUNCATED, TC::fromFlagWord( 0xFDFF ) );
         self::assertSame( TC::TRUNCATED, TC::fromFlagWord( 0xFFFF ) );
+    }
+
+
+    public function testFromName() : void {
+        self::assertSame( TC::NOT_TRUNCATED, TC::fromName( 'notc' ) );
+        self::assertSame( TC::TRUNCATED, TC::fromName( 'tc' ) );
+        self::assertSame( TC::NOT_TRUNCATED, TC::fromName( 'Not_Truncated' ) );
+        self::assertSame( TC::TRUNCATED, TC::fromName( 'TRUNCATED' ) );
+        self::expectException( FlagException::class );
+        TC::fromName( 'Invalid_Name' );
     }
 
 

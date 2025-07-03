@@ -24,6 +24,14 @@ final class ZBitsTest extends TestCase {
     }
 
 
+    public function testNormalize() : void {
+        self::assertSame( 0, ZBits::normalize( 0 )->bits );
+        self::assertSame( 1, ZBits::normalize( 1 )->bits );
+        self::assertSame( 4, ZBits::normalize( 4 )->bits );
+        self::assertSame( 2, ZBits::normalize( new ZBits( 2 ) )->bits );
+    }
+
+
     public function testToFlagWord() : void {
         $z = new ZBits( 0 );
         self::assertSame( 0, $z->toFlagWord() );

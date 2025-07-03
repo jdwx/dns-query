@@ -76,6 +76,12 @@ final class QRTest extends TestCase {
     }
 
 
+    public function testToFlag() : void {
+        self::assertSame( '', QR::QUERY->toFlag() );
+        self::assertSame( 'qr ', QR::RESPONSE->toFlag() );
+    }
+
+
     public function testToFlagWord() : void {
         self::assertSame( 0, QR::QUERY->toFlagWord() );
         self::assertSame( 0x8000, QR::RESPONSE->toFlagWord() );

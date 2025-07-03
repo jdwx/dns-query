@@ -51,6 +51,8 @@ final class RDataTypeTest extends TestCase {
         self::assertSame( 'foo', RDataType::CharacterString->parse( 'foo' ) );
         self::assertSame( 12345, RDataType::UINT16->parse( '12345' ) );
         self::assertSame( 1234567890, RDataType::UINT32->parse( '1234567890' ) );
+        self::expectException( LogicException::class );
+        RDataType::Option->parse( 'invalid-option' );
     }
 
 

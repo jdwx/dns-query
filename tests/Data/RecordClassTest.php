@@ -20,6 +20,14 @@ use PHPUnit\Framework\TestCase;
 final class RecordClassTest extends TestCase {
 
 
+    public function testAnyToId() : void {
+        self::assertSame( RecordClass::IN->value, RecordClass::anyToId( RecordClass::IN ) );
+        self::assertSame( RecordClass::IN->value, RecordClass::anyToId( RecordClass::IN->value ) );
+        self::assertSame( RecordClass::IN->value, RecordClass::anyToId( 'in' ) );
+        self::assertSame( 12345, RecordClass::anyToId( 12345 ) );
+    }
+
+
     public function testConsume() : void {
         $data = new Buffer( OK::pack( 'n', 1 ) . 'rest' );
         self::assertSame( RecordClass::IN, RecordClass::consume( $data ) );

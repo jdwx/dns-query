@@ -38,6 +38,12 @@ class DOKTest extends TestCase {
     }
 
 
+    public function testToFlag() : void {
+        self::assertSame( '', DOK::DNSSEC_NOT_SUPPORTED->toFlag() );
+        self::assertSame( 'do ', DOK::DNSSEC_OK->toFlag() );
+    }
+
+
     public function testToFlagTTL() : void {
         self::assertSame( 0, DOK::DNSSEC_NOT_SUPPORTED->toFlagTTL() );
         self::assertSame( 0x8000, DOK::DNSSEC_OK->toFlagTTL() );

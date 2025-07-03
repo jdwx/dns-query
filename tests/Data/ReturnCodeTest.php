@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Exceptions\ReturnCodeException;
+use JDWX\DNSQuery\Message\Header;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -20,6 +21,16 @@ final class ReturnCodeTest extends TestCase {
     public function testDecode() : void {
         self::assertStringContainsString( 'completed successfully', ReturnCode::NOERROR->decode() );
         self::assertStringContainsString( 'ZZZ', ReturnCode::ZZZ_TEST_ONLY_DO_NOT_USE->decode() );
+    }
+
+
+    public function testFromExtended() : void {
+        $header = new Header();
+        self::assertSame( ReturnCode::NOERROR, ReturnCode::fromExtended( $header, 0 ) );
+        self::assertSame( ReturnCode::BADSIG, ReturnCode::fromExtended( $header, 0x01000000 ) );
+        $header->setRCode( ReturnCode::FORMERR );
+        self::assertSame( ReturnCode::FORMERR, ReturnCode::fromExtended( $header, 0 ) );
+        self::assertSame( ReturnCode::BADKEY, ReturnCode::fromExtended( $header, 0x1000000 ) );
     }
 
 
@@ -65,9 +76,10 @@ final class ReturnCodeTest extends TestCase {
 
 
     public function testTryFromName() : void {
-        self::assertSame( ReturnCode::NOERROR, ReturnCode::tryFromName( 'NOERROR' ) );
+        self::assertSame( ReturnCode::NOERROR, ReturnCode::tryFromName( 'NOERROR', true ) );
         self::assertSame( ReturnCode::SERVFAIL, ReturnCode::tryFromName( 'ServFail' ) );
         self::assertSame( ReturnCode::NXDOMAIN, ReturnCode::tryFromName( 'nxdomain' ) );
+        self::assertSame( ReturnCode::BADVERS, ReturnCode::tryFromName( 'BADVERS' ) );
         self::assertSame( ReturnCode::BADVERS, ReturnCode::tryFromName( 'BADVERS' ) );
         self::assertNull( ReturnCode::tryFromName( 'Foo' ) );
     }

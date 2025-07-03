@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 
 use JDWX\DNSQuery\Data\RA;
+use JDWX\DNSQuery\Exceptions\FlagException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,29 @@ final class RATest extends TestCase {
         self::assertSame( RA::RECURSION_AVAILABLE, RA::fromFlagWord( 0x0080 ) );
         self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::fromFlagWord( 0x007F ) );
         self::assertSame( RA::RECURSION_AVAILABLE, RA::fromFlagWord( 0x00FF ) );
+    }
+
+
+    public function testFromName() : void {
+        self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::fromName( 'nora' ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::fromName( 'ra' ) );
+        self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::fromName( 'Recursion_Not_Available' ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::fromName( 'Recursion_Available' ) );
+        self::expectException( FlagException::class );
+        RA::fromName( 'Invalid_Name' );
+    }
+
+
+    public function testNormalize() : void {
+        self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::normalize( false ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::normalize( true ) );
+        self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::normalize( 0 ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::normalize( 1 ) );
+        self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::normalize( 'nora' ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::normalize( 'ra' ) );
+        self::assertSame( RA::RECURSION_NOT_AVAILABLE, RA::normalize( 'Recursion_Not_Available' ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::normalize( 'Recursion_Available' ) );
+        self::assertSame( RA::RECURSION_AVAILABLE, RA::normalize( RA::RECURSION_AVAILABLE ) );
     }
 
 

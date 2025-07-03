@@ -18,6 +18,14 @@ use PHPUnit\Framework\TestCase;
 final class RecordTypeTest extends TestCase {
 
 
+    public function testAnyToId() : void {
+        self::assertSame( RecordType::MX->value, RecordType::anyToId( RecordType::MX ) );
+        self::assertSame( RecordType::MX->value, RecordType::anyToId( RecordType::MX->value ) );
+        self::assertSame( RecordType::MX->value, RecordType::anyToId( 'mx' ) );
+        self::assertSame( 12345, RecordType::anyToId( 12345 ) );
+    }
+
+
     public function testConsume() : void {
         $data = new Buffer( pack( 'n', RecordType::A->value ) );
         self::assertSame( RecordType::A, RecordType::consume( $data ) );

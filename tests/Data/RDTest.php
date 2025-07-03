@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 
 use JDWX\DNSQuery\Data\RD;
+use JDWX\DNSQuery\Exceptions\FlagException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,16 @@ final class RDTest extends TestCase {
         self::assertSame( RD::RECURSION_DESIRED, RD::fromFlagWord( 0x0100 ) );
         self::assertSame( RD::RECURSION_NOT_DESIRED, RD::fromFlagWord( 0xFEFF ) );
         self::assertSame( RD::RECURSION_DESIRED, RD::fromFlagWord( 0xFFFF ) );
+    }
+
+
+    public function testFromName() : void {
+        self::assertSame( RD::RECURSION_NOT_DESIRED, RD::fromName( 'nord' ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::fromName( 'rd' ) );
+        self::assertSame( RD::RECURSION_NOT_DESIRED, RD::fromName( 'Recursion_Not_Desired' ) );
+        self::assertSame( RD::RECURSION_DESIRED, RD::fromName( 'Recursion_Desired' ) );
+        self::expectException( FlagException::class );
+        RD::fromName( 'Invalid_Name' );
     }
 
 

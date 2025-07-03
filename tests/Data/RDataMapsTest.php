@@ -35,6 +35,8 @@ class RDataMapsTest extends TestCase {
 
         $r = RDataMaps::tryMap( RecordType::ZZZ_TEST_ONLY_DO_NOT_USE );
         self::assertNull( $r );
+
+        self::assertNull( RDataMaps::tryMap( 'Not_a_Record_Type' ) );
     }
 
 
