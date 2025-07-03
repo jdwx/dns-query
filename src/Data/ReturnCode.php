@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Data;
 
 
 use JDWX\DNSQuery\Exceptions\ReturnCodeException;
+use JDWX\DNSQuery\Message\Header;
 
 
 /** @suppress PhanInvalidConstantExpression */
@@ -85,6 +86,15 @@ enum ReturnCode: int {
     ];
 
 
+    public static function fromExtended( Header $i_header, int $i_uOptTTL ) : self {
+        $uHeaderCode = $i_header->rCodeValue();
+        $uFromHeader = $uHeaderCode & 0x0F;
+        $uFromOpt = ( $i_uOptTTL & 0xFF000000 ) >> 20;
+        return self::tryFrom( $uFromOpt | $uFromHeader )
+            ?? throw new ReturnCodeException( "Invalid extended return code ID: header={$uHeaderCode}, opt={$uFromOpt}" );
+    }
+
+
     public static function fromFlagWord( int $i_flagWord ) : self {
         $i_flagWord = $i_flagWord & 0x0F;
         return self::tryFrom( $i_flagWord )
@@ -112,12 +122,15 @@ enum ReturnCode: int {
     }
 
 
-    public static function tryFromName( string $i_stName ) : ?self {
+    public static function tryFromName( string $i_stName, bool $i_bFlushCache = false ) : ?self {
         $i_stName = strtoupper( trim( $i_stName ) );
         if ( 'BADVERS' === $i_stName ) {
             return self::BADVERS;
         }
-        static $cache = [];
+        static $cache;
+        if ( $i_bFlushCache || ! isset( $cache ) ) {
+            $cache = [];
+        }
         if ( empty( $cache ) ) {
             foreach ( self::cases() as $case ) {
                 $cache[ $case->name ] = $case;
