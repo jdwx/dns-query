@@ -8,7 +8,7 @@ namespace JDWX\DNSQuery\Data;
 
 
 use JDWX\DNSQuery\Exceptions\ReturnCodeException;
-use JDWX\DNSQuery\Message\Header;
+use JDWX\DNSQuery\Message\HeaderInterface;
 
 
 /** @suppress PhanInvalidConstantExpression */
@@ -86,7 +86,7 @@ enum ReturnCode: int {
     ];
 
 
-    public static function fromExtended( Header $i_header, int $i_uOptTTL ) : self {
+    public static function fromExtended( HeaderInterface $i_header, int $i_uOptTTL ) : self {
         $uHeaderCode = $i_header->rCodeValue();
         $uFromHeader = $uHeaderCode & 0x0F;
         $uFromOpt = ( $i_uOptTTL & 0xFF000000 ) >> 20;
