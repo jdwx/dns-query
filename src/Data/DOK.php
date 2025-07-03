@@ -38,6 +38,11 @@ enum DOK: int {
     }
 
 
+    public function toFlag() : string {
+        return $this === self::DNSSEC_OK ? 'do ' : '';
+    }
+
+
     public function toFlagTTL() : int {
         return match ( $this ) {
             self::DNSSEC_NOT_SUPPORTED => 0,
