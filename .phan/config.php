@@ -16,6 +16,7 @@ return [
 
 	'exclude_analysis_directory_list' => [
 		'src/Legacy',
+		'tests/Legacy',
 		'vendor'
 	],
 
