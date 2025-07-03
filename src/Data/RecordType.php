@@ -214,7 +214,16 @@ enum RecordType: int {
         if ( is_int( $i_value ) ) {
             return $i_value;
         }
-        $i_value = self::normalize( $i_value );
+        if ( is_string( $i_value ) ) {
+            $x = self::tryFromName( $i_value );
+            if ( $x instanceof self ) {
+                return $x->value;
+            }
+            if ( preg_match( '/^TYPE(\d+)$/', $i_value, $matches ) ) {
+                return (int) $matches[ 1 ];
+            }
+            throw new RecordTypeException( "Unknown record type: {$i_value}" );
+        }
         return $i_value->value;
     }
 

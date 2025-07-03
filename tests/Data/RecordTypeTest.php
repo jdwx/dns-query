@@ -23,6 +23,9 @@ final class RecordTypeTest extends TestCase {
         self::assertSame( RecordType::MX->value, RecordType::anyToId( RecordType::MX->value ) );
         self::assertSame( RecordType::MX->value, RecordType::anyToId( 'mx' ) );
         self::assertSame( 12345, RecordType::anyToId( 12345 ) );
+        self::assertSame( 12345, RecordType::anyToId( 'TYPE12345' ) );
+        self::expectException( RecordTypeException::class );
+        RecordType::anyToId( 'Not-A-Name' );
     }
 
 
