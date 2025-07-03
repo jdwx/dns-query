@@ -59,13 +59,8 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testClassUnknownClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 99999, 300, 'data' );
-
-        // When class is unknown, it throws an exception when trying to get the name
-        self::expectException( RecordClassException::class );
-        self::expectExceptionMessage( 'Unknown record class: 99999' );
-
-        $record->class();
+        $record = new ResourceRecord( [ 'test' ], 1, 23456, 300, 'data' );
+        self::assertSame( 'CLASS23456', $record->class() );
     }
 
 
@@ -536,11 +531,9 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testGetClassUnknownClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 99999, 300, 'data' );
-
+        $record = new ResourceRecord( [ 'test' ], 1, 12345, 300, 'data' );
         self::expectException( RecordClassException::class );
-        self::expectExceptionMessage( 'Unknown record class: 99999' );
-
+        self::expectExceptionMessage( 'Unknown record class: 12345' );
         $record->getClass();
     }
 
@@ -624,11 +617,9 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testGetTypeUnknownType() : void {
-        $record = new ResourceRecord( [ 'test' ], 99999, 1, 300, 'data' );
-
+        $record = new ResourceRecord( [ 'test' ], 12345, 1, 300, 'data' );
         self::expectException( RecordTypeException::class );
-        self::expectExceptionMessage( 'Unknown record type: 99999' );
-
+        self::expectExceptionMessage( 'Unknown record type: 12345' );
         $record->getType();
     }
 
@@ -931,13 +922,8 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testTypeUnknownType() : void {
-        $record = new ResourceRecord( [ 'test' ], 99999, 1, 300, 'data' );
-
-        // When type is unknown, it throws an exception when trying to get the name
-        self::expectException( RecordTypeException::class );
-        self::expectExceptionMessage( 'Unknown record type: 99999' );
-
-        $record->type();
+        $record = new ResourceRecord( [ 'test' ], 12345, 1, 300, 'data' );
+        self::assertSame( 'TYPE12345', $record->type() );
     }
 
 

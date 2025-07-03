@@ -188,7 +188,7 @@ class ResourceRecord implements ResourceRecordInterface {
 
 
     public function class() : string {
-        return $this->getClass()->name;
+        return RecordClass::idToName( $this->classValue() );
     }
 
 
@@ -320,7 +320,7 @@ class ResourceRecord implements ResourceRecordInterface {
 
 
     public function type() : string {
-        return $this->getType()->name;
+        return RecordType::idToName( $this->uType );
     }
 
 

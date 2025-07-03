@@ -77,9 +77,7 @@ final class OpaqueQuestionTest extends TestCase {
 
     public function testClassWithUnknownValue() : void {
         $question = new Question( 'example.com', RecordType::A->value, 65535 );
-
-        $this->expectException( RecordClassException::class );
-        $question->class();
+        self::assertSame( 'CLASS65535', $question->class() );
     }
 
 
@@ -125,9 +123,7 @@ final class OpaqueQuestionTest extends TestCase {
 
     public function testGetClass() : void {
         $question = new Question( 'example.com', RecordType::A->value, RecordClass::CH->value );
-
         $class = $question->getClass();
-        self::assertInstanceOf( RecordClass::class, $class );
         self::assertSame( RecordClass::CH, $class );
     }
 
@@ -270,13 +266,8 @@ final class OpaqueQuestionTest extends TestCase {
 
 
     public function testToStringWithUnknownTypeAndClass() : void {
-        $question = new Question( 'test.example.com', 12345, 67890 );
-
-        // This will throw exceptions when trying to get the string representations
-        $this->expectException( RecordClassException::class );
-
-        $x = (string) $question;
-        unset( $x );
+        $question = new Question( 'test.example.com', 12345, 65432 );
+        self::assertSame( 'test.example.com CLASS65432 TYPE12345', (string) $question );
     }
 
 
@@ -296,10 +287,8 @@ final class OpaqueQuestionTest extends TestCase {
 
 
     public function testTypeWithUnknownValue() : void {
-        $question = new Question( 'example.com', 65535, RecordClass::IN->value );
-
-        $this->expectException( RecordTypeException::class );
-        $question->type();
+        $question = new Question( 'example.com', 12345, RecordClass::IN->value );
+        self::assertSame( 'TYPE12345', $question->type() );
     }
 
 

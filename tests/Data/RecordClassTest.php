@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\Transport\Buffer;
 use JDWX\Strict\OK;
 use OutOfBoundsException;
@@ -26,6 +27,17 @@ final class RecordClassTest extends TestCase {
         self::assertSame( RecordClass::IN->value, RecordClass::anyToId( 'in' ) );
         self::assertSame( 12345, RecordClass::anyToId( 12345 ) );
         self::assertSame( 12345, RecordClass::anyToId( 'CLASS12345' ) );
+        self::expectException( RecordClassException::class );
+        RecordClass::anyToId( 'FOO' );
+    }
+
+
+    public function testAnyToName() : void {
+        self::assertSame( RecordClass::IN->name, RecordClass::anyToName( RecordClass::IN ) );
+        self::assertSame( RecordClass::IN->name, RecordClass::anyToName( RecordClass::IN->value ) );
+        self::assertSame( RecordClass::IN->name, RecordClass::anyToName( 'in' ) );
+        self::assertSame( 'CLASS12345', RecordClass::anyToName( 12345 ) );
+        self::assertSame( 'CLASS12345', RecordClass::anyToName( 'CLASS12345' ) );
     }
 
 
@@ -87,6 +99,7 @@ final class RecordClassTest extends TestCase {
         self::assertSame( RecordClass::HS, RecordClass::fromName( 'Hs' ) );
         self::assertSame( RecordClass::NONE, RecordClass::fromName( 'none' ) );
         self::assertSame( RecordClass::ANY, RecordClass::fromName( 'ANY' ) );
+        self::assertSame( RecordClass::IN, RecordClass::fromName( 'CLASS1' ) );
     }
 
 
@@ -113,12 +126,18 @@ final class RecordClassTest extends TestCase {
         self::assertFalse( RecordClass::IN->is( 3 ) );
         self::assertTrue( RecordClass::IN->is( 'IN' ) );
         self::assertFalse( RecordClass::IN->is( 'CH' ) );
+
+        $rr = new ResourceRecord( [], 'A', 'IN', 3600, '1.2.3.4' );
+        self::assertTrue( $rr->getClass()->is( RecordClass::IN ) );
+        self::assertFalse( $rr->getClass()->is( RecordClass::CH ) );
+        self::assertTrue( RecordClass::IN->is( $rr ) );
+        self::assertFalse( RecordClass::CH->is( $rr ) );
     }
 
 
-    public function testIsValidId() : void {
-        self::assertTrue( RecordClass::isValidId( 1 ) );
-        self::assertFalse( RecordClass::isValidId( 999 ) );
+    public function testIsKnownId() : void {
+        self::assertTrue( RecordClass::isKnownId( 1 ) );
+        self::assertFalse( RecordClass::isKnownId( 999 ) );
     }
 
 

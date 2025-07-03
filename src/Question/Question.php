@@ -42,7 +42,7 @@ class Question implements QuestionInterface {
 
 
     public function class() : string {
-        return $this->getClass()->name;
+        return RecordClass::idToName( $this->uClass );
     }
 
 
@@ -93,7 +93,7 @@ class Question implements QuestionInterface {
 
 
     public function type() : string {
-        return $this->getType()->name;
+        return RecordType::idToName( $this->uType );
     }
 
 

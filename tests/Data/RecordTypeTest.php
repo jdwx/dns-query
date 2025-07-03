@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\Tests\Data;
 
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -106,13 +107,14 @@ final class RecordTypeTest extends TestCase {
 
     public function testIdToNameForInvalid() : void {
         $this->expectException( RecordTypeException::class );
-        RecordType::idToName( 9999 );
+        RecordType::idToName( 99_999 );
     }
 
 
     public function testIdToNameForValid() : void {
         self::assertSame( 'A', RecordType::idToName( RecordType::A->value ) );
         self::assertSame( 'ANY', RecordType::idToName( RecordType::ANY->value ) );
+        self::assertSame( 'TYPE12345', RecordType::idToName( 12345 ) );
     }
 
 
@@ -123,6 +125,12 @@ final class RecordTypeTest extends TestCase {
         self::assertFalse( RecordType::A->is( RecordType::CNAME ) );
         self::assertTrue( RecordType::A->is( 1 ) );
         self::assertFalse( RecordType::A->is( 3 ) );
+
+        $rr = new ResourceRecord( [], RecordType::A, 0, 0, '' );
+        self::assertTrue( $rr->getType()->is( RecordType::A ) );
+        self::assertFalse( $rr->getType()->is( RecordType::CNAME ) );
+        self::assertTrue( RecordType::A->is( $rr ) );
+        self::assertFalse( RecordType::CNAME->is( $rr ) );
     }
 
 

@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Data;
 
 
 use JDWX\DNSQuery\Exceptions\RecordClassException;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\Transport\BufferInterface;
 use JDWX\Strict\TypeIs;
 
@@ -28,13 +29,20 @@ enum RecordClass: int {
 
     public static function anyToId( int|string|self $i_value ) : int {
         if ( is_int( $i_value ) ) {
-            return $i_value;
+            return self::requireValidId( $i_value );
         }
-        if ( is_string( $i_value ) && preg_match( '/^CLASS(\d+)$/i', $i_value, $matches ) ) {
-            $u = intval( $matches[ 1 ] );
-            if ( $u >= 0 && $u <= 65535 ) {
-                return $u;
+        if ( is_string( $i_value ) ) {
+            $x = self::tryFromName( $i_value );
+            if ( $x instanceof self ) {
+                return $x->value;
             }
+            if ( preg_match( '/^CLASS(\d+)$/i', $i_value, $matches ) ) {
+                $u = intval( $matches[ 1 ] );
+                if ( $u >= 0 && $u <= 65535 ) {
+                    return $u;
+                }
+            }
+            throw new RecordClassException( "Invalid record class name: {$i_value}" );
         }
         $i_value = self::normalize( $i_value );
         return $i_value->value;
@@ -42,13 +50,12 @@ enum RecordClass: int {
 
 
     public static function anyToName( int|string|self $i_value ) : string {
-        if ( is_int( $i_value ) ) {
-            return self::idToName( $i_value );
+        $id = self::anyToId( $i_value );
+        $x = self::tryFrom( $id );
+        if ( $x instanceof self ) {
+            return $x->name;
         }
-        if ( is_string( $i_value ) ) {
-            return $i_value;
-        }
-        return $i_value->name;
+        return "CLASS{$id}";
     }
 
 
@@ -84,18 +91,16 @@ enum RecordClass: int {
 
 
     public static function idToName( int $i_id ) : string {
+        $i_id = self::requireValidId( $i_id );
         $name = self::tryIdToName( $i_id );
         if ( is_string( $name ) ) {
             return $name;
-        }
-        if ( $i_id < 0 || $i_id > 65535 ) {
-            throw new RecordClassException( "Invalid record class ID: {$i_id}" );
         }
         return "CLASS{$i_id}";
     }
 
 
-    public static function isValidId( int $i_id ) : bool {
+    public static function isKnownId( int $i_id ) : bool {
         return self::tryFrom( $i_id ) !== null;
     }
 
@@ -169,7 +174,18 @@ enum RecordClass: int {
     }
 
 
-    public function is( int|string|self $i_value ) : bool {
+    protected static function requireValidId( int $i_id ) : int {
+        if ( $i_id < 0 || $i_id > 65535 ) {
+            throw new RecordClassException( "Invalid record class ID: {$i_id}" );
+        }
+        return $i_id;
+    }
+
+
+    public function is( int|string|self|ResourceRecord $i_value ) : bool {
+        if ( $i_value instanceof ResourceRecord ) {
+            $i_value = $i_value->classValue();
+        }
         $i_value = self::normalize( $i_value );
         return $this === $i_value;
     }

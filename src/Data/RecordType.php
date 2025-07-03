@@ -213,7 +213,7 @@ enum RecordType: int {
 
     public static function anyToId( int|string|self $i_value ) : int {
         if ( is_int( $i_value ) ) {
-            return $i_value;
+            return self::requireValidId( $i_value );
         }
         if ( is_string( $i_value ) ) {
             $x = self::tryFromName( $i_value );
@@ -277,8 +277,12 @@ enum RecordType: int {
 
 
     public static function idToName( int $i_id ) : string {
-        return self::tryFrom( $i_id )->name
-            ?? throw new RecordTypeException( "Unknown record type ID: {$i_id}" );
+        $i_id = self::requireValidId( $i_id );
+        $x = self::tryFrom( $i_id );
+        if ( $x instanceof self ) {
+            return $x->name;
+        }
+        return "TYPE{$i_id}";
     }
 
 
@@ -426,6 +430,14 @@ enum RecordType: int {
             return 'ANY';
         }
         return self::tryFromPhpId( $i_phpId )?->name;
+    }
+
+
+    private static function requireValidId( int $i_id ) : int {
+        if ( $i_id < 0 || $i_id > 65535 ) {
+            throw new RecordTypeException( "Invalid record type ID: {$i_id}" );
+        }
+        return $i_id;
     }
 
 
