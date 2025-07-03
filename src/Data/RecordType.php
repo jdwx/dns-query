@@ -219,6 +219,19 @@ enum RecordType: int {
     }
 
 
+    public static function anyToName( int|string|self $i_value ) : string {
+        if ( is_int( $i_value ) ) {
+            $x = self::tryFrom( $i_value );
+            return $x?->name ?? "TYPE{$i_value}";
+        }
+        if ( is_string( $i_value ) ) {
+            $x = self::tryFromName( $i_value );
+            return $x?->name ?? throw new RecordTypeException( "Unknown record type: {$i_value}" );
+        }
+        return $i_value->name;
+    }
+
+
     public static function consume( BufferInterface $i_buffer ) : self {
         $id = $i_buffer->consumeUINT16();
         return self::tryFrom( $id )

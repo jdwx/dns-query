@@ -26,6 +26,16 @@ final class RecordTypeTest extends TestCase {
     }
 
 
+    public function testAnyToName() : void {
+        self::assertSame( 'MX', RecordType::anyToName( RecordType::MX ) );
+        self::assertSame( 'MX', RecordType::anyToName( RecordType::MX->value ) );
+        self::assertSame( 'MX', RecordType::anyToName( 'mx' ) );
+        self::assertSame( 'TYPE12345', RecordType::anyToName( 12345 ) );
+        self::expectException( RecordTypeException::class );
+        RecordType::anyToName( 'Not-A-Name' );
+    }
+
+
     public function testConsume() : void {
         $data = new Buffer( pack( 'n', RecordType::A->value ) );
         self::assertSame( RecordType::A, RecordType::consume( $data ) );
