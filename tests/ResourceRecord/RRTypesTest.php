@@ -26,11 +26,12 @@ use PHPUnit\Framework\TestCase;
  * - Creating a binary representation of the record with RFC1035Codec::encodeResourceRecord( $rr ).
  * - Parsing a binary representation of the record from a Buffer with RFC1035Codec::decodeResourceRecord( $buffer ).
  *
- * So, for each record type, there should be four methods here:
- * - testXX() - For constructing the XX record type directly.
- * - testXXForArray() - For converting the XX record type to or from an array.
- * - testXXForString() - For converting the XX record type to or from a string.
- * - testXXForBinary() - For converting the XX record type to or from a binary representation.
+ * Except where not possible (e.g., OPT records have no string representation), the test should look like this:
+ * - Construct a ResourceRecord with the type.
+ * - Use RRTypesTest::roundTripArray() to convert it to an array, check the result, and convert it back.
+ * - Use RRTypesTest::roundTripBinary() to convert it to a binary representation and convert it back.
+ * - Use RRTypesTest::roundTripString() to convert it to a string representation, check the result, and convert it back.
+ * - Check that the type and values are (still) as expected.
  */
 #[CoversClass( RDataMaps::class )]
 class RRTypesTest extends TestCase {
@@ -232,6 +233,18 @@ class RRTypesTest extends TestCase {
     public function testSPF() : void {
         $rr = new ResourceRecord( 'example.com', 'SPF', 'IN', 3600,
             [ 'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'SPF',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN SPF v=spf1 include:_spf.example.com ~all' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'SPF', $rr->type() );
         self::assertSame( [ 'v=spf1', 'include:_spf.example.com', '~all' ], $rr->tryGetRDataValue( 'text' ) );
     }
@@ -239,33 +252,21 @@ class RRTypesTest extends TestCase {
 
     public function testTXT() : void {
         $rr = new ResourceRecord( 'example.com', 'TXT', 'IN', 3600,
-            [ 'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ] ] );
+            [ 'text' => [ 'foo bar', 'baz qux', 'quux' ] ] );
         $rr = $this->roundTripArray( $rr, [
             'name' => [ 'example', 'com' ],
             'type' => 'TXT',
             'class' => 'IN',
             'ttl' => 3600,
-            'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ],
+            'text' => [ 'foo bar', 'baz qux', 'quux' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN TXT v=spf1 include:_spf.example.com ~all' );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN TXT "foo bar" "baz qux" quux' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
         self::assertSame( 'TXT', $rr->type() );
-        self::assertSame( [ 'v=spf1', 'include:_spf.example.com', '~all' ], $rr->tryGetRDataValue( 'text' ) );
-    }
-
-
-    public function testTXTForString() : void {
-        $rr = new ResourceRecord( 'example.com', 'TXT', 'IN', 3600,
-            [ 'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ] ] );
-        $string = (string) $rr;
-        self::assertStringContainsString( 'example.com', $string );
-        self::assertStringContainsString( '3600', $string );
-        self::assertStringContainsString( 'IN', $string );
-        self::assertStringContainsString( 'TXT', $string );
-        self::assertStringContainsString( 'v=spf1', $string );
+        self::assertSame( [ 'foo bar', 'baz qux', 'quux' ], $rr->tryGetRDataValue( 'text' ) );
     }
 
 
