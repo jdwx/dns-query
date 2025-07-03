@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Data;
 
 
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use JDWX\DNSQuery\Transport\BufferInterface;
 
 
@@ -428,7 +429,10 @@ enum RecordType: int {
     }
 
 
-    public function is( int|string|self $i_value ) : bool {
+    public function is( int|string|self|ResourceRecordInterface $i_value ) : bool {
+        if ( $i_value instanceof ResourceRecordInterface ) {
+            $i_value = $i_value->typeValue();
+        }
         $i_value = self::tryNormalize( $i_value );
         return $this === $i_value;
     }
