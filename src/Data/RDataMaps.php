@@ -21,18 +21,70 @@ final class RDataMaps {
 
     /** @var array<int, array<string, RDataType>> */
     private const array MAP_LIST = [
+
         RecordType::A->value => [ 'address' => RDataType::IPv4Address ],
+
         RecordType::AAAA->value => [ 'address' => RDataType::IPv6Address ],
+
+        RecordType::AFSDB->value => [
+            'subtype' => RDataType::UINT16,
+            'hostname' => RDataType::DomainName,
+        ],
+
+        RecordType::ALIAS->value => [ 'alias' => RDataType::DomainName ],
+
+        RecordType::CAA->value => [
+            'flags' => RDataType::UINT16,
+            'tag' => RDataType::CharacterString,
+            'value' => RDataType::CharacterString,
+        ],
+
         RecordType::CNAME->value => [ 'cname' => RDataType::DomainName ],
+
+        RecordType::DNAME->value => [ 'dname' => RDataType::DomainName ],
+
+        RecordType::HINFO->value => [
+            'cpu' => RDataType::CharacterString,
+            'os' => RDataType::CharacterString,
+        ],
+
+        RecordType::ISDN->value => [
+            'isdnAddress' => RDataType::CharacterString,
+            'sa' => RDataType::CharacterString,
+        ],
+
+        RecordType::KX->value => [
+            'preference' => RDataType::UINT16,
+            'exchange' => RDataType::CharacterString,
+        ],
+
         RecordType::MX->value => [
             'preference' => RDataType::UINT16,
             'exchange' => RDataType::DomainName,
         ],
+
         RecordType::NS->value => [ 'nsdname' => RDataType::DomainName ],
-        RecordType::OPT->value => [
-            'options' => RDataType::OptionList,
-        ],
+
+        RecordType::OPT->value => [ 'options' => RDataType::OptionList ],
+
         RecordType::PTR->value => [ 'ptrdname' => RDataType::DomainName ],
+
+        RecordType::PX->value => [
+            'preference' => RDataType::UINT16,
+            'map822' => RDataType::DomainName,
+            'mapX400' => RDataType::DomainName,
+        ],
+
+        RecordType::RP->value => [
+            'mboxDName' => RDataType::DomainName,
+            'txtDName' => RDataType::DomainName,
+        ],
+
+        RecordType::RT->value => [
+            'preference' => RDataType::UINT16,
+            'intermediateHost' => RDataType::DomainName,
+        ],
+
         RecordType::SOA->value => [
             'mname' => RDataType::DomainName,
             'rname' => RDataType::DomainName,
@@ -42,9 +94,16 @@ final class RDataMaps {
             'expire' => RDataType::UINT32,
             'minimum' => RDataType::UINT32,
         ],
+
+        RecordType::SPF->value => [
+            'text' => RDataType::CharacterStringList,
+        ],
+
         RecordType::TXT->value => [
             'text' => RDataType::CharacterStringList,
         ],
+
+        RecordType::X25->value => [ 'psdnAddress' => RDataType::CharacterString ],
     ];
 
 

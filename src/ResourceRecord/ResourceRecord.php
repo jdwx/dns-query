@@ -13,6 +13,7 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\DomainName;
 use JDWX\DNSQuery\Exceptions\MessageException;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
 use JDWX\Quote\Exception as QuoteException;
@@ -23,7 +24,7 @@ use JDWX\Strict\Exceptions\TypeException;
 use JDWX\Strict\TypeIs;
 
 
-class ResourceRecord extends AbstractResourceRecord {
+class ResourceRecord implements ResourceRecordInterface {
 
 
     protected const RecordClass DEFAULT_CLASS = RecordClass::IN;
@@ -76,15 +77,12 @@ class ResourceRecord extends AbstractResourceRecord {
 
     /** @param array<string, mixed> $i_data */
     public static function fromArray( array $i_data ) : static {
-        if ( ! isset( $i_data[ 'name' ] ) ) {
-            throw new RecordException( 'Missing name in resource record array' );
-        }
         if ( ! isset( $i_data[ 'type' ] ) ) {
             throw new RecordTypeException( 'Missing record type in resource record array' );
         }
         try {
             $rName = DomainName::normalize(
-                TypeIs::stringOrListString( $i_data[ 'name' ], 'name in resource record array' )
+                TypeIs::stringOrListString( $i_data[ 'name' ] ?? [], 'name in resource record array' )
             );
         } catch ( TypeException $e ) {
             $stType = get_debug_type( $i_data[ 'name' ] );
@@ -189,6 +187,11 @@ class ResourceRecord extends AbstractResourceRecord {
     }
 
 
+    public function class() : string {
+        return $this->getClass()->name;
+    }
+
+
     public function classValue() : int {
         return $this->uClass;
     }
@@ -210,6 +213,15 @@ class ResourceRecord extends AbstractResourceRecord {
     }
 
 
+    public function getRDataValue( string $i_stKey ) : mixed {
+        $rData = $this->getRData();
+        if ( ! isset( $rData[ $i_stKey ] ) ) {
+            throw new RecordDataException( "Invalid RData key: \"{$i_stKey}\"" );
+        }
+        return $rData[ $i_stKey ];
+    }
+
+
     public function getTTL() : int {
         return $this->uTTL;
     }
@@ -218,6 +230,26 @@ class ResourceRecord extends AbstractResourceRecord {
     public function getType() : RecordType {
         return RecordType::tryFrom( $this->uType ) ??
             throw new RecordTypeException( "Unknown record type: {$this->uType}" );
+    }
+
+
+    public function hasRDataValue( string $i_stKey ) : bool {
+        return isset( $this->getRData()->toArray()[ $i_stKey ] );
+    }
+
+
+    public function isClass( int|string|RecordClass $i_class ) : bool {
+        return $this->getClass()->is( $i_class );
+    }
+
+
+    public function isType( int|string|RecordType $i_type ) : bool {
+        return $this->getType()->is( $i_type );
+    }
+
+
+    public function name() : string {
+        return DomainName::format( $this->getName() );
     }
 
 
@@ -247,6 +279,11 @@ class ResourceRecord extends AbstractResourceRecord {
     }
 
 
+    public function setRDataValue( string $i_stKey, mixed $i_value ) : void {
+        $this->getRData()[ $i_stKey ] = $i_value;
+    }
+
+
     public function setTTL( int $i_uTTL ) : void {
         if ( $i_uTTL < 0 || $i_uTTL > 4_294_967_295 ) {
             throw new RecordException( "Invalid TTL {$i_uTTL}" );
@@ -269,6 +306,21 @@ class ResourceRecord extends AbstractResourceRecord {
             'ttl' => $this->uTTL,
         ];
         return array_merge( $rOut, $this->rData->toArray() );
+    }
+
+
+    public function tryGetRDataValue( string $i_stKey ) : mixed {
+        return $this->getRData()->toArray()[ $i_stKey ] ?? null;
+    }
+
+
+    public function ttl() : int {
+        return $this->getTTL();
+    }
+
+
+    public function type() : string {
+        return $this->getType()->name;
     }
 
 

@@ -11,9 +11,9 @@ use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Transport\BufferInterface;
+use JDWX\DNSQuery\Transport\SocketTransport;
 use JDWX\DNSQuery\Transport\TransportBuffer;
 use JDWX\DNSQuery\Transport\TransportInterface;
-use JDWX\DNSQuery\Transport\UdpTransport;
 
 
 /**
@@ -39,9 +39,10 @@ class SimpleClient extends AbstractTimedClient {
     }
 
 
-    public static function createUdp( string $i_stNameServer, int $i_uPort = 53, string $i_stLocalAddress = '',
-                                      ?int   $i_uLocalPort = null ) : self {
-        $xpt = new UdpTransport( $i_stNameServer, $i_uPort, $i_stLocalAddress, $i_uLocalPort );
+    public static function createUdp( string $i_stNameServer, int $i_uPort = 53, ?string $i_nstLocalAddress = null,
+                                      ?int   $i_nuLocalPort = null ) : self {
+        $xpt = SocketTransport::udp( $i_stNameServer, $i_uPort, i_nstLocalAddress: $i_nstLocalAddress,
+            i_nuLocalPort: $i_nuLocalPort );
         $codec = new RFC1035Codec();
         return new self( $xpt, $codec );
     }

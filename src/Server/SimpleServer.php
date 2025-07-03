@@ -14,9 +14,9 @@ use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use JDWX\DNSQuery\Transport\BufferInterface;
+use JDWX\DNSQuery\Transport\SocketTransport;
 use JDWX\DNSQuery\Transport\TransportBuffer;
 use JDWX\DNSQuery\Transport\TransportInterface;
-use JDWX\DNSQuery\Transport\UdpTransport;
 
 
 /**
@@ -48,7 +48,7 @@ class SimpleServer {
      * Create a UDP server bound to the specified address and port.
      */
     public static function createUdp( string $i_stBindAddress = '127.0.0.1', int $i_uPort = 53 ) : self {
-        $transport = new UdpTransport( $i_stBindAddress, $i_uPort );
+        $transport = SocketTransport::udp( $i_stBindAddress, $i_uPort );
         return new self( $transport );
     }
 
