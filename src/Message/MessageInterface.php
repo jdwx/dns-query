@@ -8,7 +8,6 @@ namespace JDWX\DNSQuery\Message;
 
 
 use JDWX\DNSQuery\Question\QuestionInterface;
-use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use Stringable;
 
@@ -36,18 +35,15 @@ interface MessageInterface extends Stringable {
     /** @return list<ResourceRecordInterface> */
     public function getAuthority() : array;
 
-    public function getOpt() : ?OptResourceRecord;
 
     /** @return list<QuestionInterface> */
     public function getQuestion() : array;
+
 
     public function header() : HeaderInterface;
 
 
     public function id() : int;
-
-
-    public function opt() : ?OptResourceRecord;
 
 
     public function question( int $i_uIndex = 0 ) : ?QuestionInterface;

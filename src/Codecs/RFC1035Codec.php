@@ -12,6 +12,7 @@ use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordException;
+use JDWX\DNSQuery\Message\EDNSMessage;
 use JDWX\DNSQuery\Message\Header;
 use JDWX\DNSQuery\Message\HeaderInterface;
 use JDWX\DNSQuery\Message\Message;
@@ -20,7 +21,6 @@ use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\Question\QuestionInterface;
 use JDWX\DNSQuery\ResourceRecord\OpaqueRData;
-use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\RData;
 use JDWX\DNSQuery\ResourceRecord\RDataInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
@@ -143,9 +143,6 @@ class RFC1035Codec implements CodecInterface {
         assert( $i_buffer->tell() - $uRDOffset === $uRDLength );
         $r[ 'rdata' ] = $rData;
 
-        if ( RecordType::OPT->is( $r[ 'type' ] ) ) {
-            return OptResourceRecord::fromArray( $r );
-        }
         return ResourceRecord::fromArray( $r );
     }
 
@@ -284,22 +281,34 @@ class RFC1035Codec implements CodecInterface {
 
         for ( $ii = 0 ; $ii < $header->getARCount() ; ++$ii ) {
             $rr = self::decodeResourceRecord( $i_buffer );
-            if ( $rr instanceof OptResourceRecord ) {
+            if ( RecordType::OPT->is( $rr->typeValue() ) ) {
                 if ( $opt !== null ) {
                     throw new RecordException( 'Multiple OPT records found in message.' );
                 }
                 $opt = $rr;
-            } else {
-                $additional[] = $rr;
             }
+            $additional[] = $rr;
         }
+
+        // If we found an OPT record, create an EDNSMessage
+        if ( $opt instanceof ResourceRecordInterface ) {
+            return EDNSMessage::fromOptRecord(
+                $header,
+                $question,
+                $answer,
+                $authority,
+                $additional,
+                $opt
+            );
+        }
+
+        // Otherwise create a regular Message
         return new Message(
             $header,
             $question,
             $answer,
             $authority,
-            $additional,
-            $opt
+            $additional
         );
     }
 
@@ -324,11 +333,6 @@ class RFC1035Codec implements CodecInterface {
 
         foreach ( $i_msg->getAdditional() as $rr ) {
             $st .= self::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
-        }
-
-        $opt = $i_msg->opt();
-        if ( $opt instanceof ResourceRecordInterface ) {
-            $st .= self::encodeResourceRecord( $opt, $rLabelMap, $uOffset );
         }
 
         return $st;

@@ -12,7 +12,6 @@ use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\Question\QuestionInterface;
-use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 
 
@@ -25,14 +24,12 @@ class Message implements MessageInterface {
      * @param list<ResourceRecordInterface> $answer
      * @param list<ResourceRecordInterface> $authority
      * @param list<ResourceRecordInterface> $additional
-     * @param ?OptResourceRecord $opt
      */
     public function __construct( private readonly HeaderInterface $header,
                                  private array                    $question = [],
                                  private array                    $answer = [],
                                  private array                    $authority = [],
-                                 private array                    $additional = [],
-                                 private ?OptResourceRecord       $opt = null ) {}
+                                 private array                    $additional = [] ) {}
 
 
     public static function request( string|QuestionInterface $domain,
@@ -60,62 +57,13 @@ class Message implements MessageInterface {
 
 
     public function __toString() : string {
-
-        $st = $this->header
-            . '; QUERY: ' . count( $this->question )
-            . ', ANSWER: ' . count( $this->answer )
-            . ', AUTHORITY: ' . count( $this->authority )
-            . ', ADDITIONAL: ' . count( $this->additional ) . "\n\n";
-
-        if ( $this->opt instanceof OptResourceRecord ) {
-            /** @noinspection SpellCheckingInspection */
-            $st .= ";; OPT PSEUDOSECTION:\n"
-                . ';' . $this->opt . "\n\n";
-        }
-
-        if ( count( $this->question ) > 0 ) {
-            $st .= ";; QUESTION SECTION:\n";
-            foreach ( $this->question as $q ) {
-                $st .= ';' . $q . "\n";
-            }
-            $st .= "\n";
-        }
-
-        if ( count( $this->answer ) > 0 ) {
-            $st .= ";; ANSWER SECTION:\n";
-            foreach ( $this->answer as $rr ) {
-                $st .= $rr . "\n";
-            }
-            $st .= "\n";
-        }
-
-        if ( count( $this->authority ) > 0 ) {
-            $st .= ";; AUTHORITY SECTION:\n";
-            foreach ( $this->authority as $rr ) {
-                $st .= $rr . "\n";
-            }
-            $st .= "\n";
-        }
-
-        if ( count( $this->additional ) > 0 ) {
-            $st .= ";; ADDITIONAL SECTION:\n";
-            foreach ( $this->additional as $rr ) {
-                $st .= $rr . "\n";
-            }
-            $st .= "\n";
-        }
-
-        return $st;
+        return $this->header . $this->stringSummary() . $this->stringRecords();
     }
 
 
     public function addAdditional( ResourceRecordInterface $i_additional ) : void {
         $this->additional[] = $i_additional;
-        $uCount = count( $this->additional );
-        if ( $this->opt instanceof OptResourceRecord ) {
-            $uCount += 1; // OPT is counted as additional
-        }
-        $this->header->setARCount( $uCount );
+        $this->header->setARCount( count( $this->additional ) );
     }
 
 
@@ -167,11 +115,6 @@ class Message implements MessageInterface {
     }
 
 
-    public function getOpt() : ?OptResourceRecord {
-        return $this->opt;
-    }
-
-
     public function getQuestion() : array {
         return $this->question;
     }
@@ -187,24 +130,60 @@ class Message implements MessageInterface {
     }
 
 
-    public function opt() : ?OptResourceRecord {
-        return $this->opt;
-    }
-
-
     public function question( int $i_uIndex = 0 ) : ?QuestionInterface {
         return $this->question[ $i_uIndex ] ?? null;
-    }
-
-
-    public function setOpt( ?OptResourceRecord $i_opt ) : void {
-        $this->opt = $i_opt;
     }
 
 
     public function setQuestion( QuestionInterface $i_question ) : void {
         $this->question = [ $i_question ];
         $this->header->setQDCount( 1 );
+    }
+
+
+    protected function stringRecords() : string {
+        $st = '';
+
+        if ( count( $this->question ) > 0 ) {
+            $st .= ";; QUESTION SECTION:\n";
+            foreach ( $this->question as $q ) {
+                $st .= ';' . $q . "\n";
+            }
+            $st .= "\n";
+        }
+
+        if ( count( $this->answer ) > 0 ) {
+            $st .= ";; ANSWER SECTION:\n";
+            foreach ( $this->answer as $rr ) {
+                $st .= $rr . "\n";
+            }
+            $st .= "\n";
+        }
+
+        if ( count( $this->authority ) > 0 ) {
+            $st .= ";; AUTHORITY SECTION:\n";
+            foreach ( $this->authority as $rr ) {
+                $st .= $rr . "\n";
+            }
+            $st .= "\n";
+        }
+
+        if ( count( $this->additional ) > 0 ) {
+            $st .= ";; ADDITIONAL SECTION:\n";
+            foreach ( $this->additional as $rr ) {
+                $st .= $rr . "\n";
+            }
+            $st .= "\n";
+        }
+        return $st;
+    }
+
+
+    protected function stringSummary() : string {
+        return '; QUERY: ' . count( $this->question )
+            . ', ANSWER: ' . count( $this->answer )
+            . ', AUTHORITY: ' . count( $this->authority )
+            . ', ADDITIONAL: ' . count( $this->additional ) . "\n\n";
     }
 
 

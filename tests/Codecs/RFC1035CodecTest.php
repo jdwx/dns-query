@@ -8,16 +8,18 @@ namespace JDWX\DNSQuery\Tests\Codecs;
 
 
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Data\EDNSVersion;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\HexDump;
+use JDWX\DNSQuery\Message\EDNSMessage;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\Question\Question;
-use JDWX\DNSQuery\ResourceRecord\OptResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\RData;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -49,6 +51,7 @@ final class RFC1035CodecTest extends TestCase {
         $codec = new RFC1035Codec();
         $msg = $codec->decode( $buffer );
 
+        self::assertInstanceOf( EDNSMessage::class, $msg );
         self::assertSame( 56866, $msg->header()->id() );
         self::assertSame( 'QUERY', $msg->header()->opcode() );
 
@@ -89,13 +92,15 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( '23.40.60.40', $msg->getAnswer()[ 3 ]->tryGetRDataValue( 'address' ) );
 
         self::assertCount( 0, $msg->getAuthority() );
-        self::assertCount( 0, $msg->getAdditional() );
+        self::assertCount( 1, $msg->getAdditional() );
         self::assertSame( 1, $msg->header()->getARCount() );
 
-        $opt = $msg->getOpt();
-        assert( $opt instanceof OptResourceRecord );
-        self::assertSame( 0, $opt->version() );
-        self::assertSame( 1232, $opt->payloadSize() );
+        self::assertNull( $msg->additional( 0 ) );
+        $opt = $msg->getAdditional()[ 0 ] ?? null;
+        assert( $opt instanceof ResourceRecordInterface );
+        $version = EDNSVersion::fromFlagTTL( $opt->getTTL() );
+        self::assertSame( 0, $version->value );
+        self::assertSame( 1232, $opt->classValue() );
         self::assertSame( [], $opt->tryGetRDataValue( 'options' ) );
 
     }
@@ -402,12 +407,13 @@ final class RFC1035CodecTest extends TestCase {
         );
         $rr = RFC1035Codec::decodeResourceRecord( $buffer );
 
-        assert( $rr instanceof OptResourceRecord );
+        assert( $rr instanceof ResourceRecord );
 
         self::assertSame( [], $rr->getName() ); // Root domain
         self::assertSame( 'OPT', $rr->type() );
-        self::assertSame( 1232, $rr->payloadSize() );
-        self::assertSame( 0, $rr->version() );
+        self::assertSame( 1232, $rr->classValue() );
+        $version = EDNSVersion::fromFlagTTL( $rr->getTTL() );
+        self::assertSame( 0, $version->value );
 
         $options = $rr->tryGetRDataValue( 'options' );
         self::assertCount( 1, $options );
