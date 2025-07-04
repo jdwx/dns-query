@@ -11,6 +11,7 @@ use JDWX\DNSQuery\Binary;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Message\EDNSMessage;
 use JDWX\DNSQuery\Message\Header;
@@ -112,6 +113,7 @@ class RFC1035Codec implements CodecInterface {
             RDataType::CharacterString => $i_buffer->consumeLabel(),
             RDataType::CharacterStringList => self::decodeRDataCharacterStringList( $i_buffer, $i_uEndOfRData ),
             RDataType::DomainName => $i_buffer->consumeNameArray(),
+            RDataType::HexBinary => $i_buffer->consumeHexBinary(),
             RDataType::IPv4Address => $i_buffer->consumeIPv4(),
             RDataType::IPv6Address => $i_buffer->consumeIPv6(),
             RDataType::Option => self::decodeRDataOption( $i_buffer ),
@@ -179,8 +181,9 @@ class RFC1035Codec implements CodecInterface {
         $rMap = $i_rData->map();
         $stRData = '';
         foreach ( $rMap as $stName => $rDataType ) {
-            if ( ! isset( $i_rData[ $stName ] ) ) {
-                throw new RecordException( "Missing RData '{$stName}'" );
+            $x = $i_rData[ $stName ];
+            if ( null === $x ) {
+                throw new RecordDataException( "Missing RData '{$stName}'" );
             }
             $st = self::encodeRDataValue( $rDataType, $i_rData[ $stName ], $io_rLabelMap, $io_offset );
             $stRData .= $st;
@@ -226,6 +229,7 @@ class RFC1035Codec implements CodecInterface {
             RDataType::CharacterString => Binary::packLabel( $i_value ),
             RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_value ),
             RDataType::DomainName => Binary::packLabels( $i_value, $io_rLabelMap, $i_uOffset ),
+            RDataType::HexBinary => Binary::packLabel( bin2hex( $i_value ) ),
             RDataType::IPv4Address => Binary::packIPv4( $i_value ),
             RDataType::IPv6Address => Binary::packIPv6( $i_value ),
             RDataType::Option => self::encodeRDataOption( $i_value ),

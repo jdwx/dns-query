@@ -26,6 +26,8 @@ enum RDataType {
 
     case CharacterStringList;
 
+    case HexBinary;
+
     case UINT8;
 
     case UINT16;
@@ -66,6 +68,7 @@ enum RDataType {
                 [ self::class, 'escapeString' ],
                 TypeIs::array( $i_value )
             ) ),
+            self::HexBinary => bin2hex( $i_value ),
             default => strval( $i_value )
         };
     }
@@ -73,8 +76,22 @@ enum RDataType {
 
     public function parse( string $i_stValue ) : mixed {
         switch ( $this ) {
+
             case self::DomainName:
                 return DomainName::parse( $i_stValue );
+
+
+            case self::HexBinary:
+                $st = filter_var( $i_stValue, FILTER_VALIDATE_REGEXP, [
+                    'options' => [
+                        'regexp' => '/^[0-9a-fA-F]+$/',
+                    ],
+                ] );
+                if ( false === $st ) {
+                    throw new RecordDataException( "Invalid HexBinary value: {$i_stValue}" );
+                }
+                return hex2bin( $st );
+
 
             case self::IPv4Address:
                 $st = filter_var( $i_stValue, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
@@ -83,6 +100,7 @@ enum RDataType {
                 }
                 return $st;
 
+
             case self::IPv6Address:
                 $st = filter_var( $i_stValue, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 );
                 if ( false === $st ) {
@@ -90,8 +108,10 @@ enum RDataType {
                 }
                 return $st;
 
+
             case self::CharacterString:
                 return $i_stValue;
+
 
             case self::CharacterStringList:
                 throw new LogicException( 'Cannot parse CharacterStringList directly.' );
@@ -122,6 +142,7 @@ enum RDataType {
                 }
                 return $uValue;
 
+
             case self::UINT32:
                 $uValue = filter_var( $i_stValue, FILTER_VALIDATE_INT, [
                     'options' => [
@@ -133,6 +154,7 @@ enum RDataType {
                     throw new RecordDataException( "Invalid UINT32 value: $i_stValue" );
                 }
                 return $uValue;
+
 
             default:
                 throw new LogicException( "Unhandled RDataType: {$this->name}" );

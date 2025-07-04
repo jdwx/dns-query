@@ -38,6 +38,15 @@ abstract class AbstractBuffer implements BufferInterface {
     }
 
 
+    public function consumeHexBinary() : string {
+        $st = $this->consumeLabel();
+        if ( ! preg_match( '/^[0-9a-fA-F]+$/', $st ) ) {
+            throw new InvalidArgumentException( "Invalid hex binary data: {$st}" );
+        }
+        return hex2bin( $st );
+    }
+
+
     public function consumeIPv4() : string {
         return Binary::unpackIPv4( $this->consume( 4 ) );
     }

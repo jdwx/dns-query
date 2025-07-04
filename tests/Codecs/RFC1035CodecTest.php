@@ -12,11 +12,14 @@ use JDWX\DNSQuery\Data\EDNSVersion;
 use JDWX\DNSQuery\Data\OpCode;
 use JDWX\DNSQuery\Data\RD;
 use JDWX\DNSQuery\Data\RDataType;
+use JDWX\DNSQuery\Exceptions\RecordDataException;
+use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\EDNSMessage;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\Question\Question;
+use JDWX\DNSQuery\ResourceRecord\OpaqueRData;
 use JDWX\DNSQuery\ResourceRecord\RData;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
@@ -183,6 +186,27 @@ final class RFC1035CodecTest extends TestCase {
         self::assertSame( 0x11121314, $message->additional( 0 )->getTTL() );
         self::assertSame( "\x01\x02\x03", $message->additional( 0 )->tryGetRDataValue( 'rdata' ) );
 
+    }
+
+
+    public function testDecodeForMultipleOPT() : void {
+        $stPacketDump = <<<ZEND
+        0x0010:  de22 8180 0000 0000 0000 0002 0000 2900 
+        0x0020:  0100 0000 1200 0700 0100 0346 6f6f 0000
+        0x0030:  2900 0100 0000 3400 0700 0200 0342 6172
+        ZEND;
+        $packet = HexDump::fromTcpDump( $stPacketDump );
+        $buffer = new Buffer( $packet );
+        $codec = new RFC1035Codec();
+        self::expectException( RecordException::class );
+        $codec->decode( $buffer );
+    }
+
+
+    public function testDecodeForNoData() : void {
+        $codec = new RFC1035Codec();
+        $buffer = new Buffer( '' );
+        self::assertNull( $codec->decode( $buffer ) );
     }
 
 
@@ -442,6 +466,22 @@ final class RFC1035CodecTest extends TestCase {
             new RData( 'A', [ 'address' => '1.2.3.4' ] )
         ) );
 
+        $msg->addAuthority( new ResourceRecord(
+            'test',
+            'NS',
+            'IN',
+            12345,
+            new RData( 'NS', [ 'nsdname' => [ 'ns', 'example', 'com' ] ] )
+        ) );
+
+        $msg->addAdditional( new ResourceRecord(
+            'ns.example.com',
+            'A',
+            'IN',
+            23456,
+            new RData( 'A', [ 'address' => '2.3.4.5' ] )
+        ) );
+
         $st = $codec->encode( $msg );
 
         // Header
@@ -453,9 +493,9 @@ final class RFC1035CodecTest extends TestCase {
         $st = substr( $st, 2 );
         self::assertStringStartsWith( "\x00\x01", $st ); // Answer Count
         $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x00\x00", $st ); // Authority Count
+        self::assertStringStartsWith( "\x00\x01", $st ); // Authority Count
         $st = substr( $st, 2 );
-        self::assertStringStartsWith( "\x00\x00", $st ); // Additional Count
+        self::assertStringStartsWith( "\x00\x01", $st ); // Additional Count
         $st = substr( $st, 2 );
 
         // Question
@@ -477,7 +517,39 @@ final class RFC1035CodecTest extends TestCase {
         $st = substr( $st, 4 );
         self::assertStringStartsWith( "\x00\x04", $st ); // RDLength
         $st = substr( $st, 2 );
-        self::assertSame( "\x01\x02\x03\x04", $st ); // IP address
+        self::assertStringStartsWith( "\x01\x02\x03\x04", $st ); // IP address
+        $st = substr( $st, 4 );
+
+        // Authority
+        self::assertStringStartsWith( HexDump::escape( "\xc0\x0c" ), HexDump::escape( $st ) ); // Name (uncompressed)
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x02", $st ); // Type NS
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Class IN
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x00\x30\x39", $st ); // TTL 12345
+        $st = substr( $st, 4 );
+        self::assertStringStartsWith( "\x00\x10", $st ); // RDLength
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( HexDump::escape( "\x02ns\x07example\x03com\x00" ), HexDump::escape( $st ) ); // NSDNAME
+        $st = substr( $st, 16 );
+
+        // Additional
+        self::assertStringStartsWith( "\xc0\x32", $st ); // Name
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Type A
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x00\x01", $st ); // Class IN
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( HexDump::escape( "\x00\x00\x5B\xA0" ), HexDump::escape( $st ) ); // TTL 23456
+        $st = substr( $st, 4 );
+        self::assertStringStartsWith( "\x00\x04", $st ); // RDLength
+        $st = substr( $st, 2 );
+        self::assertStringStartsWith( "\x02\x03\x04\x05", $st ); // IP address
+        $st = substr( $st, 4 );
+
+        self::assertSame( '', $st );
+
     }
 
 
@@ -505,6 +577,29 @@ final class RFC1035CodecTest extends TestCase {
         $strings = [ 'Foo', 'Bar', 'Baz', 'Quux' ];
         $st = RFC1035Codec::encodeRDataCharacterStringList( $strings );
         self::assertSame( "\x03Foo\x03Bar\x03Baz\x04Quux", $st );
+    }
+
+
+    public function testEncodeRDataForMissingData() : void {
+        $rDataMap = [
+            'foo' => RDataType::UINT16,
+        ];
+        $rDataValues = [ 'foo' => 0x1234 ];
+        $rData = new RData( $rDataMap, $rDataValues );
+        $rData->rDataMap[ 'bar' ] = RDataType::CharacterString;
+        $rLabelMap = [];
+        $uOffset = 0;
+        self::expectException( RecordDataException::class );
+        RFC1035Codec::encodeRData( $rData, $rLabelMap, $uOffset );
+    }
+
+
+    public function testEncodeRDataForOpaque() : void {
+        $rData = new OpaqueRData( 'Opaque data' );
+        $rLabelMap = [];
+        $uOffset = 0;
+        $st = RFC1035Codec::encodeRData( $rData, $rLabelMap, $uOffset );
+        self::assertSame( 'Opaque data', $st );
     }
 
 

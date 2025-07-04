@@ -16,6 +16,9 @@ interface BufferInterface {
     public function consume( int $i_uLength ) : string;
 
 
+    public function consumeHexBinary() : string;
+
+
     public function consumeIPv4() : string;
 
 

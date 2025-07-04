@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
+#[CoversClass( AbstractBuffer::class )]
 #[CoversClass( Buffer::class )]
 final class BufferTest extends TestCase {
 
@@ -47,6 +48,19 @@ final class BufferTest extends TestCase {
         self::assertSame( 'Foo', $buffer->consume( 3 ) );
         self::assertSame( 'Bar', $buffer->consume( 3 ) );
         self::assertSame( 'Baz', $buffer->consume( 3 ) );
+    }
+
+
+    public function testConsumeHexBinary() : void {
+        $buffer = new Buffer( "\x06426172" );
+        self::assertSame( 'Bar', $buffer->consumeHexBinary() );
+    }
+
+
+    public function testConsumeHexBinaryForInvalid() : void {
+        $buffer = new Buffer( "\x04\x01\x02\x03\x04" );
+        self::expectException( InvalidArgumentException::class );
+        $buffer->consumeHexBinary();
     }
 
 
@@ -144,6 +158,15 @@ final class BufferTest extends TestCase {
         $buffer = new Buffer( "\x03Foo\xC0\x00" ); // Pointer points to start
         self::expectException( InvalidArgumentException::class );
         $buffer->expandNamePointer( 0 );
+    }
+
+
+    public function testReadyCheck() : void {
+        $buffer = new Buffer( '' );
+        self::assertFalse( $buffer->readyCheck() );
+
+        $buffer = new Buffer( 'Foo' );
+        self::assertTrue( $buffer->readyCheck() );
     }
 
 

@@ -8,12 +8,14 @@ namespace JDWX\DNSQuery\Tests\Transport;
 
 
 use JDWX\DNSQuery\Exceptions\TransportException;
+use JDWX\DNSQuery\Transport\AbstractTransport;
 use JDWX\DNSQuery\Transport\SocketTransport;
 use JDWX\Socket\Socket;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
+#[CoversClass( AbstractTransport::class )]
 #[CoversClass( SocketTransport::class )]
 final class SocketTransportTest extends TestCase {
 

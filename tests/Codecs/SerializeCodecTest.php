@@ -28,4 +28,11 @@ final class SerializeCodecTest extends TestCase {
     }
 
 
+    public function testDecodeForNoData() : void {
+        $codec = new SerializeCodec();
+        $buffer = new Buffer( '' );
+        self::assertNull( $codec->decode( $buffer ) );
+    }
+
+
 }
