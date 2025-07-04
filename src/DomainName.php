@@ -43,8 +43,12 @@ final class DomainName {
     public static function normalize( array|string $i_name, array $i_rOrigin = [] ) : array {
         if ( is_string( $i_name ) ) {
             $i_name = self::parse( $i_name, $i_rOrigin );
+        } elseif ( ! empty( $i_rOrigin ) && ! empty( $i_name[ count( $i_name ) - 1 ] ) ) {
+            $i_name = array_merge( $i_name, $i_rOrigin );
         }
-        $i_name = array_merge( $i_name, $i_rOrigin );
+        if ( empty( $i_name[ count( $i_name ) - 1 ] ) ) {
+            array_pop( $i_name );
+        }
         return array_map( fn( string $x ) => strtolower( trim( $x ) ), $i_name );
     }
 

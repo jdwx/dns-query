@@ -33,6 +33,10 @@ final class RDataMaps {
 
         RecordType::ALIAS->value => [ 'alias' => RDataType::DomainName ],
 
+        RecordType::AVC->value => [
+            'text' => RDataType::CharacterStringList,
+        ],
+
         RecordType::CAA->value => [
             'flags' => RDataType::UINT16,
             'tag' => RDataType::CharacterString,
@@ -58,9 +62,28 @@ final class RDataMaps {
             'exchange' => RDataType::CharacterString,
         ],
 
+        RecordType::L32->value => [
+            'preference' => RDataType::UINT16,
+            'locator32' => RDataType::IPv4Address,
+        ],
+
+        RecordType::LP->value => [
+            'preference' => RDataType::UINT16,
+            'fqdn' => RDataType::DomainName,
+        ],
+
         RecordType::MX->value => [
             'preference' => RDataType::UINT16,
             'exchange' => RDataType::DomainName,
+        ],
+
+        RecordType::NAPTR->value => [
+            'order' => RDataType::UINT16,
+            'preference' => RDataType::UINT16,
+            'flags' => RDataType::CharacterString,
+            'services' => RDataType::CharacterString,
+            'regexp' => RDataType::CharacterString,
+            'replacement' => RDataType::DomainName,
         ],
 
         RecordType::NS->value => [ 'nsdname' => RDataType::DomainName ],
@@ -97,6 +120,13 @@ final class RDataMaps {
 
         RecordType::SPF->value => [
             'text' => RDataType::CharacterStringList,
+        ],
+
+        RecordType::SRV->value => [
+            'priority' => RDataType::UINT16,
+            'weight' => RDataType::UINT16,
+            'port' => RDataType::UINT16,
+            'target' => RDataType::DomainName,
         ],
 
         RecordType::TXT->value => [

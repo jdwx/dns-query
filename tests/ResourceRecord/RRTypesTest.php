@@ -122,6 +122,26 @@ class RRTypesTest extends TestCase {
     }
 
 
+    public function testAVC() : void {
+        $rr = new ResourceRecord( 'example.com', 'AVC', 'IN', 3600,
+            [ 'text' => [ 'app=example', 'version=1.0' ] ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'AVC',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'text' => [ 'app=example', 'version=1.0' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN AVC app=example version=1.0' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'AVC', $rr->type() );
+        self::assertSame( [ 'app=example', 'version=1.0' ], $rr->tryGetRDataValue( 'text' ) );
+    }
+
+
     public function testCAA() : void {
         $rr = new ResourceRecord( 'example.com', 'CAA', 'IN', 3600, [
             'flags' => 0,
@@ -261,6 +281,54 @@ class RRTypesTest extends TestCase {
     }
 
 
+    public function testL32() : void {
+        $rr = new ResourceRecord( 'example.com', 'L32', 'IN', 3600, [
+            'preference' => 10,
+            'locator32' => '192.0.2.1',
+        ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'L32',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'preference' => 10,
+            'locator32' => '192.0.2.1',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN L32 10 192.0.2.1' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'L32', $rr->type() );
+        self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
+        self::assertSame( '192.0.2.1', $rr->tryGetRDataValue( 'locator32' ) );
+    }
+
+
+    public function testLP() : void {
+        $rr = new ResourceRecord( 'example.com', 'LP', 'IN', 3600, [
+            'preference' => 10,
+            'fqdn' => [ 'locator', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'LP',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'preference' => 10,
+            'fqdn' => [ 'locator', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN LP 10 locator.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'LP', $rr->type() );
+        self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
+        self::assertSame( [ 'locator', 'example', 'com' ], $rr->tryGetRDataValue( 'fqdn' ) );
+    }
+
+
     public function testMX() : void {
         $rr = new ResourceRecord( 'example.com', 'MX', 'IN', 3600, [
             'preference' => 10,
@@ -282,6 +350,42 @@ class RRTypesTest extends TestCase {
         self::assertSame( 'MX', $rr->type() );
         self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
         self::assertSame( [ 'mail', 'example', 'com' ], $rr->tryGetRDataValue( 'exchange' ) );
+    }
+
+
+    public function testNAPTR() : void {
+        $rr = new ResourceRecord( 'example.com', 'NAPTR', 'IN', 3600, [
+            'order' => 100,
+            'preference' => 10,
+            'flags' => 'S',
+            'services' => 'SIP+D2U',
+            'regexp' => '!^.*$!sip:customer-service@example.com!',
+            'replacement' => [ '_sip', '_udp', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'NAPTR',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'order' => 100,
+            'preference' => 10,
+            'flags' => 'S',
+            'services' => 'SIP+D2U',
+            'regexp' => '!^.*$!sip:customer-service@example.com!',
+            'replacement' => [ '_sip', '_udp', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN NAPTR 100 10 S SIP+D2U !^.*$!sip:customer-service@example.com! _sip._udp.example.com' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'NAPTR', $rr->type() );
+        self::assertSame( 100, $rr->tryGetRDataValue( 'order' ) );
+        self::assertSame( 10, $rr->tryGetRDataValue( 'preference' ) );
+        self::assertSame( 'S', $rr->tryGetRDataValue( 'flags' ) );
+        self::assertSame( 'SIP+D2U', $rr->tryGetRDataValue( 'services' ) );
+        self::assertSame( '!^.*$!sip:customer-service@example.com!', $rr->tryGetRDataValue( 'regexp' ) );
+        self::assertSame( [ '_sip', '_udp', 'example', 'com' ], $rr->tryGetRDataValue( 'replacement' ) );
     }
 
 
@@ -479,6 +583,36 @@ class RRTypesTest extends TestCase {
     }
 
 
+    public function testSRV() : void {
+        $rr = new ResourceRecord( '_http._tcp.example.com', 'SRV', 'IN', 3600, [
+            'priority' => 10,
+            'weight' => 60,
+            'port' => 80,
+            'target' => [ 'www', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ '_http', '_tcp', 'example', 'com' ],
+            'type' => 'SRV',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'priority' => 10,
+            'weight' => 60,
+            'port' => 80,
+            'target' => [ 'www', 'example', 'com' ],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, '_http._tcp.example.com 3600 IN SRV 10 60 80 www.example.com' );
+        self::assertSame( [ '_http', '_tcp', 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'SRV', $rr->type() );
+        self::assertSame( 10, $rr->tryGetRDataValue( 'priority' ) );
+        self::assertSame( 60, $rr->tryGetRDataValue( 'weight' ) );
+        self::assertSame( 80, $rr->tryGetRDataValue( 'port' ) );
+        self::assertSame( [ 'www', 'example', 'com' ], $rr->tryGetRDataValue( 'target' ) );
+    }
+
+
     public function testTXT() : void {
         $rr = new ResourceRecord( 'example.com', 'TXT', 'IN', 3600,
             [ 'text' => [ 'foo bar', 'baz qux', 'quux' ] ] );
@@ -519,6 +653,7 @@ class RRTypesTest extends TestCase {
     }
 
 
+    /** @param array<string, mixed>|null $i_nrCheck */
     private function roundTripArray( ResourceRecordInterface $rr, ?array $i_nrCheck = null ) : ResourceRecordInterface {
         $array = $rr->toArray( true );
         if ( is_array( $i_nrCheck ) ) {

@@ -13,34 +13,28 @@ use JDWX\Strict\TypeIs;
 use LogicException;
 
 
-enum RDataType: int {
+enum RDataType {
 
 
-    case DomainName          = 0;
+    case DomainName;
 
-    case IPv4Address         = 1;
+    case IPv4Address;
 
-    case IPv6Address         = 2;
+    case IPv6Address;
 
-    case CharacterString     = 3;
+    case CharacterString;
 
-    case CharacterStringList = 4;
+    case CharacterStringList;
 
-    case UINT16              = 5;
+    case UINT8;
 
-    case UINT32              = 6;
+    case UINT16;
 
-    case Option              = 7;
+    case UINT32;
 
-    case OptionList          = 8;
+    case Option;
 
-
-    public static function normalize( int|RDataType $i_type ) : RDataType {
-        if ( $i_type instanceof RDataType ) {
-            return $i_type;
-        }
-        return RDataType::from( $i_type );
-    }
+    case OptionList;
 
 
     protected static function escapeString( string $i_value ) : string {
@@ -101,6 +95,20 @@ enum RDataType: int {
 
             case self::CharacterStringList:
                 throw new LogicException( 'Cannot parse CharacterStringList directly.' );
+
+
+            case self::UINT8:
+                $uValue = filter_var( $i_stValue, FILTER_VALIDATE_INT, [
+                    'options' => [
+                        'min_range' => 0,
+                        'max_range' => 255,
+                    ],
+                ] );
+                if ( false === $uValue ) {
+                    throw new RecordDataException( "Invalid UINT8 value: $i_stValue" );
+                }
+                return $uValue;
+
 
             case self::UINT16:
                 $uValue = filter_var( $i_stValue, FILTER_VALIDATE_INT, [

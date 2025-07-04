@@ -116,6 +116,7 @@ class RFC1035Codec implements CodecInterface {
             RDataType::IPv6Address => $i_buffer->consumeIPv6(),
             RDataType::Option => self::decodeRDataOption( $i_buffer ),
             RDataType::OptionList => self::decodeRDataOptionList( $i_buffer, $i_uEndOfRData ),
+            RDataType::UINT8 => $i_buffer->consumeUINT8(),
             RDataType::UINT16 => $i_buffer->consumeUINT16(),
             RDataType::UINT32 => $i_buffer->consumeUINT32(),
         };
@@ -229,6 +230,7 @@ class RFC1035Codec implements CodecInterface {
             RDataType::IPv6Address => Binary::packIPv6( $i_value ),
             RDataType::Option => self::encodeRDataOption( $i_value ),
             RDataType::OptionList => self::encodeRDataOptionList( $i_value ),
+            RDataType::UINT8 => Binary::packUINT8( $i_value ),
             RDataType::UINT16 => Binary::packUINT16( $i_value ),
             RDataType::UINT32 => Binary::packUINT32( $i_value ),
         };

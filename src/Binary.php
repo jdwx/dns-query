@@ -137,6 +137,11 @@ final class Binary {
     }
 
 
+    public static function packUINT8( int $i_uValue ) : string {
+        return chr( $i_uValue );
+    }
+
+
     /** @return Generator<string, string> */
     public static function splitLabels( string $i_stName ) : Generator {
         $rParts = explode( '.', $i_stName );

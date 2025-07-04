@@ -46,6 +46,9 @@ interface BufferInterface {
     public function consumeUINT32() : int;
 
 
+    public function consumeUINT8() : int;
+
+
     public function getData() : string;
 
 

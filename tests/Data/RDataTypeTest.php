@@ -38,17 +38,12 @@ final class RDataTypeTest extends TestCase {
     }
 
 
-    public function testNormalize() : void {
-        self::assertSame( RDataType::DomainName, RDataType::normalize( 0 ) );
-        self::assertSame( RDataType::DomainName, RDataType::normalize( RDataType::DomainName ) );
-    }
-
-
     public function testParse() : void {
         self::assertSame( [ 'foo.bar', 'baz' ], RDataType::DomainName->parse( '"foo.bar".baz' ) );
         self::assertSame( '1.2.3.4', RDataType::IPv4Address->parse( '1.2.3.4' ) );
         self::assertSame( '2001:db8::ff00:42:8329', RDataType::IPv6Address->parse( '2001:db8::ff00:42:8329' ) );
         self::assertSame( 'foo', RDataType::CharacterString->parse( 'foo' ) );
+        self::assertSame( 123, RDataType::UINT8->parse( '123' ) );
         self::assertSame( 12345, RDataType::UINT16->parse( '12345' ) );
         self::assertSame( 1234567890, RDataType::UINT32->parse( '1234567890' ) );
         self::expectException( LogicException::class );
@@ -77,13 +72,19 @@ final class RDataTypeTest extends TestCase {
 
     public function testParseForInvalidUINT16() : void {
         self::expectException( RecordDataException::class );
-        RDataType::UINT16->parse( '65536' ); // UINT16 max is 65535
+        RDataType::UINT16->parse( '65536' );
     }
 
 
     public function testParseForInvalidUINT32() : void {
         self::expectException( RecordDataException::class );
         RDataType::UINT32->parse( '-1' );
+    }
+
+
+    public function testParseForInvalidUINT8() : void {
+        self::expectException( RecordDataException::class );
+        RDataType::UINT8->parse( '256' );
     }
 
 
