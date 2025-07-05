@@ -301,7 +301,7 @@ enum RecordType: int {
     }
 
 
-    public static function normalize( int|string|self $i_recordType ) : self {
+    public static function normalize( int|string|self|ResourceRecordInterface $i_recordType ) : self {
         $x = self::tryNormalize( $i_recordType );
         if ( $x instanceof self ) {
             return $x;
@@ -409,7 +409,10 @@ enum RecordType: int {
     }
 
 
-    public static function tryNormalize( int|string|self $i_recordType ) : ?self {
+    public static function tryNormalize( int|string|self|ResourceRecordInterface $i_recordType ) : ?self {
+        if ( $i_recordType instanceof ResourceRecordInterface ) {
+            $i_recordType = $i_recordType->typeValue();
+        }
         if ( is_int( $i_recordType ) ) {
             return self::tryFrom( $i_recordType );
         }

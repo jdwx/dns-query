@@ -205,7 +205,7 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testFromArrayMissingClass() : void {
+    public function testFromArrayForMissingClass() : void {
         $data = [
             'name' => 'example.com',
             'type' => 'A',
@@ -216,7 +216,7 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testFromArrayMissingType() : void {
+    public function testFromArrayForMissingType() : void {
         $data = [
             'name' => 'example.com',
             'class' => 'IN',
@@ -228,7 +228,21 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testFromArrayPartialData() : void {
+    public function testFromArrayForNonsenseRData() : void {
+        $data = [
+            'name' => 'example.com',
+            'type' => 'A',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'rdata' => 125, // Three, sir! Three!
+        ];
+        self::expectException( RecordDataException::class );
+        self::expectExceptionMessage( 'Invalid RData format' );
+        ResourceRecord::fromArray( $data );
+    }
+
+
+    public function testFromArrayForPartialData() : void {
         $data = [
             'name' => [ 'partial' ],
             'type' => 100,
@@ -245,7 +259,7 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testFromArrayWithNestedRData() : void {
+    public function testFromArrayForWithNestedRData() : void {
         $data = [
             'name' => [ 'example', 'com' ],
             'type' => 'A',
@@ -264,7 +278,7 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
-    public function testFromArrayWithoutTTL() : void {
+    public function testFromArrayForWithoutTTL() : void {
         $data = [
             'name' => 'example.com',
             'type' => 'A',

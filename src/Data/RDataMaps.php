@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Data;
 
 
 use JDWX\DNSQuery\Exceptions\RecordException;
+use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 
 
 /**
@@ -143,8 +144,11 @@ final class RDataMaps {
     ];
 
 
-    /** @return array<string, RDataType> */
-    public static function map( int|string|RecordType $i_type ) : array {
+    /**
+     * @param array<string, RDataType>|int|string|RecordType|ResourceRecordInterface $i_type
+     * @return array<string, RDataType>
+     */
+    public static function map( array|int|string|RecordType|ResourceRecordInterface $i_type ) : array {
         $map = self::tryMap( $i_type );
         if ( $map !== null ) {
             return $map;
@@ -156,15 +160,23 @@ final class RDataMaps {
     }
 
 
-    /** @return array<string, RDataType>|null */
-    public static function tryMap( int|string|RecordType $i_type ) : ?array {
-        try {
-            $i_type = RecordType::normalize( $i_type );
-        } catch ( RecordException ) {
-            return null;
+    /**
+     * @param array<string, RDataType>|int|string|RecordType|ResourceRecordInterface $i_type
+     * @return array<string, RDataType>|null
+     */
+    public static function tryMap( array|int|string|RecordType|ResourceRecordInterface $i_type ) : ?array {
+        if ( is_array( $i_type ) ) {
+            return $i_type;
         }
-        $value = $i_type->value;
-        return self::MAP_LIST[ $value ] ?? null;
+
+        $i_type = RecordType::tryNormalize( $i_type );
+        if ( $i_type instanceof RecordType ) {
+            $value = $i_type->value;
+            return self::MAP_LIST[ $value ] ?? null;
+        }
+
+        return null;
+
     }
 
 

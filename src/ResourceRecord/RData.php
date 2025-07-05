@@ -11,7 +11,6 @@ use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordDataException;
-use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\Strict\TypeIs;
 
 
@@ -26,20 +25,17 @@ class RData extends AbstractRData {
 
 
     /**
-     * @param array<string, RDataType>|int|string|RecordType $i_rDataMap
+     * @param array<string, RDataType>|int|string|RecordType|ResourceRecordInterface $i_rDataMap
      * @param array<string, mixed> $i_rDataValues
      *
      */
-    public function __construct( array|int|string|RecordType $i_rDataMap, array $i_rDataValues ) {
-        if ( ! is_array( $i_rDataMap ) ) {
-            $i_rDataMap = RDataMaps::map( $i_rDataMap );
-        }
-        $this->rDataMap = $i_rDataMap;
+    public function __construct( array|int|string|RecordType|ResourceRecordInterface $i_rDataMap, array|string $i_rDataValues ) {
+        $this->rDataMap = RDataMaps::map( $i_rDataMap );
         foreach ( $this->rDataMap as $stName => $rdt ) {
             /** @phpstan-ignore function.alreadyNarrowedType, instanceof.alwaysTrue */
             assert( $rdt instanceof RDataType );
             if ( ! isset( $i_rDataValues[ $stName ] ) ) {
-                throw new RecordException( "Missing RData value for {$stName} in record" );
+                throw new RecordDataException( "Missing RData value for {$stName} in record" );
             }
             $this->rDataValues[ $stName ] = $i_rDataValues[ $stName ];
         }
@@ -54,14 +50,41 @@ class RData extends AbstractRData {
         $rData = [];
         foreach ( $i_rDataMap as $stName => $rdt ) {
             if ( empty( $i_rParsedStrings ) ) {
-                throw new RecordException( "Missing RData value for {$stName} in record" );
+                throw new RecordDataException( "Missing RData value for {$stName} in record" );
             }
             $rData[ $stName ] = $rdt->consume( $i_rParsedStrings );
         }
         if ( ! empty( $i_rParsedStrings ) ) {
-            throw new RecordException( 'Extra data found in record: ' . implode( ' ', $i_rParsedStrings ) );
+            throw new RecordDataException( 'Extra data found in record: ' . implode( ' ', $i_rParsedStrings ) );
         }
         return new self( $i_rDataMap, $rData );
+    }
+
+
+    /**
+     * @param array<string, RDataType>|int|string|RecordType|ResourceRecordInterface $i_map
+     * @param array<string, mixed>|string|RDataInterface $i_value
+     * @return RDataInterface
+     */
+    public static function normalize( array|int|string|RecordType|ResourceRecordInterface $i_map,
+                                      array|string|RDataInterface                         $i_value ) : RDataInterface {
+        if ( $i_value instanceof RDataInterface ) {
+            return $i_value;
+        }
+        $i_map = RDataMaps::tryMap( $i_map );
+        if ( ! is_array( $i_map ) ) {
+            if ( is_string( $i_value ) ) {
+                return new OpaqueRData( $i_value );
+            }
+            throw new RecordDataException(
+                'Missing RData map'
+            );
+        }
+        if ( is_array( $i_value ) ) {
+            return new self( $i_map, $i_value );
+        }
+        $i_value = ResourceRecord::splitString( $i_value );
+        return self::fromParsedString( $i_map, $i_value );
     }
 
 
@@ -76,7 +99,7 @@ class RData extends AbstractRData {
 
     public function getValue( string $i_stKey ) : mixed {
         if ( ! $this->hasValue( $i_stKey ) ) {
-            throw new \LogicException( "Invalid RData key: \"{$i_stKey}\"" );
+            throw new RecordDataException( "Invalid RData key: \"{$i_stKey}\"" );
         }
         return $this->rDataValues[ $i_stKey ];
     }

@@ -88,16 +88,10 @@ class ResourceRecord implements ResourceRecordInterface {
             : null;
 
         $rData = $i_data[ 'rdata' ] ?? $i_data;
-        if ( ! $rData instanceof RDataInterface ) {
-            $map = RDataMaps::tryMap( $uType );
-            if ( is_array( $map ) ) {
-                $rData = new RData( $map, $rData );
-            } elseif ( is_string( $rData ) ) {
-                $rData = new OpaqueRData( $rData );
-            } else {
-                throw new RecordException( 'Invalid RData type: must be RDataInterface, array, or string' );
-            }
+        if ( ! is_string( $rData ) && ! is_array( $rData ) && ! $rData instanceof RDataInterface ) {
+            throw new RecordDataException( 'Invalid RData format: must be string, array, or RDataInterface' );
         }
+        $rData = RData::normalize( $uType, $rData );
 
         /** @phpstan-ignore new.static */
         return new static(
@@ -162,6 +156,7 @@ class ResourceRecord implements ResourceRecordInterface {
     }
 
 
+    /** @return list<string> */
     public static function splitString( string $i_st ) : array {
         $lineParser = new Parser(
             hardQuote: QuoteOperator::double(),
@@ -266,29 +261,9 @@ class ResourceRecord implements ResourceRecordInterface {
     }
 
 
+    /** @param array<string, mixed>|string|RDataInterface $i_rData */
     public function setRData( array|string|RDataInterface $i_rData ) : void {
-        if ( $i_rData instanceof RDataInterface ) {
-            $this->rData = $i_rData;
-            return;
-        }
-
-        $map = RDataMaps::tryMap( $this->uType );
-        if ( ! is_array( $map ) ) {
-            if ( is_string( $i_rData ) ) {
-                // If the RData is a string, we assume it's an opaque RData.
-                $this->rData = new OpaqueRData( $i_rData );
-                return;
-            }
-            throw new RecordDataException( "No RData map for type {$this->uType}" );
-        }
-
-        if ( is_array( $i_rData ) ) {
-            $this->rData = new RData( $map, $i_rData );
-            return;
-        }
-
-        $r = static::splitString( $i_rData );
-        $this->rData = RData::fromParsedString( $map, $r );
+        $this->rData = RData::normalize( $this, $i_rData );
     }
 
 
