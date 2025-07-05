@@ -7,8 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Codecs;
 
 
+use JDWX\DNSQuery\Buffer\BufferInterface;
 use JDWX\DNSQuery\Message\MessageInterface;
-use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 /**

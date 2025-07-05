@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Codecs;
 
 
+use JDWX\DNSQuery\Buffer\Buffer;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\EDNSVersion;
 use JDWX\DNSQuery\Data\OpCode;
@@ -23,7 +24,6 @@ use JDWX\DNSQuery\ResourceRecord\OpaqueRData;
 use JDWX\DNSQuery\ResourceRecord\RData;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
-use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Server;
 
 
+use JDWX\DNSQuery\Buffer\BufferInterface;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\ReturnCode;
@@ -15,7 +16,6 @@ use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Question\Question;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\Server\SimpleServer;
-use JDWX\DNSQuery\Transport\BufferInterface;
 use JDWX\DNSQuery\Transport\TransportInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;

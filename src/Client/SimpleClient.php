@@ -7,10 +7,10 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Client;
 
 
+use JDWX\DNSQuery\Buffer\BufferInterface;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Message\MessageInterface;
-use JDWX\DNSQuery\Transport\BufferInterface;
 use JDWX\DNSQuery\Transport\SocketTransport;
 use JDWX\DNSQuery\Transport\TransportBuffer;
 use JDWX\DNSQuery\Transport\TransportInterface;

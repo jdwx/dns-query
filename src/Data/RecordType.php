@@ -7,9 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Buffer\BufferInterface;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
-use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 enum RecordType: int {

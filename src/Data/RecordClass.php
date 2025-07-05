@@ -7,9 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Buffer\BufferInterface;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
-use JDWX\DNSQuery\Transport\BufferInterface;
 use JDWX\Strict\TypeIs;
 
 

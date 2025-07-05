@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Transport;
+namespace JDWX\DNSQuery\Buffer;
 
 
 interface BufferInterface {
@@ -13,7 +13,7 @@ interface BufferInterface {
     public function atEnd() : bool;
 
 
-    public function consume( int $i_uLength ) : string;
+    public function consume( ?int $i_nuLength ) : string;
 
 
     public function consumeHexBinary() : string;
@@ -55,10 +55,16 @@ interface BufferInterface {
     public function getData() : string;
 
 
+    public function length() : int;
+
+
     public function readyCheck() : bool;
 
 
     public function seek( int $i_uOffset, int $i_iWhence = SEEK_SET ) : void;
+
+
+    public function sub( int $i_uLength, int $i_iWhence = SEEK_CUR, ?int $i_uOffset = null ) : BufferInterface;
 
 
     public function tell() : int;

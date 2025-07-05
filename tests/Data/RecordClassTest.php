@@ -7,10 +7,10 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
+use JDWX\DNSQuery\Buffer\Buffer;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
-use JDWX\DNSQuery\Transport\Buffer;
 use JDWX\Strict\OK;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;

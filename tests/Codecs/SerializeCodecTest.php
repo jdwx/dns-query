@@ -7,9 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Codecs;
 
 
+use JDWX\DNSQuery\Buffer\Buffer;
 use JDWX\DNSQuery\Codecs\SerializeCodec;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

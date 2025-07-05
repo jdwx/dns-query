@@ -4,12 +4,12 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Tests\Transport;
+namespace JDWX\DNSQuery\Tests\Buffer;
 
 
 use InvalidArgumentException;
-use JDWX\DNSQuery\Transport\AbstractBuffer;
-use JDWX\DNSQuery\Transport\Buffer;
+use JDWX\DNSQuery\Buffer\AbstractBuffer;
+use JDWX\DNSQuery\Buffer\Buffer;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -48,6 +48,9 @@ final class BufferTest extends TestCase {
         self::assertSame( 'Foo', $buffer->consume( 3 ) );
         self::assertSame( 'Bar', $buffer->consume( 3 ) );
         self::assertSame( 'Baz', $buffer->consume( 3 ) );
+
+        $buffer = new Buffer( 'FooBarBaz', 3 );
+        self::assertSame( 'BarBaz', $buffer->consume( null ) );
     }
 
 
@@ -196,6 +199,25 @@ final class BufferTest extends TestCase {
 
         self::expectException( InvalidArgumentException::class );
         $buffer->seek( 0, -1 );
+    }
+
+
+    public function testSub() : void {
+        $buffer = new Buffer( 'FooBarBaz', 3 );
+        $subBuffer = $buffer->sub( 3 );
+        self::assertSame( 'FooBar', $subBuffer->getData() );
+        self::assertSame( 3, $subBuffer->tell() );
+        self::assertSame( 6, $subBuffer->length() );
+        self::assertSame( 'Bar', $subBuffer->consume( 3 ) );
+
+        $subBuffer = $buffer->sub( 3, SEEK_CUR, 0 );
+        self::assertSame( 'FooBar', $subBuffer->getData() );
+        self::assertSame( 0, $subBuffer->tell() );
+        self::assertSame( 6, $subBuffer->length() );
+        self::assertSame( 'Foo', $subBuffer->consume( 3 ) );
+
+        self::expectException( OutOfBoundsException::class );
+        $buffer->sub( 10 );
     }
 
 

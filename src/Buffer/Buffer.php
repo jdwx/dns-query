@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Transport;
+namespace JDWX\DNSQuery\Buffer;
 
 
 class Buffer extends AbstractBuffer {

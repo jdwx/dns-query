@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
+use JDWX\DNSQuery\Buffer\AbstractBuffer;
+
+
 class TransportBuffer extends AbstractBuffer {
 
 

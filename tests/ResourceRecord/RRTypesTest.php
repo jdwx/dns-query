@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 
+use JDWX\DNSQuery\Buffer\Buffer;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\SSHFPAlgorithm;
@@ -14,7 +15,6 @@ use JDWX\DNSQuery\Data\SSHFPType;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
-use JDWX\DNSQuery\Transport\Buffer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

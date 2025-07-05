@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Codecs;
 
 
 use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\Buffer\BufferInterface;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
@@ -26,7 +27,6 @@ use JDWX\DNSQuery\ResourceRecord\RData;
 use JDWX\DNSQuery\ResourceRecord\RDataInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
-use JDWX\DNSQuery\Transport\BufferInterface;
 
 
 class RFC1035Codec implements CodecInterface {

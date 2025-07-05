@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\Transport;
+namespace JDWX\DNSQuery\Buffer;
 
 
 use InvalidArgumentException;
@@ -30,10 +30,13 @@ abstract class AbstractBuffer implements BufferInterface {
     }
 
 
-    public function consume( int $i_uLength ) : string {
-        $this->fillTo( $this->uOffset + $i_uLength );
-        $stOut = substr( $this->stData, $this->uOffset, $i_uLength );
-        $this->uOffset += $i_uLength;
+    public function consume( ?int $i_nuLength ) : string {
+        if ( ! is_int( $i_nuLength ) ) {
+            $i_nuLength = $this->length() - $this->uOffset;
+        }
+        $this->fillTo( $this->uOffset + $i_nuLength );
+        $stOut = substr( $this->stData, $this->uOffset, $i_nuLength );
+        $this->uOffset += $i_nuLength;
         return $stOut;
     }
 
@@ -156,6 +159,7 @@ abstract class AbstractBuffer implements BufferInterface {
 
 
     public function length() : int {
+        $this->fillToEnd();
         return strlen( $this->stData );
     }
 
@@ -169,23 +173,38 @@ abstract class AbstractBuffer implements BufferInterface {
 
 
     public function seek( int $i_uOffset, int $i_iWhence = SEEK_SET ) : void {
-        if ( $i_iWhence === SEEK_SET ) {
-            $this->uOffset = $i_uOffset;
-        } elseif ( $i_iWhence === SEEK_CUR ) {
-            $this->uOffset += $i_uOffset;
-        } elseif ( $i_iWhence === SEEK_END ) {
-            $this->uOffset = strlen( $this->stData ) + $i_uOffset;
-        } else {
-            throw new InvalidArgumentException( "Invalid whence value: {$i_iWhence}." );
-        }
-        if ( $this->uOffset < 0 ) {
-            $this->uOffset = 0;
-        }
+        $this->uOffset = $this->calculateOffset( $i_uOffset, $i_iWhence );
+    }
+
+
+    public function sub( int $i_uLength, int $i_iWhence = SEEK_CUR, ?int $i_uOffset = null ) : BufferInterface {
+        $i_uOffset = $i_uOffset ?? $this->uOffset;
+        $uLength = $this->calculateOffset( $i_uLength, $i_iWhence );
+        $this->fillTo( $uLength );
+        return new Buffer( substr( $this->stData, 0, $uLength ), $i_uOffset );
     }
 
 
     public function tell() : int {
         return $this->uOffset;
+    }
+
+
+    protected function calculateOffset( int $i_uOffset, int $i_iWhence = SEEK_SET ) : int {
+        if ( $i_iWhence === SEEK_SET ) {
+            $uOffset = $i_uOffset;
+        } elseif ( $i_iWhence === SEEK_CUR ) {
+            $uOffset = $this->uOffset + $i_uOffset;
+        } elseif ( $i_iWhence === SEEK_END ) {
+            $uOffset = $this->length() + $i_uOffset;
+        } else {
+            throw new InvalidArgumentException( "Invalid whence value: {$i_iWhence}." );
+        }
+        if ( $uOffset < 0 ) {
+            $uOffset = 0;
+        }
+        $this->fillTo( $uOffset );
+        return $uOffset;
     }
 
 
@@ -195,9 +214,17 @@ abstract class AbstractBuffer implements BufferInterface {
     protected function fillTo( int $i_uOffset ) : void {
         while ( strlen( $this->stData ) < $i_uOffset ) {
             if ( ! $this->tryFill() ) {
-                $uBytesNeeded = $i_uOffset - strlen( $this->stData );
-                throw new OutOfBoundsException( "Not enough data to consume {$uBytesNeeded} bytes." );
+                $uLength = strlen( $this->stData );
+                $uBytesNeeded = $i_uOffset - $uLength;
+                throw new OutOfBoundsException( "Buffer reached end at {$uLength}, wanted {$uBytesNeeded} more bytes." );
             }
+        }
+    }
+
+
+    protected function fillToEnd() : void {
+        while ( $this->tryFill() ) {
+            // Fill until no more data can be fetched
         }
     }
 
