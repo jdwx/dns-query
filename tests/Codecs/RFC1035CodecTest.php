@@ -257,6 +257,14 @@ final class RFC1035CodecTest extends TestCase {
     }
 
 
+    public function testDecodeRDataHexBinary() : void {
+        $buffer = new Buffer( "Foo\x01\x02\x03\x04\x05\x06" );
+        $buffer->seek( 3 );
+        $uEndOfRData = $buffer->append( 'Bar' );
+        self::assertSame( '010203040506', RFC1035Codec::decodeRDataHexBinary( $buffer, $uEndOfRData ) );
+    }
+
+
     public function testDecodeRDataOption() : void {
         $buffer = new Buffer( "Foo\x01\x02\x00\x09BarBazQux" );
         $buffer->seek( 3 );
@@ -600,6 +608,14 @@ final class RFC1035CodecTest extends TestCase {
         $uOffset = 0;
         $st = RFC1035Codec::encodeRData( $rData, $rLabelMap, $uOffset );
         self::assertSame( 'Opaque data', $st );
+    }
+
+
+    public function testEncodeRDataHexBinary() : void {
+        $st = RFC1035Codec::encodeRDataHexBinary( '010203040506' );
+        self::assertSame( "\x01\x02\x03\x04\x05\x06", $st );
+        self::expectException( RecordDataException::class );
+        RFC1035Codec::encodeRDataHexBinary( 'Invalid hex' );
     }
 
 

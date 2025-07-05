@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\RDataMaps;
+use JDWX\DNSQuery\Data\SSHFPAlgorithm;
+use JDWX\DNSQuery\Data\SSHFPType;
 use JDWX\DNSQuery\Option;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
@@ -610,6 +612,33 @@ class RRTypesTest extends TestCase {
         self::assertSame( 60, $rr->tryGetRDataValue( 'weight' ) );
         self::assertSame( 80, $rr->tryGetRDataValue( 'port' ) );
         self::assertSame( [ 'www', 'example', 'com' ], $rr->tryGetRDataValue( 'target' ) );
+    }
+
+
+    public function testSSHFP() : void {
+        $rr = new ResourceRecord( 'example.com', 'SSHFP', 'IN', 3600, [
+            'algorithm' => SSHFPAlgorithm::RSA,
+            'fptype' => SSHFPType::SHA256,
+            'fingerprint' => 'aabbccddeeff00112233445566778899aabbccdd',
+        ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'SSHFP',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'algorithm' => SSHFPAlgorithm::RSA,
+            'fptype' => SSHFPType::SHA256,
+            'fingerprint' => 'aabbccddeeff00112233445566778899aabbccdd',
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com 3600 IN SSHFP 1 2 aabbccddeeff00112233445566778899aabbccdd' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'SSHFP', $rr->type() );
+        self::assertSame( 1, $rr->tryGetRDataValue( 'algorithm' ) );
+        self::assertSame( 2, $rr->tryGetRDataValue( 'fptype' ) );
+        self::assertSame( 'aabbccddeeff00112233445566778899aabbccdd', $rr->tryGetRDataValue( 'fingerprint' ) );
     }
 
 

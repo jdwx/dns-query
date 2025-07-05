@@ -15,7 +15,6 @@ use JDWX\DNSQuery\Exceptions\RecordDataException;
 use JDWX\DNSQuery\Exceptions\RecordException;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
-use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -52,14 +51,14 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
 
         self::assertSame( 'IN', $record->class() );
     }
 
 
     public function testClassUnknownClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 23456, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 23456, 300, '1.2.3.4' );
         self::assertSame( 'CLASS23456', $record->class() );
     }
 
@@ -72,7 +71,7 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testClassValue2() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 255, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 255, 300, '1.2.3.4' );
         self::assertSame( 255, $record->classValue() );
     }
 
@@ -128,7 +127,7 @@ final class ResourceRecordTest extends TestCase {
 
     public function testConstructor() : void {
         $name = [ 'example', 'com' ];
-        $type = 99; // Unknown type
+        $type = 999; // Unknown type
         $class = 1; // IN
         $ttl = 3600;
         $data = 'opaque data';
@@ -523,7 +522,7 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testGetClassKnownClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
 
         $class = $record->getClass();
         self::assertSame( RecordClass::IN, $class );
@@ -531,7 +530,7 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testGetClassUnknownClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 12345, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 12345, 300, '1.2.3.4' );
         self::expectException( RecordClassException::class );
         self::expectExceptionMessage( 'Unknown record class: 12345' );
         $record->getClass();
@@ -540,7 +539,7 @@ final class ResourceRecordTest extends TestCase {
 
     public function testGetName() : void {
         $name = [ 'subdomain', 'example', 'net' ];
-        $record = new ResourceRecord( $name, 1, 1, 300, 'data' );
+        $record = new ResourceRecord( $name, 1, 1, 300, '1.2.3.4' );
 
         self::assertSame( $name, $record->getName() );
     }
@@ -578,15 +577,15 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testGetRDataValueThrowsException() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-        self::assertSame( 'data', $record->getRDataValue( 'rdata' ) );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
+        self::assertSame( '1.2.3.4', $record->getRDataValue( 'address' ) );
         self::expectException( RecordDataException::class );
         $record->getRDataValue( 'any' );
     }
 
 
     public function testGetTTL() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 86400, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 86400, '1.2.3.4' );
 
         self::assertSame( 86400, $record->getTTL() );
         self::assertSame( 86400, $record->ttl() );
@@ -609,7 +608,7 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testGetTypeKnownType() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
 
         $type = $record->getType();
         self::assertSame( RecordType::A, $type );
@@ -625,16 +624,16 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testHasRDataValue() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
 
         self::assertFalse( $record->hasRDataValue( 'any' ) );
-        self::assertFalse( $record->hasRDataValue( 'address' ) );
+        self::assertTrue( $record->hasRDataValue( 'address' ) );
         self::assertFalse( $record->hasRDataValue( '' ) );
     }
 
 
     public function testIsClass() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
 
         self::assertTrue( $record->isClass( RecordClass::IN ) );
         self::assertTrue( $record->isClass( 'IN' ) );
@@ -688,14 +687,14 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testName() : void {
-        $record = new ResourceRecord( [ 'host', 'domain', 'tld' ], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [ 'host', 'domain', 'tld' ], 1, 1, 300, '1.2.3.4' );
 
         self::assertSame( 'host.domain.tld', $record->name() );
     }
 
 
     public function testNameWithEmptyArray() : void {
-        $record = new ResourceRecord( [], 1, 1, 300, 'data' );
+        $record = new ResourceRecord( [], 1, 1, 300, '1.2.3.4' );
 
         self::assertSame( '', $record->name() );
     }
@@ -754,6 +753,24 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
+    public function testSetName() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        $rr->setName( 'new.example.com' );
+        self::assertSame( 'new.example.com', $rr->name() );
+        $rr->setName( [ 'another', 'example', 'com' ] );
+        self::assertSame( 'another.example.com', $rr->name() );
+    }
+
+
+    public function testSetRData() : void {
+        $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
+            [ 'address' => '1.2.3.4' ] );
+        $rr->setRData( [ 'address' => '2.3.4.5' ] );
+        self::assertSame( '2.3.4.5', $rr->tryGetRDataValue( 'address' ) );
+    }
+
+
     public function testSetRDataValue() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
@@ -772,11 +789,9 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testSetRDataValueThrowsException() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-
-        self::expectException( LogicException::class );
+        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, '1.2.3.4' );
+        self::expectException( RecordDataException::class );
         self::expectExceptionMessage( 'Invalid RData key' );
-
         $record->setRDataValue( 'any', 'value' );
     }
 
@@ -816,32 +831,6 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testToArray() : void {
-        $record = new ResourceRecord(
-            [ 'www', 'example', 'com' ],
-            99,
-            1,
-            7200,
-            'some data'
-        );
-
-        $array = $record->toArray();
-
-        self::assertArrayHasKey( 'name', $array );
-        self::assertArrayHasKey( 'type', $array );
-        self::assertArrayHasKey( 'class', $array );
-        self::assertArrayHasKey( 'ttl', $array );
-        self::assertArrayHasKey( 'rdata', $array );
-
-        self::assertSame( 'www.example.com', $array[ 'name' ] );
-        // Type 99 is SPF in the enum, so it returns 'SPF' not 99
-        self::assertSame( 'SPF', $array[ 'type' ] );
-        self::assertSame( 'IN', $array[ 'class' ] );
-        self::assertSame( 7200, $array[ 'ttl' ] );
-        self::assertSame( 'some data', $array[ 'rdata' ] );
-    }
-
-
-    public function testToArray2() : void {
         $rr = new ResourceRecord( 'example.com', 'A', 'IN', 3600,
             [ 'address' => '192.0.2.123' ] );
         $array = $rr->toArray();
@@ -861,22 +850,48 @@ final class ResourceRecordTest extends TestCase {
     }
 
 
+    public function testToArrayForUnknownType() : void {
+        $record = new ResourceRecord(
+            [ 'www', 'example', 'com' ],
+            999,
+            1,
+            7200,
+            'some data'
+        );
+
+        $array = $record->toArray();
+
+        self::assertArrayHasKey( 'name', $array );
+        self::assertArrayHasKey( 'type', $array );
+        self::assertArrayHasKey( 'class', $array );
+        self::assertArrayHasKey( 'ttl', $array );
+        self::assertArrayHasKey( 'rdata', $array );
+
+        self::assertSame( 'www.example.com', $array[ 'name' ] );
+        self::assertSame( 'TYPE999', $array[ 'type' ] );
+        self::assertSame( 'IN', $array[ 'class' ] );
+        self::assertSame( 7200, $array[ 'ttl' ] );
+        self::assertSame( 'some data', $array[ 'rdata' ] );
+    }
+
+
     public function testToArrayWithNameAsArray() : void {
         $record = new ResourceRecord(
-            [ 'mail', 'example', 'org' ],
+            [ 'example', 'org' ],
             15, // MX
             1,  // IN
             3600,
-            'mx data'
+            '10 mail.example.org'
         );
 
         $array = $record->toArray( true );
 
-        self::assertSame( [ 'mail', 'example', 'org' ], $array[ 'name' ] );
+        self::assertSame( [ 'example', 'org' ], $array[ 'name' ] );
         self::assertSame( 'MX', $array[ 'type' ] );
         self::assertSame( 'IN', $array[ 'class' ] );
         self::assertSame( 3600, $array[ 'ttl' ] );
-        self::assertSame( 'mx data', $array[ 'rdata' ] );
+        self::assertSame( 10, $array[ 'preference' ] );
+        self::assertSame( [ 'mail', 'example', 'org' ], $array[ 'exchange' ] );
     }
 
 
@@ -902,8 +917,8 @@ final class ResourceRecordTest extends TestCase {
 
 
     public function testToStringForOpaque() : void {
-        $record = new ResourceRecord( [ 'test' ], 1, 1, 300, 'data' );
-        self::assertSame( 'test 300 IN A 64617461', strval( $record ) );
+        $record = new ResourceRecord( [ 'test' ], 9999, 1, 300, 'data' );
+        self::assertSame( 'test 300 IN TYPE9999 64617461', strval( $record ) );
     }
 
 

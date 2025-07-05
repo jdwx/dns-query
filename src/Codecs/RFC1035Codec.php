@@ -89,6 +89,11 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
+    public static function decodeRDataHexBinary( BufferInterface $i_buffer, int $i_uEndOfRData ) : string {
+        return bin2hex( $i_buffer->consume( $i_uEndOfRData - $i_buffer->tell() ) );
+    }
+
+
     public static function decodeRDataOption( BufferInterface $i_buffer ) : Option {
         $uCode = $i_buffer->consumeUINT16();
         $uLength = $i_buffer->consumeUINT16();
@@ -113,7 +118,7 @@ class RFC1035Codec implements CodecInterface {
             RDataType::CharacterString => $i_buffer->consumeLabel(),
             RDataType::CharacterStringList => self::decodeRDataCharacterStringList( $i_buffer, $i_uEndOfRData ),
             RDataType::DomainName => $i_buffer->consumeNameArray(),
-            RDataType::HexBinary => $i_buffer->consumeHexBinary(),
+            RDataType::HexBinary => self::decodeRDataHexBinary( $i_buffer, $i_uEndOfRData ),
             RDataType::IPv4Address => $i_buffer->consumeIPv4(),
             RDataType::IPv6Address => $i_buffer->consumeIPv6(),
             RDataType::Option => self::decodeRDataOption( $i_buffer ),
@@ -204,6 +209,14 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
+    public static function encodeRDataHexBinary( string $i_st ) : string {
+        if ( ! preg_match( '/^[0-9a-fA-F]+$/', $i_st ) ) {
+            throw new RecordDataException( "Invalid HexBinary value: {$i_st}" );
+        }
+        return hex2bin( $i_st );
+    }
+
+
     public static function encodeRDataOption( Option $i_option ) : string {
         $stOut = Binary::packUINT16( $i_option->code );
         $stOut .= Binary::packUINT16( strlen( $i_option->data ) );
@@ -229,7 +242,7 @@ class RFC1035Codec implements CodecInterface {
             RDataType::CharacterString => Binary::packLabel( $i_value ),
             RDataType::CharacterStringList => self::encodeRDataCharacterStringList( $i_value ),
             RDataType::DomainName => Binary::packLabels( $i_value, $io_rLabelMap, $i_uOffset ),
-            RDataType::HexBinary => Binary::packLabel( bin2hex( $i_value ) ),
+            RDataType::HexBinary => self::encodeRDataHexBinary( $i_value ),
             RDataType::IPv4Address => Binary::packIPv4( $i_value ),
             RDataType::IPv6Address => Binary::packIPv6( $i_value ),
             RDataType::Option => self::encodeRDataOption( $i_value ),

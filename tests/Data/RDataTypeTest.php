@@ -35,7 +35,7 @@ final class RDataTypeTest extends TestCase {
         self::assertSame( 'example', RDataType::CharacterString->format( 'example' ) );
         self::assertSame( '"foo bar"', RDataType::CharacterString->format( 'foo bar' ) );
         self::assertSame( 'foo "bar baz"', RDataType::CharacterStringList->format( [ 'foo', 'bar baz' ] ) );
-        self::assertSame( '466f6f', RDataType::HexBinary->format( 'Foo' ) );
+        self::assertSame( 'Foo', RDataType::HexBinary->format( 'Foo' ) );
     }
 
 
@@ -44,7 +44,7 @@ final class RDataTypeTest extends TestCase {
         self::assertSame( '1.2.3.4', RDataType::IPv4Address->parse( '1.2.3.4' ) );
         self::assertSame( '2001:db8::ff00:42:8329', RDataType::IPv6Address->parse( '2001:db8::ff00:42:8329' ) );
         self::assertSame( 'foo', RDataType::CharacterString->parse( 'foo' ) );
-        self::assertSame( 'Foo', RDataType::HexBinary->parse( '466f6f' ) );
+        self::assertSame( '466f6f', RDataType::HexBinary->parse( '466f6f' ) );
         self::assertSame( 123, RDataType::UINT8->parse( '123' ) );
         self::assertSame( 12345, RDataType::UINT16->parse( '12345' ) );
         self::assertSame( 1234567890, RDataType::UINT32->parse( '1234567890' ) );

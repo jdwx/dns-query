@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery;
 
 use Generator;
 use InvalidArgumentException;
+use JDWX\DNSQuery\Data\SSHFPAlgorithm;
+use JDWX\DNSQuery\Data\SSHFPType;
 use JDWX\Strict\OK;
 use JDWX\Strict\TypeIs;
 use LengthException;
@@ -137,7 +139,13 @@ final class Binary {
     }
 
 
-    public static function packUINT8( int $i_uValue ) : string {
+    public static function packUINT8( int|SSHFPAlgorithm|SSHFPType $i_uValue ) : string {
+        if ( ! is_int( $i_uValue ) ) {
+            $i_uValue = $i_uValue->value;
+        }
+        if ( $i_uValue < 0 || $i_uValue > 255 ) {
+            throw new InvalidArgumentException( "Value {$i_uValue} out of range for 8-bit integer." );
+        }
         return chr( $i_uValue );
     }
 
@@ -160,22 +168,6 @@ final class Binary {
             yield $stLabel => $i_rLabels;
             array_shift( $i_rLabels );
         }
-    }
-
-
-    /**
-     *
-     * Consume a string, incrementing the offset by the length of the consumed string.
-     *
-     * @param string $i_stData
-     * @param int $io_uOffset
-     * @param int $i_uLength
-     * @return string
-     */
-    public static function tryConsume( string $i_stData, int &$io_uOffset, int $i_uLength ) : string {
-        $st = substr( $i_stData, $io_uOffset, $i_uLength );
-        $io_uOffset += strlen( $st );
-        return $st;
     }
 
 

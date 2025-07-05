@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery\Tests;
 
 use InvalidArgumentException;
 use JDWX\DNSQuery\Binary;
+use JDWX\DNSQuery\Data\SSHFPAlgorithm;
+use JDWX\DNSQuery\Data\SSHFPType;
 use JDWX\Strict\OK;
 use LengthException;
 use OutOfBoundsException;
@@ -100,6 +102,15 @@ final class BinaryTest extends TestCase {
 
     public function testPackUINT32() : void {
         self::assertSame( OK::pack( 'N', 123456789 ), Binary::packUINT32( 123456789 ) );
+    }
+
+
+    public function testPackUINT8() : void {
+        self::assertSame( chr( 123 ), Binary::packUINT8( 123 ) );
+        self::assertSame( chr( 1 ), Binary::packUINT8( SSHFPAlgorithm::RSA ) );
+        self::assertSame( chr( 2 ), Binary::packUINT8( SSHFPType::SHA256 ) );
+        self::expectException( InvalidArgumentException::class );
+        Binary::packUINT8( 12345 );
     }
 
 

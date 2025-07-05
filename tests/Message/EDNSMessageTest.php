@@ -148,7 +148,7 @@ final class EDNSMessageTest extends TestCase {
 
     public function testFromMessageWithOpt() : void {
         $msg = Message::request( 'example.com', 'A' );
-        $opt = new ResourceRecord( '', RecordType::OPT, class: 1232, uTTL: 0x8000 ); // "DO" bit set
+        $opt = new ResourceRecord( '', RecordType::OPT, 1232, 0x8000, [ 'options' => [] ] ); // "DO" bit set
         $msg->addAdditional( $opt );
 
         $edns = EDNSMessage::fromMessage( $msg );

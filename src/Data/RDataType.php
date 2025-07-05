@@ -68,7 +68,6 @@ enum RDataType {
                 [ self::class, 'escapeString' ],
                 TypeIs::array( $i_value )
             ) ),
-            self::HexBinary => bin2hex( $i_value ),
             default => strval( $i_value )
         };
     }
@@ -79,18 +78,6 @@ enum RDataType {
 
             case self::DomainName:
                 return DomainName::parse( $i_stValue );
-
-
-            case self::HexBinary:
-                $st = filter_var( $i_stValue, FILTER_VALIDATE_REGEXP, [
-                    'options' => [
-                        'regexp' => '/^[0-9a-fA-F]+$/',
-                    ],
-                ] );
-                if ( false === $st ) {
-                    throw new RecordDataException( "Invalid HexBinary value: {$i_stValue}" );
-                }
-                return hex2bin( $st );
 
 
             case self::IPv4Address:
@@ -109,6 +96,12 @@ enum RDataType {
                 return $st;
 
 
+            case self::HexBinary:
+                if ( ! preg_match( '/^[0-9a-fA-F]+$/', $i_stValue ) ) {
+                    throw new RecordDataException( "Invalid HexBinary value: {$i_stValue}" );
+                }
+                return $i_stValue;
+                
             case self::CharacterString:
                 return $i_stValue;
 

@@ -129,6 +129,12 @@ final class RDataMaps {
             'target' => RDataType::DomainName,
         ],
 
+        RecordType::SSHFP->value => [
+            'algorithm' => RDataType::UINT8,
+            'fptype' => RDataType::UINT8,
+            'fingerprint' => RDataType::HexBinary,
+        ],
+
         RecordType::TXT->value => [
             'text' => RDataType::CharacterStringList,
         ],

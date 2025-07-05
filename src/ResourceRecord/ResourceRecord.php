@@ -55,7 +55,7 @@ class ResourceRecord implements ResourceRecordInterface {
         int|string|RecordType       $type,
         int|string|RecordClass|null $class = null,
         ?int                        $uTTL = null,
-        array|string|RDataInterface $rData = '',
+        array|string|RDataInterface $rData = [],
     ) {
         if ( is_string( $rName ) ) {
             $rName = DomainName::parse( $rName );
@@ -64,14 +64,7 @@ class ResourceRecord implements ResourceRecordInterface {
         $this->setType( $type );
         $this->setClass( $class ?? static::DEFAULT_CLASS );
         $this->setTTL( $uTTL ?? self::$uDefaultTTL );
-        if ( is_string( $rData ) ) {
-            $rData = new OpaqueRData( $rData );
-        }
-        if ( is_array( $rData ) ) {
-            $map = RDataMaps::map( $this->uType );
-            $rData = new RData( $map, $rData );
-        }
-        $this->rData = $rData;
+        $this->setRData( $rData );
     }
 
 
@@ -117,19 +110,8 @@ class ResourceRecord implements ResourceRecordInterface {
     }
 
 
-    public static function fromString( string $i_string ) : self {
-        $lineParser = new Parser(
-            hardQuote: QuoteOperator::double(),
-            delimiter: DelimiterOperator::whitespace(),
-        );
-        try {
-            $r = iterator_to_array( $lineParser( $i_string ) );
-        } catch ( QuoteException $e ) {
-            throw new RecordException( "Failed to parse record string: {$i_string}", 0, $e );
-        }
-        if ( empty( $r ) ) {
-            throw new RecordException( 'Empty record string' );
-        }
+    public static function fromString( string $i_st ) : self {
+        $r = static::splitString( $i_st );
         $rName = DomainName::parse( array_shift( $r ) );
 
         # The next few fields could be the TTL, class, or type
@@ -145,7 +127,7 @@ class ResourceRecord implements ResourceRecordInterface {
                     $uTTL = intval( $stField );
                     continue;
                 }
-                throw new MessageException( "Multiple TTL values found in record: {$i_string}" );
+                throw new MessageException( "Multiple TTL values found in record: {$i_st}" );
             }
 
             if ( RecordClass::isValidName( $stField ) ) {
@@ -153,7 +135,7 @@ class ResourceRecord implements ResourceRecordInterface {
                     $class = RecordClass::normalize( $stField );
                     continue;
                 }
-                throw new MessageException( "Multiple class values found in record: {$i_string}" );
+                throw new MessageException( "Multiple class values found in record: {$i_st}" );
             }
             if ( RecordType::isValidName( $stField ) ) {
                 $type = RecordType::normalize( $stField );
@@ -166,7 +148,7 @@ class ResourceRecord implements ResourceRecordInterface {
         $uTTL ??= self::$uDefaultTTL;
 
         if ( ! $type instanceof RecordType ) {
-            throw new RecordTypeException( "Missing or invalid record type in record: {$i_string}" );
+            throw new RecordTypeException( "Missing or invalid record type in record: {$i_st}" );
         }
 
         $map = RDataMaps::map( $type );
@@ -177,6 +159,23 @@ class ResourceRecord implements ResourceRecordInterface {
 
     public static function setDefaultTTL( int $uTTL ) : void {
         self::$uDefaultTTL = $uTTL;
+    }
+
+
+    public static function splitString( string $i_st ) : array {
+        $lineParser = new Parser(
+            hardQuote: QuoteOperator::double(),
+            delimiter: DelimiterOperator::whitespace(),
+        );
+        try {
+            $r = iterator_to_array( $lineParser( $i_st ) );
+        } catch ( QuoteException $e ) {
+            throw new RecordException( "Failed to parse record string: {$i_st}", 0, $e );
+        }
+        if ( empty( $r ) ) {
+            throw new RecordException( 'Empty record string' );
+        }
+        return $r;
     }
 
 
@@ -267,15 +266,29 @@ class ResourceRecord implements ResourceRecordInterface {
     }
 
 
-    public function setRData( string|RDataInterface $i_rData ) : void {
-        if ( is_string( $i_rData ) ) {
-            $i_rData = new OpaqueRData( $i_rData );
+    public function setRData( array|string|RDataInterface $i_rData ) : void {
+        if ( $i_rData instanceof RDataInterface ) {
+            $this->rData = $i_rData;
+            return;
         }
-        /** @phpstan-ignore instanceof.alwaysTrue */
-        if ( ! $i_rData instanceof RDataInterface ) {
-            throw new RecordException( 'Invalid RData type' );
+
+        $map = RDataMaps::tryMap( $this->uType );
+        if ( ! is_array( $map ) ) {
+            if ( is_string( $i_rData ) ) {
+                // If the RData is a string, we assume it's an opaque RData.
+                $this->rData = new OpaqueRData( $i_rData );
+                return;
+            }
+            throw new RecordDataException( "No RData map for type {$this->uType}" );
         }
-        $this->rData = $i_rData;
+
+        if ( is_array( $i_rData ) ) {
+            $this->rData = new RData( $map, $i_rData );
+            return;
+        }
+
+        $r = static::splitString( $i_rData );
+        $this->rData = RData::fromParsedString( $map, $r );
     }
 
 

@@ -126,7 +126,7 @@ final class RecordTypeTest extends TestCase {
         self::assertTrue( RecordType::A->is( 1 ) );
         self::assertFalse( RecordType::A->is( 3 ) );
 
-        $rr = new ResourceRecord( [], RecordType::A, 0, 0, '' );
+        $rr = new ResourceRecord( [], RecordType::A, 0, 0, '1.2.3.4' );
         self::assertTrue( $rr->getType()->is( RecordType::A ) );
         self::assertFalse( $rr->getType()->is( RecordType::CNAME ) );
         self::assertTrue( RecordType::A->is( $rr ) );
