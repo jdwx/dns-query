@@ -194,6 +194,16 @@ class RFC1035EncoderTest extends TestCase {
     }
 
 
+    public function testEncodeRDataValueDomainNameUncompressed() : void {
+        $enc = new RFC1035Encoder();
+        $rdv = new RDataValue( RDataType::DomainNameUncompressed, [ 'example', 'com' ] );
+        $wri = new WriteBuffer();
+        $enc->encodeRDataValue( $wri, $rdv );
+        self::assertSame( "\x07example\x03com\x00", $wri->end() );
+
+    }
+
+
     public function testEncodeRDataValueForCharacterString() : void {
         $enc = new RFC1035Encoder();
         $rdv = new RDataValue( RDataType::CharacterString, 'Test string' );
