@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Tests\Server;
 
 
 use JDWX\DNSQuery\Buffer\ReadBufferInterface;
+use JDWX\DNSQuery\Buffer\WriteBufferInterface;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\ReturnCode;
@@ -99,14 +100,15 @@ final class SimpleServerTest extends TestCase {
             ->method( 'decodeMessage' )
             ->willReturnOnConsecutiveCalls( $request1, $request2, $request3 );
 
-        /*
         $codec->expects( self::exactly( 3 ) )
             ->method( 'encodeMessage' )
-            ->willReturn( 'encoded' );
-        */
+            ->willReturnCallback( function ( $writeBuffer, $message ) {
+                $writeBuffer->append( 'encoded' );
+            } );
 
         $transport->expects( self::exactly( 3 ) )
-            ->method( 'send' );
+            ->method( 'send' )
+            ->with( 'encoded' );
 
         // Inject mocks
         $reflection = new \ReflectionClass( $server );
@@ -138,10 +140,13 @@ final class SimpleServerTest extends TestCase {
 
         $codec->expects( self::once() )
             ->method( 'encodeMessage' )
-            ->willReturn( 'encoded' );
+            ->willReturnCallback( function ( $writeBuffer, $message ) {
+                $writeBuffer->append( 'encoded' );
+            } );
 
         $transport->expects( self::once() )
-            ->method( 'send' );
+            ->method( 'send' )
+            ->with( 'encoded' );
 
         // Inject mocks
         $reflection = new \ReflectionClass( $server );
@@ -188,8 +193,13 @@ final class SimpleServerTest extends TestCase {
 
         $codec->expects( self::once() )
             ->method( 'encodeMessage' )
-            ->with( self::isInstanceOf( MessageInterface::class ) )
-            ->willReturn( $encodedResponse );
+            ->with(
+                self::isInstanceOf( \JDWX\DNSQuery\Buffer\WriteBufferInterface::class ),
+                self::isInstanceOf( MessageInterface::class )
+            )
+            ->willReturnCallback( function ( $writeBuffer, $message ) use ( $encodedResponse ) {
+                $writeBuffer->append( $encodedResponse );
+            } );
 
         $transport->expects( self::once() )
             ->method( 'send' )
