@@ -43,6 +43,9 @@ interface ReadBufferInterface {
     public function consumeNameLabel() : string;
 
 
+    public function consumeSub( int $i_uLength ) : ReadBufferInterface;
+
+
     public function consumeUINT16() : int;
 
 

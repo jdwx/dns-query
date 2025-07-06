@@ -9,42 +9,48 @@ namespace JDWX\DNSQuery\Tests\Codecs;
 
 use JDWX\DNSQuery\Buffer\ReadBuffer;
 use JDWX\DNSQuery\Buffer\WriteBuffer;
-use JDWX\DNSQuery\Codecs\SerializeCodec;
+use JDWX\DNSQuery\Codecs\SerializeDecoder;
+use JDWX\DNSQuery\Codecs\SerializeEncoder;
 use JDWX\DNSQuery\Message\Header;
 use JDWX\DNSQuery\Message\Message;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
-#[CoversClass( SerializeCodec::class )]
+#[CoversClass( SerializeDecoder::class )]
+#[CoversClass( SerializeEncoder::class )]
 final class SerializeCodecTest extends TestCase {
 
 
     public function testCodec() : void {
-        $codec = new SerializeCodec();
-        $msg = Message::request( 'example.com', 'A' );
+        $dec = new SerializeDecoder();
+        $enc = new SerializeEncoder();
         $wri = new WriteBuffer();
-        $codec->encodeMessage( $wri, $msg );
+
+        $msg = Message::request( 'example.com', 'A' );
+        $enc->encodeMessage( $wri, $msg );
         $buffer = new ReadBuffer( $wri->end() );
-        $msg2 = $codec->decodeMessage( $buffer );
+        $msg2 = $dec->decodeMessage( $buffer );
         self::assertSame( strval( $msg ), strval( $msg2 ) );
     }
 
 
     public function testDecodeForNoData() : void {
-        $codec = new SerializeCodec();
+        $codec = new SerializeDecoder();
         $buffer = new ReadBuffer( '' );
         self::assertNull( $codec->decodeMessage( $buffer ) );
     }
 
 
     public function testHeader() : void {
-        $hdr = new Header( null, 1, 2, 3, 4 );
-        $codec = new SerializeCodec();
+        $dec = new SerializeDecoder();
+        $enc = new SerializeEncoder();
         $wri = new WriteBuffer();
-        $codec->encodeHeader( $wri, $hdr );
+
+        $hdr = new Header( null, 1, 2, 3, 4 );
+        $enc->encodeHeader( $wri, $hdr );
         $buffer = new ReadBuffer( $wri->end() );
-        $hdr2 = $codec->decodeHeader( $buffer );
+        $hdr2 = $dec->decodeHeader( $buffer );
         self::assertSame( strval( $hdr ), strval( $hdr2 ) );
     }
 

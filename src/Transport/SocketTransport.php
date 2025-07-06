@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
+use JDWX\DNSQuery\Buffer\WriteBufferInterface;
 use JDWX\DNSQuery\Exceptions\TransportException;
 use JDWX\Socket\Socket;
 
@@ -77,7 +78,10 @@ class SocketTransport implements TransportInterface {
     }
 
 
-    public function send( string $i_stData ) : void {
+    public function send( string|WriteBufferInterface $i_stData ) : void {
+        if ( $i_stData instanceof WriteBufferInterface ) {
+            $i_stData = $i_stData->end();
+        }
         if ( ! $this->socket->selectForWrite( $this->uTimeoutSeconds, $this->uTimeoutMicroseconds ) ) {
             throw new TransportException( 'Socket send timed out' );
         }

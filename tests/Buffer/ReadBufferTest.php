@@ -104,6 +104,17 @@ final class ReadBufferTest extends TestCase {
     }
 
 
+    public function testConsumeSub() : void {
+        $buffer = new ReadBuffer( 'FooBarBazQuxQuux', 3 );
+        $subBuffer = $buffer->consumeSub( 9 );
+        self::assertSame( 'Bar', $subBuffer->consume( 3 ) );
+        self::assertSame( 'Baz', $subBuffer->consume( 3 ) );
+        self::assertSame( 'Qux', $subBuffer->consume( 3 ) );
+        self::assertTrue( $subBuffer->atEnd() );
+        self::assertSame( 'Quux', $buffer->consume( null ) );
+    }
+
+
     public function testConsumeUINT16() : void {
         $buffer = new ReadBuffer( "\x01\x02\x03\x04\x05\x06\x07\x08" );
         self::assertSame( 0x102, $buffer->consumeUINT16() );

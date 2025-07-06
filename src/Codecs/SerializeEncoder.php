@@ -8,7 +8,6 @@ namespace JDWX\DNSQuery\Codecs;
 
 
 use JDWX\DNSQuery\Binary;
-use JDWX\DNSQuery\Buffer\ReadBufferInterface;
 use JDWX\DNSQuery\Buffer\WriteBufferInterface;
 use JDWX\DNSQuery\Message\HeaderInterface;
 use JDWX\DNSQuery\Message\MessageInterface;
@@ -18,17 +17,7 @@ use JDWX\DNSQuery\ResourceRecord\RDataValueInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 
 
-class SerializeCodec implements CodecInterface {
-
-
-    public function decodeHeader( ReadBufferInterface $i_buffer ) : ?HeaderInterface {
-        return $this->decodeObject( $i_buffer, HeaderInterface::class );
-    }
-
-
-    public function decodeMessage( ReadBufferInterface $i_buffer ) : ?MessageInterface {
-        return $this->decodeObject( $i_buffer, MessageInterface::class );
-    }
+class SerializeEncoder implements EncoderInterface {
 
 
     public function encodeHeader( WriteBufferInterface $i_buffer, HeaderInterface $i_hdr ) : void {
@@ -58,27 +47,6 @@ class SerializeCodec implements CodecInterface {
 
     public function encodeResourceRecord( WriteBufferInterface $i_buffer, ResourceRecordInterface $i_rr ) : void {
         $this->encodeObject( $i_buffer, $i_rr );
-    }
-
-
-    protected function decodeObject( ReadBufferInterface $i_buffer, string $i_stClass ) : ?object {
-        if ( ! $i_buffer->readyCheck() ) {
-            return null;
-        }
-
-        $uLength = $i_buffer->consumeUINT32();
-        if ( $uLength === 0 ) {
-            return null;
-        }
-
-        $st = $i_buffer->consume( $uLength );
-        $object = unserialize( $st, [ 'allowed_classes' => true ] );
-
-        if ( ! is_a( $object, $i_stClass, true ) ) {
-            throw new \UnexpectedValueException( "Decoded object is not of type {$i_stClass}." );
-        }
-
-        return $object;
     }
 
 

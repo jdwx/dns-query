@@ -110,6 +110,13 @@ abstract class AbstractReadBuffer implements ReadBufferInterface {
     }
 
 
+    public function consumeSub( int $i_uLength ) : ReadBufferInterface {
+        $sub = $this->sub( $i_uLength );
+        $this->uOffset += $i_uLength;
+        return $sub;
+    }
+
+
     public function consumeUINT16() : int {
         return Binary::unpackUINT16( $this->consume( 2 ) );
     }

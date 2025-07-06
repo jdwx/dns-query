@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
+use JDWX\DNSQuery\Buffer\WriteBufferInterface;
 use JDWX\Strict\TypeIs;
 
 
@@ -45,7 +46,10 @@ class PseudowireTransport implements TransportInterface {
     }
 
 
-    public function send( string $i_stData ) : void {
+    public function send( string|WriteBufferInterface $i_stData ) : void {
+        if ( $i_stData instanceof WriteBufferInterface ) {
+            $i_stData = $i_stData->end();
+        }
         $this->rSendBuffer[] = $i_stData;
     }
 

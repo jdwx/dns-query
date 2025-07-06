@@ -9,7 +9,8 @@ namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 use JDWX\DNSQuery\Buffer\ReadBuffer;
 use JDWX\DNSQuery\Buffer\WriteBuffer;
-use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Codecs\RFC1035Decoder;
+use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\SSHFPAlgorithm;
 use JDWX\DNSQuery\Data\SSHFPType;
@@ -694,10 +695,11 @@ class RRTypesTest extends TestCase {
 
 
     private function roundTripBinary( ResourceRecordInterface $rr ) : ResourceRecordInterface {
-        $codec = new RFC1035Codec();
+        $dec = new RFC1035Decoder();
+        $enc = new RFC1035Encoder();
         $wri = new WriteBuffer();
-        $codec->encodeResourceRecord( $wri, $rr );
-        return $codec->decodeResourceRecord( new ReadBuffer( $wri->end() ) );
+        $enc->encodeResourceRecord( $wri, $rr );
+        return $dec->decodeResourceRecord( new ReadBuffer( $wri->end() ) );
     }
 
 

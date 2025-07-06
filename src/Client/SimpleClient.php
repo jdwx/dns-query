@@ -8,9 +8,10 @@ namespace JDWX\DNSQuery\Client;
 
 
 use JDWX\DNSQuery\Buffer\ReadBufferInterface;
-use JDWX\DNSQuery\Buffer\WriteBuffer;
+use JDWX\DNSQuery\Codecs\Codec;
 use JDWX\DNSQuery\Codecs\CodecInterface;
-use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Codecs\RFC1035Decoder;
+use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\Message\MessageInterface;
 use JDWX\DNSQuery\Transport\SocketTransport;
 use JDWX\DNSQuery\Transport\TransportBuffer;
@@ -44,15 +45,13 @@ class SimpleClient extends AbstractTimedClient {
                                       ?int   $i_nuLocalPort = null ) : self {
         $xpt = SocketTransport::udp( $i_stNameServer, $i_uPort, i_nstLocalAddress: $i_nstLocalAddress,
             i_nuLocalPort: $i_nuLocalPort );
-        $codec = new RFC1035Codec();
+        $codec = new Codec( new RFC1035Encoder(), new RFC1035Decoder() );
         return new self( $xpt, $codec );
     }
 
 
     public function sendRequest( MessageInterface $i_request ) : void {
-        $wri = new WriteBuffer();
-        $this->codec->encodeMessage( $wri, $i_request );
-        $this->transport->send( $wri->end() );
+        $this->transport->send( $this->codec->encodeMessage( $i_request )->end() );
     }
 
 

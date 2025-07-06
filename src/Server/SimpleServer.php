@@ -9,8 +9,10 @@ namespace JDWX\DNSQuery\Server;
 
 use JDWX\DNSQuery\Buffer\ReadBufferInterface;
 use JDWX\DNSQuery\Buffer\WriteBuffer;
-use JDWX\DNSQuery\Codecs\CodecInterface;
-use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Codecs\DecoderInterface;
+use JDWX\DNSQuery\Codecs\EncoderInterface;
+use JDWX\DNSQuery\Codecs\RFC1035Decoder;
+use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\MessageInterface;
@@ -34,13 +36,16 @@ class SimpleServer {
     /** @var callable|null */
     private $requestHandler = null;
 
-    private CodecInterface $codec;
+    private DecoderInterface $decoder;
+
+    private EncoderInterface $encoder;
 
     private ReadBufferInterface $buffer;
 
 
     public function __construct( private readonly TransportInterface $transport ) {
-        $this->codec = new RFC1035Codec();
+        $this->decoder = new RFC1035Decoder();
+        $this->encoder = new RFC1035Encoder();
         $this->buffer = new TransportBuffer( $this->transport );
     }
 
@@ -117,7 +122,7 @@ class SimpleServer {
      */
     public function handleSingleRequest() : bool {
 
-        $request = $this->codec->decodeMessage( $this->buffer );
+        $request = $this->decoder->decodeMessage( $this->buffer );
         if ( $request === null ) {
             return false;
         }
@@ -125,7 +130,7 @@ class SimpleServer {
         $response = $this->processRequest( $request );
         if ( $response !== null ) {
             $wri = new WriteBuffer();
-            $this->codec->encodeMessage( $wri, $response );
+            $this->encoder->encodeMessage( $wri, $response );
             $this->transport->send( $wri->end() );
         }
 
