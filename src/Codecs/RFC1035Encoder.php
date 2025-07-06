@@ -135,6 +135,7 @@ class RFC1035Encoder implements EncoderInterface {
     }
 
 
+    /** @param list<string> $i_domainName */
     public function encodeRDataValueDomainNameUncompressed( array $i_domainName ) : string {
         return Binary::packNameUncompressedArray( $i_domainName );
     }

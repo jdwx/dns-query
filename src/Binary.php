@@ -119,6 +119,7 @@ final class Binary {
     }
 
 
+    /** @param list<string> $i_rLabels */
     public static function packNameUncompressedArray( array $i_rLabels ) : string {
         $stOut = '';
         foreach ( self::splitLabelsArray( $i_rLabels ) as $stLabel => $rRest ) {
