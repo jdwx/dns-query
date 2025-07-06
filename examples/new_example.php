@@ -8,44 +8,36 @@ use JDWX\DNSQuery\Codecs\RFC1035Decoder;
 use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
-use JDWX\DNSQuery\Transport\SocketTransport;
+use JDWX\DNSQuery\Transport\TransportFactory;
 
 
 require __DIR__ . '/../vendor/autoload.php';
 
 
 /** @suppress PhanTypeSuspiciousEcho */
-( function () : void {
+( function ( array $argv ) : void {
 
-
-    # This is aspirational code right now, describing how I want this module to work,
-    # not how it actually works.
+    array_shift( $argv ); // Remove script name
+    $stProtocol = array_shift( $argv ) ?? 'udp';
+    $stHost = array_shift( $argv ) ?? '1.1.1.1';
+    $stQuestionHost = array_shift( $argv ) ?? 'www.example.com';
+    $stQuestionType = array_shift( $argv ) ?? 'A';
 
     $codec = new JDWX\DNSQuery\Codecs\Codec( new RFC1035Encoder(), new RFC1035Decoder() );
-    $xpt = SocketTransport::udp( '1.1.1.1' );
+    $xpt = match ( $stProtocol ) {
+        'udp' => TransportFactory::udp( $stHost ),
+        'tcp' => TransportFactory::tcp( $stHost ),
+        'unix' => TransportFactory::unix( $stHost, SOCK_DGRAM ),
+        default => throw new InvalidArgumentException( "Unknown protocol: {$stProtocol}" ),
+    };
 
     # Client sends request
-    $request = Message::request( 'example.com', 'A' );
+    $request = Message::request( $stQuestionHost, $stQuestionType );
     echo HexDump::dump( $codec->encodeMessage( $request )->end() ), "\n";
     echo $request;
 
     $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt, $codec );
     $client->sendRequest( $request );
-
-    /*
-    # Pseudo-server
-    $request = $xpt->receiveRequest();
-    echo $request;
-
-    $response = Message::response( $request );
-    $response->answer[] = JDWX\DNSQuery\RR\A::make(
-        $request->question[ 0 ]->stName,
-        i_rData: [ '127.0.0.1' ],
-    );
-    echo $response;
-    echo HexDump::dump( $codec->encode( $response ) ), "\n";
-    $xpt->sendResponse( $response );
-    */
 
     # Client receives response
     $response = $client->receiveResponse();
@@ -56,4 +48,4 @@ require __DIR__ . '/../vendor/autoload.php';
     echo HexDump::dump( $codec->encodeMessage( $response )->end() ), "\n";
     echo $response;
 
-} )();
+} )( $argv );

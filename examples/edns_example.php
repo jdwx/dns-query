@@ -15,12 +15,12 @@ use JDWX\DNSQuery\Codecs\RFC1035Decoder;
 use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\EDNSMessage;
-use JDWX\DNSQuery\Transport\SocketTransport;
+use JDWX\DNSQuery\Transport\TransportFactory;
 
 
 ( function () : void {
 // Create an EDNS-enabled DNS client
-    $transport = SocketTransport::udp( '1.1.1.1' );
+    $transport = TransportFactory::udp( '1.1.1.1' );
     $dec = new RFC1035Decoder();
     $enc = new RFC1035Encoder();
     $codec = new Codec( $enc, $dec );
