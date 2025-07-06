@@ -100,15 +100,16 @@ final class SimpleServerTest extends TestCase {
             ->method( 'decodeMessage' )
             ->willReturnOnConsecutiveCalls( $request1, $request2, $request3 );
 
+        $encodedBuffer = $this->createMock( WriteBufferInterface::class );
+        $encodedBuffer->method( '__toString' )->willReturn( 'encoded' );
+
         $codec->expects( self::exactly( 3 ) )
             ->method( 'encodeMessage' )
-            ->willReturnCallback( function ( $writeBuffer, $message ) {
-                $writeBuffer->append( 'encoded' );
-            } );
+            ->willReturn( $encodedBuffer );
 
         $transport->expects( self::exactly( 3 ) )
             ->method( 'send' )
-            ->with( 'encoded' );
+            ->with( $encodedBuffer );
 
         // Inject mocks
         $reflection = new \ReflectionClass( $server );
@@ -138,15 +139,16 @@ final class SimpleServerTest extends TestCase {
             ->method( 'decodeMessage' )
             ->willReturnOnConsecutiveCalls( $request, null );
 
+        $encodedBuffer = $this->createMock( WriteBufferInterface::class );
+        $encodedBuffer->method( '__toString' )->willReturn( 'encoded' );
+
         $codec->expects( self::once() )
             ->method( 'encodeMessage' )
-            ->willReturnCallback( function ( $writeBuffer, $message ) {
-                $writeBuffer->append( 'encoded' );
-            } );
+            ->willReturn( $encodedBuffer );
 
         $transport->expects( self::once() )
             ->method( 'send' )
-            ->with( 'encoded' );
+            ->with( $encodedBuffer );
 
         // Inject mocks
         $reflection = new \ReflectionClass( $server );
@@ -180,7 +182,8 @@ final class SimpleServerTest extends TestCase {
         $server = new SimpleServer( $transport );
 
         $request = $this->createTestRequest();
-        $encodedResponse = 'encoded-response';
+        $encodedBuffer = $this->createMock( WriteBufferInterface::class );
+        $encodedBuffer->method( '__toString' )->willReturn( 'encoded-response' );
 
         // Setup codec mock
         $codec = $this->createMock( CodecInterface::class );
@@ -193,17 +196,12 @@ final class SimpleServerTest extends TestCase {
 
         $codec->expects( self::once() )
             ->method( 'encodeMessage' )
-            ->with(
-                self::isInstanceOf( WriteBufferInterface::class ),
-                self::isInstanceOf( MessageInterface::class )
-            )
-            ->willReturnCallback( function ( $writeBuffer, $message ) use ( $encodedResponse ) {
-                $writeBuffer->append( $encodedResponse );
-            } );
+            ->with( self::isInstanceOf( MessageInterface::class ) )
+            ->willReturn( $encodedBuffer );
 
         $transport->expects( self::once() )
             ->method( 'send' )
-            ->with( $encodedResponse );
+            ->with( $encodedBuffer );
 
         // Inject mocks
         $reflection = new \ReflectionClass( $server );
@@ -284,7 +282,7 @@ final class SimpleServerTest extends TestCase {
         $server = new SimpleServer( $transport );
         $request = $this->createTestRequest();
 
-        $handler = function ( MessageInterface $request ) : ?MessageInterface {
+        $handler = function () : ?MessageInterface {
             return null;
         };
 
