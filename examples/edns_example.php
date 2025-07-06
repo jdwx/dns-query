@@ -8,8 +8,11 @@ declare( strict_types = 1 );
 require_once __DIR__ . '/../vendor/autoload.php';
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Client\SimpleClient;
-use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Codecs\Codec;
+use JDWX\DNSQuery\Codecs\RFC1035Decoder;
+use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\EDNSMessage;
 use JDWX\DNSQuery\Transport\SocketTransport;
@@ -18,7 +21,9 @@ use JDWX\DNSQuery\Transport\SocketTransport;
 ( function () : void {
 // Create an EDNS-enabled DNS client
     $transport = SocketTransport::udp( '1.1.1.1' );
-    $codec = new RFC1035Codec();
+    $dec = new RFC1035Decoder();
+    $enc = new RFC1035Encoder();
+    $codec = new Codec( $enc, $dec );
     $client = new SimpleClient( $transport, $codec );
 
 // Create an EDNS query with a larger payload size and DNSSEC OK bit
@@ -38,8 +43,8 @@ use JDWX\DNSQuery\Transport\SocketTransport;
     echo $query . "\n";
 
 // Show the encoded query
-    $wri = new \JDWX\DNSQuery\Buffer\WriteBuffer();
-    $codec->encodeMessage( $wri, $query );
+    $wri = new WriteBuffer();
+    $enc->encodeMessage( $wri, $query );
     $encoded = $wri->end();
     echo 'Encoded query (' . strlen( $encoded ) . " bytes):\n";
     echo HexDump::dump( $encoded ) . "\n";

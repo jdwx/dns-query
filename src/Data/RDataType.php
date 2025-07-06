@@ -17,6 +17,8 @@ enum RDataType {
 
     case DomainName;
 
+    case DomainNameUncompressed;
+
     case IPv4Address;
 
     case IPv6Address;
@@ -52,6 +54,7 @@ enum RDataType {
     public function parse( string $i_stValue ) : mixed {
         switch ( $this ) {
 
+            case self::DomainNameUncompressed:
             case self::DomainName:
                 return DomainName::parse( $i_stValue );
 

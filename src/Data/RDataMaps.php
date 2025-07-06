@@ -104,6 +104,18 @@ final class RDataMaps {
             'txtDName' => RDataType::DomainName,
         ],
 
+        RecordType::RRSIG->value => [
+            'typeCovered' => RDataType::UINT16,
+            'algorithm' => RDataType::UINT8,
+            'labels' => RDataType::UINT8,
+            'originalTTL' => RDataType::UINT32,
+            'signatureExpiration' => RDataType::UINT32,
+            'signatureInception' => RDataType::UINT32,
+            'keyTag' => RDataType::UINT16,
+            'signerName' => RDataType::DomainNameUncompressed,
+            'signature' => RDataType::HexBinary,
+        ],
+
         RecordType::RT->value => [
             'preference' => RDataType::UINT16,
             'intermediateHost' => RDataType::DomainName,

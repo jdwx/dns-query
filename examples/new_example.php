@@ -4,8 +4,8 @@
 declare( strict_types = 1 );
 
 
-use JDWX\DNSQuery\Buffer\WriteBuffer;
-use JDWX\DNSQuery\Codecs\RFC1035Codec;
+use JDWX\DNSQuery\Codecs\RFC1035Decoder;
+use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Transport\SocketTransport;
@@ -21,14 +21,12 @@ require __DIR__ . '/../vendor/autoload.php';
     # This is aspirational code right now, describing how I want this module to work,
     # not how it actually works.
 
-    $codec = new RFC1035Codec();
+    $codec = new JDWX\DNSQuery\Codecs\Codec( new RFC1035Encoder(), new RFC1035Decoder() );
     $xpt = SocketTransport::udp( '1.1.1.1' );
 
     # Client sends request
     $request = Message::request( 'example.com', 'A' );
-    $wri = new WriteBuffer();
-    $codec->encodeMessage( $wri, $request );
-    echo HexDump::dump( $wri->end() ), "\n";
+    echo HexDump::dump( $codec->encodeMessage( $request )->end() ), "\n";
     echo $request;
 
     $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt, $codec );
@@ -55,8 +53,7 @@ require __DIR__ . '/../vendor/autoload.php';
         echo "No response received.\n";
         return;
     }
-    $codec->encodeMessage( $wri, $response );
-    echo HexDump::dump( $wri->end() ), "\n";
+    echo HexDump::dump( $codec->encodeMessage( $response )->end() ), "\n";
     echo $response;
 
 } )();

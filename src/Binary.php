@@ -119,6 +119,15 @@ final class Binary {
     }
 
 
+    public static function packNameUncompressedArray( array $i_rLabels ) : string {
+        $stOut = '';
+        foreach ( self::splitLabelsArray( $i_rLabels ) as $stLabel => $rRest ) {
+            $stOut .= self::packLabel( $stLabel );
+        }
+        return $stOut . chr( 0 );
+    }
+
+
     public static function packPointer( int $i_uOffset ) : string {
         if ( $i_uOffset > 16_383 ) {
             throw new OutOfRangeException( "Offset {$i_uOffset} out of pointer range" );

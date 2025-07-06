@@ -41,28 +41,36 @@ class RFC1035Encoder implements EncoderInterface {
 
 
     public function encodeMessage( WriteBufferInterface $i_buffer, MessageInterface $i_msg ) : void {
+        $this->uOffset = 0;
+        $this->rLabelMap = []; // Reset label map for each message
+        $uBufferStart = $i_buffer->length();
         self::encodeHeader( $i_buffer, $i_msg->header() );
-        assert( $this->uOffset === $i_buffer->length() );
+        assert( $this->uOffset === $i_buffer->length() - $uBufferStart,
+            "Offset ({$this->uOffset}) & buffer ({$i_buffer->length()} - {$uBufferStart}) don't match" );
 
         foreach ( $i_msg->getQuestion() as $q ) {
             self::encodeQuestion( $i_buffer, $q );
         }
-        assert( $this->uOffset === $i_buffer->length(), "{$this->uOffset} !== {$i_buffer->length()}" );
+        assert( $this->uOffset === $i_buffer->length() - $uBufferStart,
+            "Offset ({$this->uOffset}) & buffer ({$i_buffer->length()} - {$uBufferStart}) don't match" );
 
         foreach ( $i_msg->getAnswer() as $rr ) {
             self::encodeResourceRecord( $i_buffer, $rr );
         }
-        assert( $this->uOffset === $i_buffer->length() );
+        assert( $this->uOffset === $i_buffer->length() - $uBufferStart,
+            "Offset ({$this->uOffset}) & buffer ({$i_buffer->length()} - {$uBufferStart}) don't match" );
 
         foreach ( $i_msg->getAuthority() as $rr ) {
             self::encodeResourceRecord( $i_buffer, $rr );
         }
-        assert( $this->uOffset === $i_buffer->length() );
+        assert( $this->uOffset === $i_buffer->length() - $uBufferStart,
+            "Offset ({$this->uOffset}) & buffer ({$i_buffer->length()} - {$uBufferStart}) don't match" );
 
         foreach ( $i_msg->getAdditional() as $rr ) {
             self::encodeResourceRecord( $i_buffer, $rr );
         }
-        assert( $this->uOffset === $i_buffer->length() );
+        assert( $this->uOffset === $i_buffer->length() - $uBufferStart,
+            "Offset ({$this->uOffset}) & buffer ({$i_buffer->length()} - {$uBufferStart}) don't match" );
 
     }
 
@@ -92,6 +100,7 @@ class RFC1035Encoder implements EncoderInterface {
             RDataType::CharacterString => $this->encodeRDataValueCharacterString( $i_rDataValue->value() ),
             RDataType::CharacterStringList => $this->encodeRDataValueCharacterStringList( $i_rDataValue->value() ),
             RDataType::DomainName => $this->encodeRDataValueDomainName( $i_rDataValue->value() ),
+            RDataType::DomainNameUncompressed => $this->encodeRDataValueDomainNameUncompressed( $i_rDataValue->value() ),
             RDataType::HexBinary => $this->encodeRDataValueHexBinary( $i_rDataValue->value() ),
             RDataType::IPv4Address => Binary::packIPv4( $i_rDataValue->value() ),
             RDataType::IPv6Address => Binary::packIPv6( $i_rDataValue->value() ),
@@ -123,6 +132,11 @@ class RFC1035Encoder implements EncoderInterface {
     /** @param list<string> $i_domainName */
     public function encodeRDataValueDomainName( array $i_domainName ) : string {
         return Binary::packLabels( $i_domainName, $this->rLabelMap, $this->uOffset );
+    }
+
+
+    public function encodeRDataValueDomainNameUncompressed( array $i_domainName ) : string {
+        return Binary::packNameUncompressedArray( $i_domainName );
     }
 
 

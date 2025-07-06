@@ -169,7 +169,7 @@ class RFC1035Decoder implements DecoderInterface {
         return match ( $i_rdt ) {
             RDataType::CharacterString => $i_buffer->consumeLabel(),
             RDataType::CharacterStringList => $this->decodeRDataCharacterStringList( $i_buffer ),
-            RDataType::DomainName => $i_buffer->consumeNameArray(),
+            RDataType::DomainName, RDataType::DomainNameUncompressed => $i_buffer->consumeNameArray(),
             RDataType::HexBinary => self::decodeRDataHexBinary( $i_buffer ),
             RDataType::IPv4Address => $i_buffer->consumeIPv4(),
             RDataType::IPv6Address => $i_buffer->consumeIPv6(),

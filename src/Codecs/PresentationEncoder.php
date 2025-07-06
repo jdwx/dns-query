@@ -91,7 +91,7 @@ class PresentationEncoder implements EncoderInterface {
 
     public function encodeRDataValue( WriteBufferInterface $i_buffer, RDataValueInterface $i_rDataValue ) : void {
         $i_buffer->append( match ( $i_rDataValue->type() ) {
-            RDataType::DomainName => $this->encodeRDataValueDomainName( $i_rDataValue->value() ),
+            RDataType::DomainName, RDataType::DomainNameUncompressed => $this->encodeRDataValueDomainName( $i_rDataValue->value() ),
             RDataType::CharacterString => self::escapeString( $i_rDataValue->value() ),
             RDataType::CharacterStringList => implode( ' ', array_map(
                 [ self::class, 'escapeString' ],
