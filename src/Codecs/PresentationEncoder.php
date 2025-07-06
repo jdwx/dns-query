@@ -103,6 +103,7 @@ class PresentationEncoder implements EncoderInterface {
     }
 
 
+    /** @param list<string> $i_domainName */
     public function encodeRDataValueDomainName( array $i_domainName ) : string {
         return DomainName::format( $i_domainName ) . '.';
     }
@@ -140,7 +141,8 @@ class PresentationEncoder implements EncoderInterface {
             } elseif ( $item->isType( 'OPT' ) ) {
                 continue;
             }
-            $this->encodeResourceRecord( $i_buffer, $item ) . "\n";
+            $this->encodeResourceRecord( $i_buffer, $item );
+            $i_buffer->append( "\n" );
         }
         $i_buffer->append( "\n" );
     }

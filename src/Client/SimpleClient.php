@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Client;
 
 
 use JDWX\DNSQuery\Buffer\ReadBufferInterface;
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Message\MessageInterface;
@@ -49,7 +50,9 @@ class SimpleClient extends AbstractTimedClient {
 
 
     public function sendRequest( MessageInterface $i_request ) : void {
-        $this->transport->send( $this->codec->encodeMessage( $i_request ) );
+        $wri = new WriteBuffer();
+        $this->codec->encodeMessage( $wri, $i_request );
+        $this->transport->send( $wri->end() );
     }
 
 

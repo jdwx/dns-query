@@ -4,6 +4,7 @@
 declare( strict_types = 1 );
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\HexDump;
 use JDWX\DNSQuery\Message\Message;
@@ -13,6 +14,7 @@ use JDWX\DNSQuery\Transport\SocketTransport;
 require __DIR__ . '/../vendor/autoload.php';
 
 
+/** @suppress PhanTypeSuspiciousEcho */
 ( function () : void {
 
 
@@ -24,7 +26,9 @@ require __DIR__ . '/../vendor/autoload.php';
 
     # Client sends request
     $request = Message::request( 'example.com', 'A' );
-    echo HexDump::dump( $codec->encodeMessage( $request ) ), "\n";
+    $wri = new WriteBuffer();
+    $codec->encodeMessage( $wri, $request );
+    echo HexDump::dump( $wri->end() ), "\n";
     echo $request;
 
     $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt, $codec );
@@ -51,7 +55,8 @@ require __DIR__ . '/../vendor/autoload.php';
         echo "No response received.\n";
         return;
     }
-    echo HexDump::dump( $codec->encodeMessage( $response ) ), "\n";
+    $codec->encodeMessage( $wri, $response );
+    echo HexDump::dump( $wri->end() ), "\n";
     echo $response;
 
 } )();

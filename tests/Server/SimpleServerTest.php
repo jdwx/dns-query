@@ -194,7 +194,7 @@ final class SimpleServerTest extends TestCase {
         $codec->expects( self::once() )
             ->method( 'encodeMessage' )
             ->with(
-                self::isInstanceOf( \JDWX\DNSQuery\Buffer\WriteBufferInterface::class ),
+                self::isInstanceOf( WriteBufferInterface::class ),
                 self::isInstanceOf( MessageInterface::class )
             )
             ->willReturnCallback( function ( $writeBuffer, $message ) use ( $encodedResponse ) {

@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\PresentationEncoder;
 use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\FlagWord;
@@ -99,7 +100,9 @@ class Header implements HeaderInterface {
 
     public function __toString() : string {
         $enc = new PresentationEncoder();
-        return $enc->encodeHeader( $this );
+        $wri = new WriteBuffer();
+        $enc->encodeHeader( $wri, $this );
+        return $wri->end();
     }
 
 

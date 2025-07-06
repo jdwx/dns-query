@@ -34,7 +34,7 @@ use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 class RFC1035Codec implements CodecInterface {
 
 
-    /** @var array<string, int> $rLabelMap */
+    /** @param array<string, int> $rLabelMap */
     public function __construct( private array $rLabelMap = [], private int $uOffset = 0 ) {}
 
 
@@ -313,6 +313,7 @@ class RFC1035Codec implements CodecInterface {
     }
 
 
+    /** @param list<string> $i_domainName */
     public function encodeRDataValueDomainName( array $i_domainName ) : string {
         return Binary::packLabels( $i_domainName, $this->rLabelMap, $this->uOffset );
     }

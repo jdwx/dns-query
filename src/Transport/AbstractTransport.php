@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\Transport;
 
 
 use JDWX\DNSQuery\Buffer\ReadBuffer;
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Message\MessageInterface;
 
@@ -49,8 +50,9 @@ abstract class AbstractTransport implements TransportInterface {
 
 
     protected function sendMessage( MessageInterface $i_msg ) : void {
-        $packet = $this->codec->encodeMessage( $i_msg );
-        $this->send( $packet );
+        $wri = new WriteBuffer();
+        $this->codec->encodeMessage( $wri, $i_msg );
+        $this->send( $wri->end() );
     }
 
 

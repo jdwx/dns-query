@@ -10,6 +10,7 @@ namespace JDWX\DNSQuery\Tests\Codecs;
 use JDWX\DNSQuery\Buffer\ReadBuffer;
 use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\SerializeCodec;
+use JDWX\DNSQuery\Message\Header;
 use JDWX\DNSQuery\Message\Message;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,17 @@ final class SerializeCodecTest extends TestCase {
         $codec = new SerializeCodec();
         $buffer = new ReadBuffer( '' );
         self::assertNull( $codec->decodeMessage( $buffer ) );
+    }
+
+
+    public function testHeader() : void {
+        $hdr = new Header( null, 1, 2, 3, 4 );
+        $codec = new SerializeCodec();
+        $wri = new WriteBuffer();
+        $codec->encodeHeader( $wri, $hdr );
+        $buffer = new ReadBuffer( $wri->end() );
+        $hdr2 = $codec->decodeHeader( $buffer );
+        self::assertSame( strval( $hdr ), strval( $hdr2 ) );
     }
 
 
