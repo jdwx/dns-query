@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
+use JDWX\DNSQuery\Codecs\PresentationEncoder;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RDataType;
 use JDWX\DNSQuery\Data\RecordType;
@@ -89,11 +91,10 @@ class RData extends AbstractRData {
 
 
     public function __toString() : string {
-        $st = '';
-        foreach ( $this->rDataMap as $stName => $rdt ) {
-            $st .= ' ' . $rdt->format( $this->rDataValues[ $stName ] );
-        }
-        return trim( $st );
+        $wri = new WriteBuffer();
+        $enc = new PresentationEncoder();
+        $enc->encodeRData( $wri, $this );
+        return $wri->end();
     }
 
 
@@ -146,6 +147,19 @@ class RData extends AbstractRData {
     /** @return array<string, mixed> */
     public function toArray() : array {
         return $this->rDataValues;
+    }
+
+
+    /**
+     * @return \Generator<string, RDataValueInterface>
+     */
+    public function values() : \Generator {
+        foreach ( $this->validKeys() as $stKey ) {
+            if ( ! isset( $this->rDataValues[ $stKey ] ) ) {
+                throw new RecordDataException( "Missing RData value for {$stKey} in record" );
+            }
+            yield $stKey => new RDataValue( $this->rDataMap[ $stKey ], $this->rDataValues[ $stKey ] );
+        }
     }
 
 

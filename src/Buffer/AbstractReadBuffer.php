@@ -12,7 +12,7 @@ use JDWX\DNSQuery\Binary;
 use OutOfBoundsException;
 
 
-abstract class AbstractBuffer implements BufferInterface {
+abstract class AbstractReadBuffer implements ReadBufferInterface {
 
 
     public function __construct( protected string $stData = '', private int $uOffset = 0 ) {}
@@ -177,11 +177,11 @@ abstract class AbstractBuffer implements BufferInterface {
     }
 
 
-    public function sub( int $i_uLength, int $i_iWhence = SEEK_CUR, ?int $i_uOffset = null ) : BufferInterface {
+    public function sub( int $i_uLength, int $i_iWhence = SEEK_CUR, ?int $i_uOffset = null ) : ReadBufferInterface {
         $i_uOffset = $i_uOffset ?? $this->uOffset;
         $uLength = $this->calculateOffset( $i_uLength, $i_iWhence );
         $this->fillTo( $uLength );
-        return new Buffer( substr( $this->stData, 0, $uLength ), $i_uOffset );
+        return new ReadBuffer( substr( $this->stData, 0, $uLength ), $i_uOffset );
     }
 
 

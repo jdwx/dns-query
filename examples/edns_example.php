@@ -38,7 +38,7 @@ use JDWX\DNSQuery\Transport\SocketTransport;
     echo $query . "\n";
 
 // Show the encoded query
-    $encoded = $codec->encode( $query );
+    $encoded = $codec->encodeMessage( $query );
     echo 'Encoded query (' . strlen( $encoded ) . " bytes):\n";
     echo HexDump::dump( $encoded ) . "\n";
 

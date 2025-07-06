@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
+use JDWX\DNSQuery\Data\RDataType;
+
+
 class OpaqueRData extends AbstractRData {
 
 
@@ -39,6 +42,14 @@ class OpaqueRData extends AbstractRData {
 
     public function toArray() : array {
         return [ 'rdata' => $this->stData ];
+    }
+
+
+    /**
+     * @return \Generator<string, RDataValueInterface>
+     */
+    public function values() : \Generator {
+        yield 'rdata' => new RDataValue( RDataType::HexBinary, $this->stData );
     }
 
 

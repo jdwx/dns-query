@@ -30,15 +30,6 @@ final class RDataTypeTest extends TestCase {
     }
 
 
-    public function testFormat() : void {
-        self::assertSame( '1.2.3.4', RDataType::IPv4Address->format( '1.2.3.4' ) );
-        self::assertSame( 'example', RDataType::CharacterString->format( 'example' ) );
-        self::assertSame( '"foo bar"', RDataType::CharacterString->format( 'foo bar' ) );
-        self::assertSame( 'foo "bar baz"', RDataType::CharacterStringList->format( [ 'foo', 'bar baz' ] ) );
-        self::assertSame( 'Foo', RDataType::HexBinary->format( 'Foo' ) );
-    }
-
-
     public function testParse() : void {
         self::assertSame( [ 'foo.bar', 'baz' ], RDataType::DomainName->parse( '"foo.bar".baz' ) );
         self::assertSame( '1.2.3.4', RDataType::IPv4Address->parse( '1.2.3.4' ) );

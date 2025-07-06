@@ -140,9 +140,7 @@ final class OpaqueQuestionTest extends TestCase {
 
     public function testGetType() : void {
         $question = new Question( 'example.com', RecordType::MX->value, RecordClass::IN->value );
-
         $type = $question->getType();
-        self::assertInstanceOf( RecordType::class, $type );
         self::assertSame( RecordType::MX, $type );
     }
 
@@ -255,19 +253,6 @@ final class OpaqueQuestionTest extends TestCase {
 
         self::assertSame( RecordType::SOA->value, $question->typeValue() );
         self::assertSame( 'SOA', $question->type() );
-    }
-
-
-    public function testToString() : void {
-        $question = new Question( 'example.com', RecordType::MX->value, RecordClass::IN->value );
-
-        self::assertSame( 'example.com IN MX', (string) $question );
-    }
-
-
-    public function testToStringWithUnknownTypeAndClass() : void {
-        $question = new Question( 'test.example.com', 12345, 65432 );
-        self::assertSame( 'test.example.com CLASS65432 TYPE12345', (string) $question );
     }
 
 

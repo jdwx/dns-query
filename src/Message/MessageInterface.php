@@ -24,6 +24,18 @@ interface MessageInterface extends Stringable {
     public function authority( int $i_uIndex ) : ?ResourceRecordInterface;
 
 
+    public function countAdditional() : int;
+
+
+    public function countAnswer() : int;
+
+
+    public function countAuthority() : int;
+
+
+    public function countQuestion() : int;
+
+
     /** @return list<ResourceRecordInterface> */
     public function getAdditional() : array;
 

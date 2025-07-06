@@ -24,7 +24,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
     # Client sends request
     $request = Message::request( 'example.com', 'A' );
-    echo HexDump::dump( $codec->encode( $request ) ), "\n";
+    echo HexDump::dump( $codec->encodeMessage( $request ) ), "\n";
     echo $request;
 
     $client = new JDWX\DNSQuery\Client\SimpleClient( $xpt, $codec );
@@ -51,7 +51,7 @@ require __DIR__ . '/../vendor/autoload.php';
         echo "No response received.\n";
         return;
     }
-    echo HexDump::dump( $codec->encode( $response ) ), "\n";
+    echo HexDump::dump( $codec->encodeMessage( $response ) ), "\n";
     echo $response;
 
 } )();

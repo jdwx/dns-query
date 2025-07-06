@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Client;
 
 
-use JDWX\DNSQuery\Buffer\BufferInterface;
+use JDWX\DNSQuery\Buffer\ReadBufferInterface;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Message\MessageInterface;
@@ -27,7 +27,7 @@ use JDWX\DNSQuery\Transport\TransportInterface;
 class SimpleClient extends AbstractTimedClient {
 
 
-    private BufferInterface $buffer;
+    private ReadBufferInterface $buffer;
 
 
     public function __construct( private readonly TransportInterface $transport,
@@ -49,12 +49,12 @@ class SimpleClient extends AbstractTimedClient {
 
 
     public function sendRequest( MessageInterface $i_request ) : void {
-        $this->transport->send( $this->codec->encode( $i_request ) );
+        $this->transport->send( $this->codec->encodeMessage( $i_request ) );
     }
 
 
     protected function receiveAnyResponse() : ?MessageInterface {
-        return $this->codec->decode( $this->buffer );
+        return $this->codec->decodeMessage( $this->buffer );
     }
 
 

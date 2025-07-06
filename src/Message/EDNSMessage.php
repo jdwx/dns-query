@@ -230,19 +230,6 @@ class EDNSMessage extends Message {
     }
 
 
-    public function __toString() : string {
-
-        /** @noinspection SpellCheckingInspection */
-        return $this->header()
-            . $this->stringSummary()
-            . ";; OPT PSEUDOSECTION:\n"
-            . '; EDNS: version: ' . $this->version->value . ', flags: ' . $this->stringFlags() . '; payload: '
-            . $this->uPayloadSize . "\n"
-            . $this->stringOptions()
-            . $this->stringRecords();
-    }
-
-
     /**
      * Add an EDNS option.
      */
@@ -360,11 +347,6 @@ class EDNSMessage extends Message {
      */
     public function tryOption( int $index ) : ?Option {
         return $this->options[ $index ] ?? null;
-    }
-
-
-    protected function stringFlags() : string {
-        return trim( $this->do->toFlag() );
     }
 
 

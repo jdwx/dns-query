@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Server;
 
 
-use JDWX\DNSQuery\Buffer\BufferInterface;
+use JDWX\DNSQuery\Buffer\ReadBufferInterface;
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\ReturnCode;
@@ -35,7 +36,7 @@ class SimpleServer {
 
     private CodecInterface $codec;
 
-    private BufferInterface $buffer;
+    private ReadBufferInterface $buffer;
 
 
     public function __construct( private readonly TransportInterface $transport ) {
@@ -116,14 +117,16 @@ class SimpleServer {
      */
     public function handleSingleRequest() : bool {
 
-        $request = $this->codec->decode( $this->buffer );
+        $request = $this->codec->decodeMessage( $this->buffer );
         if ( $request === null ) {
             return false;
         }
 
         $response = $this->processRequest( $request );
         if ( $response !== null ) {
-            $this->transport->send( $this->codec->encode( $response ) );
+            $wri = new WriteBuffer();
+            $this->codec->encodeMessage( $wri, $response );
+            $this->transport->send( $wri->end() );
         }
 
         return true;

@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\ResourceRecord;
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
+use JDWX\DNSQuery\Codecs\PresentationEncoder;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
@@ -175,9 +177,10 @@ class ResourceRecord implements ResourceRecordInterface {
 
 
     public function __toString() : string {
-        $st = $this->name() . ' ' . $this->getTTL() . ' ' . $this->class() . ' ' . $this->type() . ' ';
-        $st .= $this->rData;
-        return $st;
+        $wri = new WriteBuffer();
+        $enc = new PresentationEncoder();
+        $enc->encodeResourceRecord( $wri, $this );
+        return $wri->end();
     }
 
 

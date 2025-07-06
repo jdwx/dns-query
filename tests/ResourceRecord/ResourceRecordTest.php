@@ -932,7 +932,7 @@ final class ResourceRecordTest extends TestCase {
 
     public function testToStringForOpaque() : void {
         $record = new ResourceRecord( [ 'test' ], 9999, 1, 300, 'data' );
-        self::assertSame( 'test 300 IN TYPE9999 64617461', strval( $record ) );
+        self::assertSame( 'test. 300 IN TYPE9999 data', strval( $record ) );
     }
 
 

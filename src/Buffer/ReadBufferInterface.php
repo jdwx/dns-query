@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Buffer;
 
 
-interface BufferInterface {
+interface ReadBufferInterface {
 
 
     public function atEnd() : bool;
@@ -64,7 +64,7 @@ interface BufferInterface {
     public function seek( int $i_uOffset, int $i_iWhence = SEEK_SET ) : void;
 
 
-    public function sub( int $i_uLength, int $i_iWhence = SEEK_CUR, ?int $i_uOffset = null ) : BufferInterface;
+    public function sub( int $i_uLength, int $i_iWhence = SEEK_CUR, ?int $i_uOffset = null ) : ReadBufferInterface;
 
 
     public function tell() : int;

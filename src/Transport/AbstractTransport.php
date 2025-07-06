@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-use JDWX\DNSQuery\Buffer\Buffer;
+use JDWX\DNSQuery\Buffer\ReadBuffer;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Message\MessageInterface;
 
@@ -43,13 +43,13 @@ abstract class AbstractTransport implements TransportInterface {
         if ( ! is_string( $packet ) ) {
             return null;
         }
-        $buffer = new Buffer( $packet );
-        return $this->codec->decode( $buffer );
+        $buffer = new ReadBuffer( $packet );
+        return $this->codec->decodeMessage( $buffer );
     }
 
 
     protected function sendMessage( MessageInterface $i_msg ) : void {
-        $packet = $this->codec->encode( $i_msg );
+        $packet = $this->codec->encodeMessage( $i_msg );
         $this->send( $packet );
     }
 

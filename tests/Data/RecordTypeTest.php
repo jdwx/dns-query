@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
-use JDWX\DNSQuery\Buffer\Buffer;
+use JDWX\DNSQuery\Buffer\ReadBuffer;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Exceptions\RecordTypeException;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
@@ -41,20 +41,20 @@ final class RecordTypeTest extends TestCase {
 
 
     public function testConsume() : void {
-        $data = new Buffer( pack( 'n', RecordType::A->value ) );
+        $data = new ReadBuffer( pack( 'n', RecordType::A->value ) );
         self::assertSame( RecordType::A, RecordType::consume( $data ) );
     }
 
 
     public function testConsumeForInsufficientData() : void {
-        $data = new Buffer( 'a' );
+        $data = new ReadBuffer( 'a' );
         self::expectException( \OutOfBoundsException::class );
         RecordType::consume( $data );
     }
 
 
     public function testConsumeForInvalid() : void {
-        $data = new Buffer( 'nope' );
+        $data = new ReadBuffer( 'nope' );
         self::expectException( RecordTypeException::class );
         RecordType::consume( $data );
     }
@@ -200,7 +200,7 @@ final class RecordTypeTest extends TestCase {
 
 
     public function testTryConsumeInvalid() : void {
-        $data = new Buffer( pack( 'n', 9999 ) );
+        $data = new ReadBuffer( pack( 'n', 9999 ) );
         self::assertNull( RecordType::tryConsume( $data ) );
     }
 

@@ -8,20 +8,20 @@ namespace JDWX\DNSQuery\Tests\Buffer;
 
 
 use InvalidArgumentException;
-use JDWX\DNSQuery\Buffer\AbstractBuffer;
-use JDWX\DNSQuery\Buffer\Buffer;
+use JDWX\DNSQuery\Buffer\AbstractReadBuffer;
+use JDWX\DNSQuery\Buffer\ReadBuffer;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
-#[CoversClass( AbstractBuffer::class )]
-#[CoversClass( Buffer::class )]
-final class BufferTest extends TestCase {
+#[CoversClass( AbstractReadBuffer::class )]
+#[CoversClass( ReadBuffer::class )]
+final class ReadBufferTest extends TestCase {
 
 
     public function testAppend() : void {
-        $buffer = new Buffer( 'Foo' );
+        $buffer = new ReadBuffer( 'Foo' );
         self::assertSame( 3, $buffer->append( 'Bar' ) );
         self::assertSame( 'FooBar', $buffer->getData() );
         self::assertSame( 0, $buffer->tell() );
@@ -29,7 +29,7 @@ final class BufferTest extends TestCase {
 
 
     public function testAtEnd() : void {
-        $buffer = new Buffer( 'Foo' );
+        $buffer = new ReadBuffer( 'Foo' );
         self::assertFalse( $buffer->atEnd() );
         $buffer->consume( 3 );
         self::assertTrue( $buffer->atEnd() );
@@ -37,50 +37,50 @@ final class BufferTest extends TestCase {
 
 
     public function testConstruct() : void {
-        $buffer = new Buffer( 'FooBarBaz' );
+        $buffer = new ReadBuffer( 'FooBarBaz' );
         self::assertSame( 'FooBarBaz', $buffer->getData() );
         self::assertSame( 0, $buffer->tell() );
     }
 
 
     public function testConsume() : void {
-        $buffer = new Buffer( 'FooBarBaz' );
+        $buffer = new ReadBuffer( 'FooBarBaz' );
         self::assertSame( 'Foo', $buffer->consume( 3 ) );
         self::assertSame( 'Bar', $buffer->consume( 3 ) );
         self::assertSame( 'Baz', $buffer->consume( 3 ) );
 
-        $buffer = new Buffer( 'FooBarBaz', 3 );
+        $buffer = new ReadBuffer( 'FooBarBaz', 3 );
         self::assertSame( 'BarBaz', $buffer->consume( null ) );
     }
 
 
     public function testConsumeHexBinary() : void {
-        $buffer = new Buffer( "\x06426172" );
+        $buffer = new ReadBuffer( "\x06426172" );
         self::assertSame( 'Bar', $buffer->consumeHexBinary() );
     }
 
 
     public function testConsumeHexBinaryForInvalid() : void {
-        $buffer = new Buffer( "\x04\x01\x02\x03\x04" );
+        $buffer = new ReadBuffer( "\x04\x01\x02\x03\x04" );
         self::expectException( InvalidArgumentException::class );
         $buffer->consumeHexBinary();
     }
 
 
     public function testConsumeIPv4() : void {
-        $buffer = new Buffer( "\x01\x02\x03\x04" );
+        $buffer = new ReadBuffer( "\x01\x02\x03\x04" );
         self::assertSame( '1.2.3.4', $buffer->consumeIPv4() );
     }
 
 
     public function testConsumeIPv6() : void {
-        $buffer = new Buffer( "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F" );
+        $buffer = new ReadBuffer( "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F" );
         self::assertSame( '1:203:405:607:809:a0b:c0d:e0f', $buffer->consumeIPv6() );
     }
 
 
     public function testConsumeLabel() : void {
-        $buffer = new Buffer( "\x03Foo\x03Bar\x00" );
+        $buffer = new ReadBuffer( "\x03Foo\x03Bar\x00" );
         self::assertSame( 'Foo', $buffer->consumeLabel() );
         self::assertSame( 'Bar', $buffer->consumeLabel() );
         self::assertSame( '', $buffer->consumeLabel() );
@@ -88,13 +88,13 @@ final class BufferTest extends TestCase {
 
 
     public function testConsumeName() : void {
-        $buffer = new Buffer( "\x03Foo\x03Bar\x00" );
+        $buffer = new ReadBuffer( "\x03Foo\x03Bar\x00" );
         self::assertSame( 'Foo.Bar', $buffer->consumeName() );
     }
 
 
     public function testConsumeNameArray() : void {
-        $buffer = new Buffer( "\x03Foo\x07Bar.Baz\x03Qux\0\x04Quux\xc0\x04" );
+        $buffer = new ReadBuffer( "\x03Foo\x07Bar.Baz\x03Qux\0\x04Quux\xc0\x04" );
         $r = $buffer->consumeNameArray();
         self::assertSame( [ 'Foo', 'Bar.Baz', 'Qux' ], $r );
         $r = $buffer->consumeNameArray();
@@ -105,7 +105,7 @@ final class BufferTest extends TestCase {
 
 
     public function testConsumeUINT16() : void {
-        $buffer = new Buffer( "\x01\x02\x03\x04\x05\x06\x07\x08" );
+        $buffer = new ReadBuffer( "\x01\x02\x03\x04\x05\x06\x07\x08" );
         self::assertSame( 0x102, $buffer->consumeUINT16() );
         self::assertSame( 0x304, $buffer->consumeUINT16() );
         self::assertSame( 0x506, $buffer->consumeUINT16() );
@@ -116,7 +116,7 @@ final class BufferTest extends TestCase {
 
 
     public function testConsumeUINT32() : void {
-        $buffer = new Buffer( "\x01\x02\x03\x04\x05\x06\x07\x08" );
+        $buffer = new ReadBuffer( "\x01\x02\x03\x04\x05\x06\x07\x08" );
         self::assertSame( 0x01020304, $buffer->consumeUINT32() );
         self::assertSame( 0x05060708, $buffer->consumeUINT32() );
         self::expectException( OutOfBoundsException::class );
@@ -125,7 +125,7 @@ final class BufferTest extends TestCase {
 
 
     public function testConsumeUINT8() : void {
-        $buffer = new Buffer( "\x01\x02\x03\x04" );
+        $buffer = new ReadBuffer( "\x01\x02\x03\x04" );
         self::assertSame( 1, $buffer->consumeUINT8() );
         self::assertSame( 2, $buffer->consumeUINT8() );
         self::assertSame( 3, $buffer->consumeUINT8() );
@@ -136,7 +136,7 @@ final class BufferTest extends TestCase {
 
 
     public function testExpandNamePointer() : void {
-        $buffer = new Buffer( "\x03Foo\x06BarBaz\x03Qux\0\x04Quux\xc0\x04" );
+        $buffer = new ReadBuffer( "\x03Foo\x06BarBaz\x03Qux\0\x04Quux\xc0\x04" );
         $r = $buffer->expandNamePointer( 0 );
         self::assertSame( [ 'Foo', 'BarBaz', 'Qux' ], $r );
         $r = $buffer->expandNamePointer( 4 );
@@ -151,30 +151,30 @@ final class BufferTest extends TestCase {
 
 
     public function testExpandNamePointerForLoop() : void {
-        $buffer = new Buffer( "\x03Foo\x06BarBaz\x03Qux\0\x04Quux\xc0\x10" ); // Pointer points to itself
+        $buffer = new ReadBuffer( "\x03Foo\x06BarBaz\x03Qux\0\x04Quux\xc0\x10" ); // Pointer points to itself
         self::expectException( InvalidArgumentException::class );
         $buffer->expandNamePointer( 16 );
     }
 
 
     public function testExpandNamePointerForLoop2() : void {
-        $buffer = new Buffer( "\x03Foo\xC0\x00" ); // Pointer points to start
+        $buffer = new ReadBuffer( "\x03Foo\xC0\x00" ); // Pointer points to start
         self::expectException( InvalidArgumentException::class );
         $buffer->expandNamePointer( 0 );
     }
 
 
     public function testReadyCheck() : void {
-        $buffer = new Buffer( '' );
+        $buffer = new ReadBuffer( '' );
         self::assertFalse( $buffer->readyCheck() );
 
-        $buffer = new Buffer( 'Foo' );
+        $buffer = new ReadBuffer( 'Foo' );
         self::assertTrue( $buffer->readyCheck() );
     }
 
 
     public function testSeek() : void {
-        $buffer = new Buffer( 'FooBarBaz' );
+        $buffer = new ReadBuffer( 'FooBarBaz' );
         self::assertSame( 0, $buffer->tell() );
 
         $st = $buffer->consume( 3 );
@@ -203,7 +203,7 @@ final class BufferTest extends TestCase {
 
 
     public function testSub() : void {
-        $buffer = new Buffer( 'FooBarBaz', 3 );
+        $buffer = new ReadBuffer( 'FooBarBaz', 3 );
         $subBuffer = $buffer->sub( 3 );
         self::assertSame( 'FooBar', $subBuffer->getData() );
         self::assertSame( 3, $subBuffer->tell() );
@@ -222,7 +222,7 @@ final class BufferTest extends TestCase {
 
 
     public function testTryFillForData() : void {
-        $buffer = new class( 'Foo', 'Bar' ) extends AbstractBuffer {
+        $buffer = new class( 'Foo', 'Bar' ) extends AbstractReadBuffer {
 
 
             public function __construct( string $i_stData, private ?string $nstMoreData ) {
@@ -243,7 +243,7 @@ final class BufferTest extends TestCase {
 
 
     public function testTryFillForNoData() : void {
-        $buffer = new Buffer( 'Foo' );
+        $buffer = new ReadBuffer( 'Foo' );
         self::assertSame( 'Foo', $buffer->consume( 3 ) );
         self::expectException( OutOfBoundsException::class );
         $buffer->consume( 3 );

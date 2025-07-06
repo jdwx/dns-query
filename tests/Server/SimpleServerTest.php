@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Server;
 
 
-use JDWX\DNSQuery\Buffer\BufferInterface;
+use JDWX\DNSQuery\Buffer\ReadBufferInterface;
 use JDWX\DNSQuery\Codecs\CodecInterface;
 use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\ReturnCode;
@@ -93,15 +93,17 @@ final class SimpleServerTest extends TestCase {
 
         // Setup codec mock
         $codec = $this->createMock( CodecInterface::class );
-        $buffer = $this->createMock( BufferInterface::class );
+        $buffer = $this->createMock( ReadBufferInterface::class );
 
         $codec->expects( self::exactly( 3 ) )
-            ->method( 'decode' )
+            ->method( 'decodeMessage' )
             ->willReturnOnConsecutiveCalls( $request1, $request2, $request3 );
 
+        /*
         $codec->expects( self::exactly( 3 ) )
-            ->method( 'encode' )
+            ->method( 'encodeMessage' )
             ->willReturn( 'encoded' );
+        */
 
         $transport->expects( self::exactly( 3 ) )
             ->method( 'send' );
@@ -128,14 +130,14 @@ final class SimpleServerTest extends TestCase {
 
         // Setup codec mock
         $codec = $this->createMock( CodecInterface::class );
-        $buffer = $this->createMock( BufferInterface::class );
+        $buffer = $this->createMock( ReadBufferInterface::class );
 
         $codec->expects( self::exactly( 2 ) )
-            ->method( 'decode' )
+            ->method( 'decodeMessage' )
             ->willReturnOnConsecutiveCalls( $request, null );
 
         $codec->expects( self::once() )
-            ->method( 'encode' )
+            ->method( 'encodeMessage' )
             ->willReturn( 'encoded' );
 
         $transport->expects( self::once() )
@@ -177,15 +179,15 @@ final class SimpleServerTest extends TestCase {
 
         // Setup codec mock
         $codec = $this->createMock( CodecInterface::class );
-        $buffer = $this->createMock( BufferInterface::class );
+        $buffer = $this->createMock( ReadBufferInterface::class );
 
         $codec->expects( self::once() )
-            ->method( 'decode' )
+            ->method( 'decodeMessage' )
             ->with( $buffer )
             ->willReturn( $request );
 
         $codec->expects( self::once() )
-            ->method( 'encode' )
+            ->method( 'encodeMessage' )
             ->with( self::isInstanceOf( MessageInterface::class ) )
             ->willReturn( $encodedResponse );
 
@@ -213,10 +215,10 @@ final class SimpleServerTest extends TestCase {
 
         // Setup codec mock to return null (timeout)
         $codec = $this->createMock( CodecInterface::class );
-        $buffer = $this->createMock( BufferInterface::class );
+        $buffer = $this->createMock( ReadBufferInterface::class );
 
         $codec->expects( self::once() )
-            ->method( 'decode' )
+            ->method( 'decodeMessage' )
             ->with( $buffer )
             ->willReturn( null );
 

@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Question;
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
+use JDWX\DNSQuery\Codecs\PresentationEncoder;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\DomainName;
@@ -37,7 +39,10 @@ class Question implements QuestionInterface {
 
 
     public function __toString() : string {
-        return $this->name() . ' ' . $this->class() . ' ' . $this->type();
+        $wri = new WriteBuffer();
+        $enc = new PresentationEncoder();
+        $enc->encodeQuestion( $wri, $this );
+        return strval( $wri );
     }
 
 

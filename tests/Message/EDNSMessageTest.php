@@ -231,22 +231,6 @@ final class EDNSMessageTest extends TestCase {
     }
 
 
-    public function testToString() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com', 'A', payloadSize: 1232 );
-        $msg->setDo( true );
-        $msg->addOption( new Option( 10, 'test' ) );
-
-        $str = (string) $msg;
-
-        self::assertStringContainsString( '; EDNS:', $str );
-        self::assertStringContainsString( 'version: 0', $str );
-        self::assertStringContainsString( 'flags: do;', $str );
-        self::assertStringContainsString( 'payload: 1232', $str );
-        self::assertStringContainsString( ';; Options:', $str );
-        self::assertStringContainsString( ';;   Code 10:', $str );
-    }
-
-
     public function testTryOption() : void {
         $msg = EDNSMessage::ednsRequest( 'example.com' );
         $msg->addOption( new Option( 10, 'test' ) );

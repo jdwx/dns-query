@@ -23,4 +23,10 @@ interface RDataInterface extends ArrayAccess, Countable, Stringable {
     public function toArray() : array;
 
 
+    /**
+     * @return \Generator<string, RDataValueInterface>
+     */
+    public function values() : \Generator;
+
+
 }

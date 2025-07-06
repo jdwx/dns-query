@@ -52,7 +52,8 @@ final class HexDump {
         $uMaxLen = strlen( $i_stData );
         for ( $ii = 0 ; $ii < $uMaxLen ; ++$ii ) {
             $ch = $i_stData[ $ii ];
-            if ( ctype_print( $ch ) ) {
+            $u = ord( $ch );
+            if ( $u >= 0x20 && $u <= 0x7E ) {
                 $stHex .= $ch;
                 continue;
             }
@@ -71,6 +72,15 @@ final class HexDump {
             $stHex .= $stLine;
         }
         return hex2bin( $stHex );
+    }
+
+
+    public static function x( string $i_stData ) : string {
+        $st = '';
+        for ( $ii = 0 ; $ii < strlen( $i_stData ) ; ++$ii ) {
+            $st .= sprintf( '%02X', ord( $i_stData[ $ii ] ) );
+        }
+        return $st;
     }
 
 

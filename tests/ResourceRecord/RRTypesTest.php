@@ -7,7 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\ResourceRecord;
 
 
-use JDWX\DNSQuery\Buffer\Buffer;
+use JDWX\DNSQuery\Buffer\ReadBuffer;
+use JDWX\DNSQuery\Buffer\WriteBuffer;
 use JDWX\DNSQuery\Codecs\RFC1035Codec;
 use JDWX\DNSQuery\Data\RDataMaps;
 use JDWX\DNSQuery\Data\SSHFPAlgorithm;
@@ -51,7 +52,7 @@ class RRTypesTest extends TestCase {
             'address' => '192.0.2.1',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN A 192.0.2.1' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN A 192.0.2.1' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -71,7 +72,7 @@ class RRTypesTest extends TestCase {
             'address' => '2001:db8::1',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN AAAA 2001:db8::1' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN AAAA 2001:db8::1' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -94,7 +95,7 @@ class RRTypesTest extends TestCase {
             'hostname' => [ 'afs', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN AFSDB 1 afs.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN AFSDB 1 afs.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -115,7 +116,7 @@ class RRTypesTest extends TestCase {
             'alias' => [ 'target', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN ALIAS target.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN ALIAS target.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -135,7 +136,7 @@ class RRTypesTest extends TestCase {
             'text' => [ 'app=example', 'version=1.0' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN AVC app=example version=1.0' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN AVC app=example version=1.0' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -160,7 +161,7 @@ class RRTypesTest extends TestCase {
             'value' => 'letsencrypt.org',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN CAA 0 issue letsencrypt.org' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN CAA 0 issue letsencrypt.org' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -182,7 +183,7 @@ class RRTypesTest extends TestCase {
             'cname' => [ 'canonical', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'www.example.com 3600 IN CNAME canonical.example.com' );
+        $rr = $this->roundTripString( $rr, 'www.example.com. 3600 IN CNAME canonical.example.com.' );
         self::assertSame( [ 'www', 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -202,7 +203,7 @@ class RRTypesTest extends TestCase {
             'dname' => [ 'target', 'example', 'net' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN DNAME target.example.net' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN DNAME target.example.net.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -225,7 +226,7 @@ class RRTypesTest extends TestCase {
             'os' => 'Linux',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN HINFO Intel Linux' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN HINFO Intel Linux' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -249,7 +250,7 @@ class RRTypesTest extends TestCase {
             'sa' => '004',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN ISDN 150862028003217 004' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN ISDN 150862028003217 004' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -273,7 +274,7 @@ class RRTypesTest extends TestCase {
             'exchange' => 'kdc.example.com',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN KX 10 kdc.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN KX 10 kdc.example.com' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -297,7 +298,7 @@ class RRTypesTest extends TestCase {
             'locator32' => '192.0.2.1',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN L32 10 192.0.2.1' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN L32 10 192.0.2.1' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -321,7 +322,7 @@ class RRTypesTest extends TestCase {
             'fqdn' => [ 'locator', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN LP 10 locator.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN LP 10 locator.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -345,7 +346,7 @@ class RRTypesTest extends TestCase {
             'exchange' => [ 'mail', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN MX 10 mail.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN MX 10 mail.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -377,7 +378,7 @@ class RRTypesTest extends TestCase {
             'replacement' => [ '_sip', '_udp', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN NAPTR 100 10 S SIP+D2U !^.*$!sip:customer-service@example.com! _sip._udp.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN NAPTR 100 10 S SIP+D2U !^.*$!sip:customer-service@example.com! _sip._udp.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -402,7 +403,7 @@ class RRTypesTest extends TestCase {
             'nsdname' => [ 'ns1', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN NS ns1.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN NS ns1.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -442,7 +443,7 @@ class RRTypesTest extends TestCase {
             'ptrdname' => [ 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, '1.2.0192.in-addr.arpa 3600 IN PTR example.com' );
+        $rr = $this->roundTripString( $rr, '1.2.0192.in-addr.arpa. 3600 IN PTR example.com.' );
         self::assertSame( [ '1', '2', '0192', 'in-addr', 'arpa' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -467,7 +468,7 @@ class RRTypesTest extends TestCase {
             'mapX400' => [ 'x400', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN PX 10 mail.example.com x400.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN PX 10 mail.example.com. x400.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -492,7 +493,7 @@ class RRTypesTest extends TestCase {
             'txtDName' => [ 'contact', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN RP admin.example.com contact.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN RP admin.example.com. contact.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -516,7 +517,7 @@ class RRTypesTest extends TestCase {
             'intermediateHost' => [ 'router', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN RT 10 router.example.com' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN RT 10 router.example.com.' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -550,7 +551,7 @@ class RRTypesTest extends TestCase {
             'minimum' => 86400,
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN SOA ns1.example.com admin.example.com 2023010101 3600 1800 604800 86400' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN SOA ns1.example.com. admin.example.com. 2023010101 3600 1800 604800 86400' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -576,7 +577,7 @@ class RRTypesTest extends TestCase {
             'text' => [ 'v=spf1', 'include:_spf.example.com', '~all' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN SPF v=spf1 include:_spf.example.com ~all' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN SPF v=spf1 include:_spf.example.com ~all' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -603,7 +604,7 @@ class RRTypesTest extends TestCase {
             'target' => [ 'www', 'example', 'com' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, '_http._tcp.example.com 3600 IN SRV 10 60 80 www.example.com' );
+        $rr = $this->roundTripString( $rr, '_http._tcp.example.com. 3600 IN SRV 10 60 80 www.example.com.' );
         self::assertSame( [ '_http', '_tcp', 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -631,7 +632,7 @@ class RRTypesTest extends TestCase {
             'fingerprint' => 'aabbccddeeff00112233445566778899aabbccdd',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN SSHFP 1 2 aabbccddeeff00112233445566778899aabbccdd' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN SSHFP 1 2 aabbccddeeff00112233445566778899aabbccdd' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -653,7 +654,7 @@ class RRTypesTest extends TestCase {
             'text' => [ 'foo bar', 'baz qux', 'quux' ],
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN TXT "foo bar" "baz qux" quux' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN TXT "foo bar" "baz qux" quux' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -673,7 +674,7 @@ class RRTypesTest extends TestCase {
             'psdnAddress' => '311061700956',
         ] );
         $rr = $this->roundTripBinary( $rr );
-        $rr = $this->roundTripString( $rr, 'example.com 3600 IN X25 311061700956' );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN X25 311061700956' );
         self::assertSame( [ 'example', 'com' ], $rr->getName() );
         self::assertSame( 3600, $rr->getTTL() );
         self::assertSame( 'IN', $rr->class() );
@@ -693,11 +694,10 @@ class RRTypesTest extends TestCase {
 
 
     private function roundTripBinary( ResourceRecordInterface $rr ) : ResourceRecordInterface {
-        $rLabelMap = [];
-        $uOffset = 0;
-        $binary = RFC1035Codec::encodeResourceRecord( $rr, $rLabelMap, $uOffset );
-        $buffer = new Buffer( $binary );
-        return RFC1035Codec::decodeResourceRecord( $buffer );
+        $codec = new RFC1035Codec();
+        $wri = new WriteBuffer();
+        $codec->encodeResourceRecord( $wri, $rr );
+        return $codec->decodeResourceRecord( new ReadBuffer( $wri->end() ) );
     }
 
 

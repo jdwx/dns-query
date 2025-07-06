@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
+use JDWX\DNSQuery\Codecs\PresentationEncoder;
 use JDWX\DNSQuery\Data\AA;
 use JDWX\DNSQuery\Data\FlagWord;
 use JDWX\DNSQuery\Data\OpCode;
@@ -97,14 +98,8 @@ class Header implements HeaderInterface {
 
 
     public function __toString() : string {
-        $st = ';; ' . ( $this->flagWord->qr === QR::QUERY ? 'Query' : 'Query Response' ) . "\n";
-        $st .= ';; ->>HEADER<<- opcode: ' . $this->opcode()
-            . ', status: ' . $this->rCode()
-            . ', id: ' . $this->id . "\n";
-        $st .= ';; flags: '
-            . $this->flagWord->flagString()
-            . '; z: ' . $this->flagWord->zBits->bits;
-        return $st;
+        $enc = new PresentationEncoder();
+        return $enc->encodeHeader( $this );
     }
 
 

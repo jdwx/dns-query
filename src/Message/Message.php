@@ -7,6 +7,8 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
+use JDWX\DNSQuery\Buffer\WriteBuffer;
+use JDWX\DNSQuery\Codecs\PresentationEncoder;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Data\RecordType;
 use JDWX\DNSQuery\Data\ReturnCode;
@@ -18,18 +20,23 @@ use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 class Message implements MessageInterface {
 
 
+    private readonly HeaderInterface $header;
+
+
     /**
-     * @param HeaderInterface $header
+     * @param ?HeaderInterface $header
      * @param list<QuestionInterface> $question
      * @param list<ResourceRecordInterface> $answer
      * @param list<ResourceRecordInterface> $authority
      * @param list<ResourceRecordInterface> $additional
      */
-    public function __construct( private readonly HeaderInterface $header,
-                                 private array                    $question = [],
-                                 private array                    $answer = [],
-                                 private array                    $authority = [],
-                                 private array                    $additional = [] ) {}
+    public function __construct( ?HeaderInterface $header = null,
+                                 private array    $question = [],
+                                 private array    $answer = [],
+                                 private array    $authority = [],
+                                 private array    $additional = [] ) {
+        $this->header = $header ?? new Header();
+    }
 
 
     public static function request( string|QuestionInterface $domain,
@@ -57,7 +64,10 @@ class Message implements MessageInterface {
 
 
     public function __toString() : string {
-        return $this->header . $this->stringSummary() . $this->stringRecords();
+        $enc = new PresentationEncoder();
+        $wri = new WriteBuffer();
+        $enc->encodeMessage( $wri, $this );
+        return $wri->end();
     }
 
 
@@ -100,6 +110,26 @@ class Message implements MessageInterface {
     }
 
 
+    public function countAdditional() : int {
+        return count( $this->additional );
+    }
+
+
+    public function countAnswer() : int {
+        return count( $this->answer );
+    }
+
+
+    public function countAuthority() : int {
+        return count( $this->authority );
+    }
+
+
+    public function countQuestion() : int {
+        return count( $this->question );
+    }
+
+
     public function getAdditional() : array {
         return $this->additional;
     }
@@ -138,52 +168,6 @@ class Message implements MessageInterface {
     public function setQuestion( QuestionInterface $i_question ) : void {
         $this->question = [ $i_question ];
         $this->header->setQDCount( 1 );
-    }
-
-
-    protected function stringRecords() : string {
-        $st = '';
-
-        if ( count( $this->question ) > 0 ) {
-            $st .= ";; QUESTION SECTION:\n";
-            foreach ( $this->question as $q ) {
-                $st .= ';' . $q . "\n";
-            }
-            $st .= "\n";
-        }
-
-        if ( count( $this->answer ) > 0 ) {
-            $st .= ";; ANSWER SECTION:\n";
-            foreach ( $this->answer as $rr ) {
-                $st .= $rr . "\n";
-            }
-            $st .= "\n";
-        }
-
-        if ( count( $this->authority ) > 0 ) {
-            $st .= ";; AUTHORITY SECTION:\n";
-            foreach ( $this->authority as $rr ) {
-                $st .= $rr . "\n";
-            }
-            $st .= "\n";
-        }
-
-        if ( count( $this->additional ) > 0 ) {
-            $st .= ";; ADDITIONAL SECTION:\n";
-            foreach ( $this->additional as $rr ) {
-                $st .= $rr . "\n";
-            }
-            $st .= "\n";
-        }
-        return $st;
-    }
-
-
-    protected function stringSummary() : string {
-        return '; QUERY: ' . count( $this->question )
-            . ', ANSWER: ' . count( $this->answer )
-            . ', AUTHORITY: ' . count( $this->authority )
-            . ', ADDITIONAL: ' . count( $this->additional ) . "\n\n";
     }
 
 

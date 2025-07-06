@@ -7,10 +7,10 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Transport;
 
 
-use JDWX\DNSQuery\Buffer\AbstractBuffer;
+use JDWX\DNSQuery\Buffer\AbstractReadBuffer;
 
 
-class TransportBuffer extends AbstractBuffer {
+class TransportBuffer extends AbstractReadBuffer {
 
 
     public function __construct( private readonly TransportInterface $transport ) {

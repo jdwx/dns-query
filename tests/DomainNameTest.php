@@ -24,17 +24,30 @@ final class DomainNameTest extends TestCase {
 
 
     public function testNormalize() : void {
+
         self::assertSame(
             [ 'example', 'com' ],
             DomainName::normalize( 'example.com.' )
         );
+
         self::assertSame(
             [ 'example', 'com' ],
             DomainName::normalize( 'example', [ 'com' ] )
         );
+
         self::assertSame(
             [ 'example', 'net' ],
             DomainName::normalize( 'example.net.', [ 'com' ] )
+        );
+
+        self::assertSame(
+            [ 'example', 'com', 'net' ],
+            DomainName::normalize( [ 'example', 'com' ], [ 'net' ] )
+        );
+
+        self::assertSame(
+            [ 'example', 'com' ],
+            DomainName::normalize( [ 'example', 'com', '' ], [ 'net' ] )
         );
 
         self::assertSame(

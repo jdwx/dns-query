@@ -9,7 +9,6 @@ namespace JDWX\DNSQuery\Data;
 
 use JDWX\DNSQuery\DomainName;
 use JDWX\DNSQuery\Exceptions\RecordDataException;
-use JDWX\Strict\TypeIs;
 use LogicException;
 
 
@@ -39,16 +38,6 @@ enum RDataType {
     case OptionList;
 
 
-    protected static function escapeString( string $i_value ) : string {
-        if ( ! str_contains( $i_value, ' ' ) ) {
-            return $i_value;
-        }
-        $i_value = str_replace( '\\', '\\\\', $i_value );
-        $i_value = str_replace( '"', '\\"', $i_value );
-        return '"' . $i_value . '"';
-    }
-
-
     /** @param list<string> $io_rArgs */
     public function consume( array &$io_rArgs ) : mixed {
         if ( self::CharacterStringList === $this ) {
@@ -57,19 +46,6 @@ enum RDataType {
             return $r;
         }
         return $this->parse( array_shift( $io_rArgs ) );
-    }
-
-
-    public function format( mixed $i_value ) : string {
-        return match ( $this ) {
-            self::DomainName => DomainName::format( $i_value ),
-            self::CharacterString => self::escapeString( $i_value ),
-            self::CharacterStringList => implode( ' ', array_map(
-                [ self::class, 'escapeString' ],
-                TypeIs::array( $i_value )
-            ) ),
-            default => strval( $i_value )
-        };
     }
 
 
@@ -101,7 +77,7 @@ enum RDataType {
                     throw new RecordDataException( "Invalid HexBinary value: {$i_stValue}" );
                 }
                 return $i_stValue;
-                
+
             case self::CharacterString:
                 return $i_stValue;
 

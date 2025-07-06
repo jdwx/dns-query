@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Data;
 
 
-use JDWX\DNSQuery\Buffer\Buffer;
+use JDWX\DNSQuery\Buffer\ReadBuffer;
 use JDWX\DNSQuery\Data\RecordClass;
 use JDWX\DNSQuery\Exceptions\RecordClassException;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecord;
@@ -42,21 +42,21 @@ final class RecordClassTest extends TestCase {
 
 
     public function testConsume() : void {
-        $data = new Buffer( OK::pack( 'n', 1 ) . 'rest' );
+        $data = new ReadBuffer( OK::pack( 'n', 1 ) . 'rest' );
         self::assertSame( RecordClass::IN, RecordClass::consume( $data ) );
         self::assertSame( 2, $data->tell() );
     }
 
 
     public function testConsumeForInsufficientData() : void {
-        $data = new Buffer( 'a' );
+        $data = new ReadBuffer( 'a' );
         self::expectException( OutOfBoundsException::class );
         RecordClass::consume( $data );
     }
 
 
     public function testConsumeForInvalid() : void {
-        $data = new Buffer( 'nope' );
+        $data = new ReadBuffer( 'nope' );
         self::expectException( RecordClassException::class );
         RecordClass::consume( $data );
     }
@@ -185,21 +185,21 @@ final class RecordClassTest extends TestCase {
 
 
     public function testTryConsume() : void {
-        $data = new Buffer( OK::pack( 'n', 1 ) . 'rest' );
+        $data = new ReadBuffer( OK::pack( 'n', 1 ) . 'rest' );
         self::assertSame( RecordClass::IN, RecordClass::tryConsume( $data ) );
         self::assertSame( 2, $data->tell() );
     }
 
 
     public function testTryConsumeForInsufficientData() : void {
-        $data = new Buffer( 'a' );
+        $data = new ReadBuffer( 'a' );
         self::expectException( OutOfBoundsException::class );
         RecordClass::tryConsume( $data );
     }
 
 
     public function testTryConsumeForInvalidValue() : void {
-        $data = new Buffer( 'nope' );
+        $data = new ReadBuffer( 'nope' );
         self::assertNull( RecordClass::tryConsume( $data ) );
         # It still ate the two bytes
         self::assertSame( 2, $data->tell() );
