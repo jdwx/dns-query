@@ -38,7 +38,7 @@
     "ext-ctype": "*",
     "jdwx/array-cache": "^1.0",
     "jdwx/quote": "dev-main",
-	"jdwx/socket": "dev-main",
+    "jdwx/socket": "dev-main",
     "jdwx/strict": "^v1.0.18"
   },
   "require-dev": {
@@ -54,5 +54,9 @@
     "phan": "PHAN_DISABLE_XDEBUG_WARN=1 phan --no-progress-bar --analyze-twice",
     "phpstan": "php -d xdebug.so vendor/bin/phpstan --no-progress",
     "test": "vendor/bin/phpunit tests"
+  },
+  "suggest": {
+    "ext-curl": "Required for DNS over HTTPS (DoH) support",
+    "ext-openssl": "Required for DNS over TLS (DoT) support"
   }
 }
