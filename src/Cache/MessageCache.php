@@ -8,7 +8,6 @@ namespace JDWX\DNSQuery\Cache;
 
 
 use JDWX\ArrayCache\ArrayCache;
-use JDWX\DNSQuery\Message\Message;
 use JDWX\DNSQuery\Message\MessageInterface;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -40,7 +39,10 @@ class MessageCache extends AbstractCache implements MessageCacheInterface {
     /**
      * @throws InvalidArgumentException
      */
-    public function get( string $i_key ) : ?Message {
+    public function get( string|MessageInterface $i_key ) : ?MessageInterface {
+        if ( $i_key instanceof MessageInterface ) {
+            $i_key = self::hash( $i_key );
+        }
         return $this->cache->get( $i_key );
     }
 

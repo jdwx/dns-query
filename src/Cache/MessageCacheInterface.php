@@ -30,21 +30,21 @@ interface MessageCacheInterface {
     /**
      * Determine if an RR type is cacheable by this implementation.
      *
-     * @param int|string|RecordType $i_type The RR type string (e.g. "A" or "OPT")
+     * @param int|string|MessageInterface|QuestionInterface|RecordType $i_type The RR type (e.g. "A" or "OPT")
      *
      * @return bool True if the RR type is cacheable, otherwise false
      */
-    public static function isTypeCacheable( int|string|RecordType $i_type ) : bool;
+    public static function isTypeCacheable( int|string|MessageInterface|QuestionInterface|RecordType $i_type ) : bool;
 
 
     /**
      * Retrieves a cached response packet based on the provided key.
      *
-     * @param string $i_key Key to look up in the cache
+     * @param string|MessageInterface $i_key Key to look up in the cache
      *
      * @return ?Message The cached response if found, otherwise null
      */
-    public function get( string $i_key ) : ?MessageInterface;
+    public function get( string|MessageInterface $i_key ) : ?MessageInterface;
 
 
     /**

@@ -62,8 +62,19 @@ abstract class AbstractCache implements MessageCacheInterface {
 
 
     /** @inheritDoc */
-    public static function isTypeCacheable( int|string|RecordType $i_type ) : bool {
-        $i_type = RecordType::normalize( $i_type );
+    public static function isTypeCacheable( int|string|MessageInterface|QuestionInterface|RecordType $i_type ) : bool {
+        if ( $i_type instanceof MessageInterface ) {
+            foreach ( $i_type->getQuestion() as $q ) {
+                if ( ! static::isTypeCacheable( $q->type() ) ) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        $i_type = RecordType::tryNormalize( $i_type );
+        if ( ! $i_type instanceof RecordType ) {
+            return false;
+        }
         return match ( $i_type ) {
             RecordType::AXFR, RecordType::OPT => false,
             default => true,
