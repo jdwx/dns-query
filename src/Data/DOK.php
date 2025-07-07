@@ -27,14 +27,28 @@ enum DOK: int {
     }
 
 
-    public static function normalize( bool|int|DOK $i_value ) : DOK {
+    public static function normalize( bool|int|self $i_value ) : self {
+        $x = self::tryNormalize( $i_value );
+        if ( $x instanceof self ) {
+            return $x;
+        }
+        throw new \InvalidArgumentException( 'Invalid DOK value: ' . print_r( $i_value, true ) );
+    }
+
+
+    public static function tryNormalize( bool|int|self $i_value ) : ?self {
+        if ( $i_value instanceof self ) {
+            return $i_value;
+        }
         if ( is_bool( $i_value ) ) {
             return self::fromBool( $i_value );
         }
-        if ( is_int( $i_value ) ) {
-            return self::from( $i_value );
-        }
-        return $i_value;
+        return self::tryFrom( $i_value );
+    }
+
+
+    public function is( bool|int|DOK $i_value ) : bool {
+        return $this === self::normalize( $i_value );
     }
 
 
