@@ -27,7 +27,7 @@ final class EDNSMessageTest extends TestCase {
 
 
     public function testAddOption() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
 
         self::assertEmpty( $msg->getOptions() );
 
@@ -44,7 +44,7 @@ final class EDNSMessageTest extends TestCase {
 
 
     public function testAddOptionMissingData() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
 
         self::expectException( InvalidArgumentException::class );
         self::expectExceptionMessage( 'Option data is missing.' );
@@ -100,37 +100,10 @@ final class EDNSMessageTest extends TestCase {
     }
 
 
-    public function testEdnsRequest() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com', 'A', 'IN', 1232, true );
-
-        self::assertInstanceOf( EDNSMessage::class, $msg );
-        self::assertCount( 1, $msg->getQuestion() );
-        self::assertSame( 'example.com', $msg->question()->name() );
-        self::assertSame( 'A', $msg->question()->type() );
-        self::assertSame( 'IN', $msg->question()->class() );
-        self::assertSame( 1232, $msg->getPayloadSize() );
-        self::assertSame( DOK::DNSSEC_OK, $msg->getDo() );
-    }
-
-
-    public function testEdnsResponse() : void {
-        $request = EDNSMessage::ednsRequest( 'example.com', 'A' );
-        $response = EDNSMessage::ednsResponse( $request );
-
-        self::assertInstanceOf( EDNSMessage::class, $response );
-        self::assertCount( 1, $response->getQuestion() );
-        self::assertSame( 'example.com', $response->question()->name() );
-        self::assertSame( EDNSMessage::DEFAULT_PAYLOAD_SIZE, $response->getPayloadSize() );
-        self::assertSame( 0, $response->getVersion()->value );
-        self::assertSame( DOK::DNSSEC_NOT_SUPPORTED, $response->getDo() );
-    }
-
-
     public function testEdnsResponseFromRegularMessage() : void {
         $request = Message::request( 'example.com', 'A' );
-        $response = EDNSMessage::ednsResponse( $request, payloadSize: 1232 );
+        $response = EDNSMessage::response( $request, payloadSize: 1232 );
 
-        self::assertInstanceOf( EDNSMessage::class, $response );
         self::assertSame( 1232, $response->getPayloadSize() );
     }
 
@@ -139,7 +112,6 @@ final class EDNSMessageTest extends TestCase {
         $msg = Message::request( 'example.com', 'A' );
         $edns = EDNSMessage::fromMessage( $msg );
 
-        self::assertInstanceOf( EDNSMessage::class, $edns );
         self::assertCount( 1, $edns->getQuestion() );
         self::assertSame( 'example.com', $edns->question()->name() );
         self::assertSame( EDNSMessage::DEFAULT_PAYLOAD_SIZE, $edns->getPayloadSize() );
@@ -159,29 +131,53 @@ final class EDNSMessageTest extends TestCase {
     }
 
 
-    public function testSetDnssecOK() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+    public function testRequest() : void {
+        $msg = EDNSMessage::request( 'example.com', 'A', 'IN', 1232 );
 
-        $msg->setDo( true );
+        self::assertCount( 1, $msg->getQuestion() );
+        self::assertSame( 'example.com', $msg->question()->name() );
+        self::assertSame( 'A', $msg->question()->type() );
+        self::assertSame( 'IN', $msg->question()->class() );
+        self::assertSame( 1232, $msg->getPayloadSize() );
+        self::assertSame( DOK::DNSSEC_OK, $msg->getDo() );
+    }
+
+
+    public function testResponse() : void {
+        $request = EDNSMessage::request( 'example.com', 'A' );
+        $response = EDNSMessage::response( $request );
+
+        self::assertCount( 1, $response->getQuestion() );
+        self::assertSame( 'example.com', $response->question()->name() );
+        self::assertSame( EDNSMessage::DEFAULT_PAYLOAD_SIZE, $response->getPayloadSize() );
+        self::assertSame( 0, $response->getVersion()->value );
+        self::assertSame( DOK::DNSSEC_OK, $response->getDo() );
+    }
+
+
+    public function testSetDO() : void {
+        $msg = EDNSMessage::request( 'example.com' );
+
+        $msg->setDO( true );
         self::assertSame( DOK::DNSSEC_OK, $msg->getDo() );
 
-        $msg->setDo( false );
+        $msg->setDO( false );
         self::assertSame( DOK::DNSSEC_NOT_SUPPORTED, $msg->getDo() );
 
-        $msg->setDo( DOK::DNSSEC_OK );
+        $msg->setDO( DOK::DNSSEC_OK );
         self::assertSame( DOK::DNSSEC_OK, $msg->getDo() );
     }
 
 
     public function testSetPayloadSize() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
         $msg->setPayloadSize( 512 );
         self::assertSame( 512, $msg->getPayloadSize() );
     }
 
 
     public function testSetPayloadSizeInvalid() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
 
         self::expectException( InvalidArgumentException::class );
         self::expectExceptionMessage( 'Payload size must be a non-negative integer.' );
@@ -190,7 +186,7 @@ final class EDNSMessageTest extends TestCase {
 
 
     public function testSetPayloadSizeTooLarge() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
 
         self::expectException( InvalidArgumentException::class );
         self::expectExceptionMessage( 'Payload size must not exceed 65535.' );
@@ -199,7 +195,7 @@ final class EDNSMessageTest extends TestCase {
 
 
     public function testSetVersion() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
         $msg->setVersion( 1 );
         self::assertSame( 1, $msg->getVersion()->value );
 
@@ -209,14 +205,13 @@ final class EDNSMessageTest extends TestCase {
 
 
     public function testToOptResourceRecord() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com', payloadSize: 1232 );
+        $msg = EDNSMessage::request( 'example.com', payloadSize: 1232 );
         $msg->setVersion( 1 );
-        $msg->setDo( true );
+        $msg->setDO( true );
         $msg->addOption( new Option( 10, 'test' ) );
 
         $opt = $msg->toOptResourceRecord();
 
-        self::assertInstanceOf( ResourceRecord::class, $opt );
         self::assertSame( [], $opt->getName() );
         self::assertSame( 'OPT', $opt->type() );
         self::assertSame( 1232, $opt->classValue() );
@@ -232,7 +227,7 @@ final class EDNSMessageTest extends TestCase {
 
 
     public function testTryOption() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com' );
+        $msg = EDNSMessage::request( 'example.com' );
         $msg->addOption( new Option( 10, 'test' ) );
 
         $option = $msg->tryOption( 0 );

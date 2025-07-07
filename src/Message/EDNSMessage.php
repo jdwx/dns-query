@@ -45,7 +45,7 @@ class EDNSMessage extends Message {
 
 
     /**
-     * @param HeaderInterface $header
+     * @param ?HeaderInterface $header
      * @param list<QuestionInterface> $question
      * @param list<ResourceRecordInterface> $answer
      * @param list<ResourceRecordInterface> $authority
@@ -55,15 +55,16 @@ class EDNSMessage extends Message {
      * @param DOK|bool|int $do
      * @param list<Option> $options
      */
-    public function __construct( HeaderInterface $header,
-                                 array           $question = [],
-                                 array           $answer = [],
-                                 array           $authority = [],
-                                 array           $additional = [],
-                                 int             $uPayloadSize = self::DEFAULT_PAYLOAD_SIZE,
-                                 int|EDNSVersion $version = 0,
-                                 bool|int|DOK    $do = false,
-                                 array           $options = [] ) {
+    public function __construct( ?HeaderInterface $header = null,
+                                 array            $question = [],
+                                 array            $answer = [],
+                                 array            $authority = [],
+                                 array            $additional = [],
+                                 int              $uPayloadSize = self::DEFAULT_PAYLOAD_SIZE,
+                                 int|EDNSVersion  $version = 0,
+                                 bool|int|DOK     $do = false,
+                                 array            $options = [] ) {
+        $header = $header ?? new Header();
 
         # Go through the additional records and drop any OPT records.
         $additionalKeep = [];
@@ -81,63 +82,6 @@ class EDNSMessage extends Message {
         $this->version = EDNSVersion::normalize( $version );
         $this->do = DOK::normalize( $do );
         $this->options = $options;
-    }
-
-
-    /**
-     * Create an EDNS request message.
-     */
-    public static function ednsRequest( string|QuestionInterface $domain,
-                                        int|string|RecordType    $type = RecordType::ANY,
-                                        int|string|RecordClass   $class = RecordClass::IN,
-                                        int                      $payloadSize = self::DEFAULT_PAYLOAD_SIZE,
-                                        DOK|bool                 $dnssecOK = false ) : self {
-        $msg = parent::request( $domain, $type, $class );
-
-        return new self(
-            $msg->header(),
-            $msg->getQuestion(),
-            [],
-            [],
-            [],
-            $payloadSize,
-            0,
-            $dnssecOK
-        );
-    }
-
-
-    /**
-     * Create an EDNS response message.
-     */
-    public static function ednsResponse( MessageInterface      $i_request,
-                                         int|string|ReturnCode $i_rc = ReturnCode::NOERROR,
-                                         int                   $payloadSize = self::DEFAULT_PAYLOAD_SIZE ) : self {
-        $header = Header::response( $i_request->header(), $i_rc );
-
-        // If the request was EDNS, preserve its settings
-        if ( $i_request instanceof EDNSMessage ) {
-            return new self(
-                $header,
-                $i_request->getQuestion(),
-                [],
-                [],
-                [],
-                $payloadSize,
-                $i_request->getVersion(),
-                $i_request->getDo()
-            );
-        }
-
-        // Otherwise create a new EDNS response
-        return new self(
-            $header,
-            $i_request->getQuestion(),
-            [],
-            [],
-            [],
-            $payloadSize
-        );
     }
 
 
@@ -231,6 +175,42 @@ class EDNSMessage extends Message {
 
 
     /**
+     * Create an EDNS request message.
+     */
+    public static function request( string|MessageInterface|QuestionInterface|null $i_domain = null,
+                                    int|string|RecordType                          $i_type = RecordType::ANY,
+                                    int|string|RecordClass                         $i_class = RecordClass::IN,
+                                    int                                            $payloadSize = self::DEFAULT_PAYLOAD_SIZE,
+                                    DOK|bool                                       $dnssecOK = true ) : static {
+        $msg = parent::request( $i_domain, $i_type, $i_class );
+        $msg->setVersion( 0 );
+        $msg->setDO( $dnssecOK );
+        $msg->setPayloadSize( $payloadSize );
+        return $msg;
+    }
+
+
+    /**
+     * Create an EDNS response message.
+     */
+    public static function response( MessageInterface      $i_request,
+                                     int|string|ReturnCode $i_rc = ReturnCode::NOERROR,
+                                     int                   $payloadSize = self::DEFAULT_PAYLOAD_SIZE,
+                                     DOK|bool              $dnssecOK = true ) : static {
+        $msg = parent::response( $i_request, $i_rc );
+        $msg->setVersion( 0 );
+        $msg->setPayloadSize( $payloadSize );
+
+        # We only want DNSSEC if $dnssecOK is true *and* the request was EDNS *and* the "DO" bit was set.
+        if ( $dnssecOK && $i_request instanceof EDNSMessage && $i_request->getDo()->is( true ) ) {
+            $msg->setDO( true );
+        }
+
+        return $msg;
+    }
+
+
+    /**
      * Add an EDNS option.
      */
     public function addOption( OptionCode|Option $option, ?string $data = null ) : void {
@@ -297,7 +277,7 @@ class EDNSMessage extends Message {
     /**
      * Set the DNSSEC OK bit.
      */
-    public function setDo( bool|int|DOK $i_do ) : void {
+    public function setDO( bool|int|DOK $i_do ) : void {
         $this->do = DOK::normalize( $i_do );
     }
 

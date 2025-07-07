@@ -39,26 +39,47 @@ class Message implements MessageInterface {
     }
 
 
-    public static function request( string|QuestionInterface $domain,
-                                    int|string|RecordType    $type = RecordType::ANY,
-                                    int|string|RecordClass   $class = RecordClass::IN ) : self {
-        $header = Header::request();
-        if ( ! $domain instanceof QuestionInterface ) {
-            $type = RecordType::normalize( $type );
-            $class = RecordClass::normalize( $class );
-            $domain = new Question( $domain, $type, $class );
+    public static function request( string|MessageInterface|QuestionInterface|null $i_domain = null,
+                                    int|string|RecordType                          $i_type = RecordType::ANY,
+                                    int|string|RecordClass                         $i_class = RecordClass::IN ) : static {
+        if ( is_null( $i_domain ) ) {
+            return static::requestEmpty();
         }
-        $header->setQDCount( 1 );
-        return new self( $header, [ $domain ] );
+        if ( is_string( $i_domain ) ) {
+            $i_domain = new Question( $i_domain, RecordType::normalize( $i_type ), RecordClass::normalize( $i_class ) );
+        }
+        if ( $i_domain instanceof QuestionInterface ) {
+            return static::requestFromQuestion( $i_domain );
+        }
+        return static::requestFromMessage( $i_domain );
     }
 
 
-    public static function response( MessageInterface $i_request, int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) : self {
+    public static function requestEmpty() : static {
+        return new static( Header::request() );
+    }
+
+
+    public static function requestFromMessage( MessageInterface $i_msg ) : static {
+        $msg = static::requestEmpty();
+        foreach ( $i_msg->getQuestion() as $question ) {
+            $msg->addQuestion( $question );
+        }
+        return $msg;
+    }
+
+
+    public static function requestFromQuestion( QuestionInterface $i_question ) : static {
+        $msg = static::requestEmpty();
+        $msg->setQuestion( $i_question );
+        return $msg;
+    }
+
+
+    public static function response( MessageInterface      $i_request,
+                                     int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) : static {
         $header = Header::response( $i_request->header(), $i_rc );
-        $msg = new self(
-            $header,
-            $i_request->getQuestion(),
-        );
+        $msg = new static( $header, $i_request->getQuestion() );
         return $msg;
     }
 

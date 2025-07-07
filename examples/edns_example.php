@@ -27,12 +27,11 @@ use JDWX\DNSQuery\Transport\TransportFactory;
     $client = new SimpleClient( $transport, $codec );
 
 // Create an EDNS query with a larger payload size and DNSSEC OK bit
-    $query = EDNSMessage::ednsRequest(
+    $query = EDNSMessage::request(
         'example.com',
         'A',
         'IN',
         payloadSize: 4096,     // Support larger responses
-        dnssecOK: true         // Request DNSSEC records
     );
 
 // You can add various EDNS options here

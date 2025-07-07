@@ -73,8 +73,8 @@ final class PresentationEncoderTest extends TestCase {
 
 
     public function testEncodeMessageForEDNS() : void {
-        $msg = EDNSMessage::ednsRequest( 'example.com', 'A', payloadSize: 1232 );
-        $msg->setDo( true );
+        $msg = EDNSMessage::request( 'example.com', 'A', payloadSize: 1232 );
+        $msg->setDO( true );
         $msg->addOption( new Option( 10, 'test' ) );
 
         $enc = new PresentationEncoder();

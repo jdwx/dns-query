@@ -7,12 +7,36 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Message;
 
 
+use JDWX\DNSQuery\Data\RecordClass;
+use JDWX\DNSQuery\Data\RecordType;
+use JDWX\DNSQuery\Data\ReturnCode;
 use JDWX\DNSQuery\Question\QuestionInterface;
 use JDWX\DNSQuery\ResourceRecord\ResourceRecordInterface;
 use Stringable;
 
 
 interface MessageInterface extends Stringable {
+
+
+    public function __construct( ?HeaderInterface $header = null );
+
+
+    public static function request( string|QuestionInterface|MessageInterface|null $i_domain = null,
+                                    int|string|RecordType                          $i_type = RecordType::ANY,
+                                    int|string|RecordClass                         $i_class = RecordClass::IN ) : static;
+
+
+    public static function requestEmpty() : static;
+
+
+    public static function requestFromMessage( MessageInterface $i_msg ) : static;
+
+
+    public static function requestFromQuestion( QuestionInterface $i_question ) : static;
+
+
+    public static function response( MessageInterface      $i_request,
+                                     int|string|ReturnCode $i_rc = ReturnCode::NOERROR ) : static;
 
 
     public function additional( int $i_uIndex ) : ?ResourceRecordInterface;
