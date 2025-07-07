@@ -10,7 +10,7 @@ namespace JDWX\DNSQuery\Client;
 use JDWX\DNSQuery\Message\MessageInterface;
 
 
-abstract class AbstractTimedClient extends AbstractClient {
+abstract class AbstractTimedClient extends AbstractMessageClient {
 
 
     protected int $uDefaultTimeoutSeconds = 5;
@@ -21,7 +21,9 @@ abstract class AbstractTimedClient extends AbstractClient {
     private array $rLookAside = [];
 
 
-    public function __construct( ?int $i_nuDefaultTimeoutSeconds = null, ?int $i_nuDefaultTimeoutMicroSeconds = null ) {
+    public function __construct( ?int    $i_nuDefaultTimeoutSeconds = null, ?int $i_nuDefaultTimeoutMicroSeconds = null,
+                                 ?string $classMessage = null ) {
+        parent::__construct( $classMessage );
         if ( is_int( $i_nuDefaultTimeoutSeconds ) ) {
             $this->uDefaultTimeoutSeconds = $i_nuDefaultTimeoutSeconds;
         }
