@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Data;
 
 
+use JDWX\DNSQuery\Exceptions\FlagException;
+
+
 /** Regrettably, this can't be called DO because that's a reserved word. */
 enum DOK: int {
 
@@ -32,7 +35,7 @@ enum DOK: int {
         if ( $x instanceof self ) {
             return $x;
         }
-        throw new \InvalidArgumentException( 'Invalid DOK value: ' . print_r( $i_value, true ) );
+        throw new FlagException( 'Invalid DOK value: ' . print_r( $i_value, true ) );
     }
 
 
@@ -48,7 +51,7 @@ enum DOK: int {
 
 
     public function is( bool|int|DOK $i_value ) : bool {
-        return $this === self::normalize( $i_value );
+        return $this === self::tryNormalize( $i_value );
     }
 
 
