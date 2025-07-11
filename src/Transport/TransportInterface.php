@@ -16,7 +16,7 @@ interface TransportInterface {
     public function receive( int $i_uBufferSize = 65_536 ) : ?string;
 
 
-    public function send( string|WriteBufferInterface $i_stData ) : void;
+    public function send( string|WriteBufferInterface $i_data ) : void;
 
 
 }

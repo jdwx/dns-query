@@ -46,11 +46,11 @@ class PseudowireTransport implements TransportInterface {
     }
 
 
-    public function send( string|WriteBufferInterface $i_stData ) : void {
-        if ( $i_stData instanceof WriteBufferInterface ) {
-            $i_stData = $i_stData->end();
+    public function send( string|WriteBufferInterface $i_data ) : void {
+        if ( $i_data instanceof WriteBufferInterface ) {
+            $i_data = $i_data->end();
         }
-        $this->rSendBuffer[] = $i_stData;
+        $this->rSendBuffer[] = $i_data;
     }
 
 

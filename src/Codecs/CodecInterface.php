@@ -18,7 +18,8 @@ interface CodecInterface {
     public function decodeMessage( ReadBufferInterface $i_buffer ) : ?MessageInterface;
 
 
-    public function encodeMessage( MessageInterface $i_msg, ?WriteBufferInterface $i_buffer = null ) : WriteBufferInterface;
+    public function encodeMessage( MessageInterface      $i_msg,
+                                   ?WriteBufferInterface $i_buffer = null ) : WriteBufferInterface;
 
 
 }

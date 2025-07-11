@@ -40,14 +40,14 @@ class StreamSocketTransport extends AbstractSocketTransport {
     }
 
 
-    public function send( string|WriteBufferInterface $i_stData ) : void {
-        if ( $i_stData instanceof WriteBufferInterface ) {
-            $i_stData = $i_stData->end();
+    public function send( string|WriteBufferInterface $i_data ) : void {
+        if ( $i_data instanceof WriteBufferInterface ) {
+            $i_data = $i_data->end();
         }
 
         // For TCP, prepend the 2-byte length prefix
-        $length = strlen( $i_stData );
-        $this->sendVector( Binary::packUINT16( $length ), $i_stData );
+        $length = strlen( $i_data );
+        $this->sendVector( Binary::packUINT16( $length ), $i_data );
     }
 
 

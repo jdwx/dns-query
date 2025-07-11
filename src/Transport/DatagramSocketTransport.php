@@ -25,11 +25,11 @@ class DatagramSocketTransport extends AbstractSocketTransport {
     }
 
 
-    public function send( string|WriteBufferInterface $i_stData ) : void {
-        if ( $i_stData instanceof WriteBufferInterface ) {
-            $i_stData = $i_stData->end();
+    public function send( string|WriteBufferInterface $i_data ) : void {
+        if ( $i_data instanceof WriteBufferInterface ) {
+            $i_data = $i_data->end();
         }
-        parent::send( $i_stData );
+        parent::send( $i_data );
     }
 
 

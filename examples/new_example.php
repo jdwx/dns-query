@@ -4,6 +4,8 @@
 declare( strict_types = 1 );
 
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\HttpFactory;
 use JDWX\DNSQuery\Codecs\RFC1035Decoder;
 use JDWX\DNSQuery\Codecs\RFC1035Encoder;
 use JDWX\DNSQuery\HexDump;
@@ -15,7 +17,12 @@ require __DIR__ . '/../vendor/autoload.php';
 
 
 /** @suppress PhanTypeSuspiciousEcho */
-( function ( array $argv ) : void {
+( static function ( array $argv ) : void {
+
+    TransportFactory::setHttpClient(
+        new Client(),
+        new HttpFactory()
+    );
 
     array_shift( $argv ); // Remove script name
     $stProtocol = array_shift( $argv ) ?? 'udp';
@@ -24,12 +31,16 @@ require __DIR__ . '/../vendor/autoload.php';
     $stQuestionType = array_shift( $argv ) ?? 'A';
 
     $codec = new JDWX\DNSQuery\Codecs\Codec( new RFC1035Encoder(), new RFC1035Decoder() );
-    $xpt = match ( $stProtocol ) {
-        'udp' => TransportFactory::udp( $stHost ),
+    /** @noinspection SpellCheckingInspection */
+    $xpt = match ( strtolower( trim( $stProtocol ) ) ) {
+        'https', 'httpspost' => TransportFactory::httpsPost( $stHost ),
+        'httpsget' => TransportFactory::httpsGet( $stHost ),
         'tcp' => TransportFactory::tcp( $stHost ),
+        'udp' => TransportFactory::udp( $stHost ),
         'unix' => TransportFactory::unix( $stHost, SOCK_DGRAM ),
         default => throw new InvalidArgumentException( "Unknown protocol: {$stProtocol}" ),
     };
+    echo 'Using transport: ', $xpt::class, "\n";
 
     # Client sends request
     $request = Message::request( $stQuestionHost, $stQuestionType );

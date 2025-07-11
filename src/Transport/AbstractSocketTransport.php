@@ -8,8 +8,7 @@ namespace JDWX\DNSQuery\Transport;
 
 
 use JDWX\DNSQuery\Buffer\WriteBufferInterface;
-use JDWX\DNSQuery\Exceptions\TransportException;
-use JDWX\Socket\Exceptions\WriteException;
+use JDWX\DNSQuery\Exceptions\ConnectionException;
 use JDWX\Socket\Socket;
 
 
@@ -39,10 +38,14 @@ abstract class AbstractSocketTransport implements TransportInterface {
     }
 
 
-    public function send( string|WriteBufferInterface $i_stData ) : void {
-        $u = $this->socket->sendTimed( $i_stData, null, $this->uTimeoutSeconds, $this->uTimeoutMicroseconds );
+    public function send( string|WriteBufferInterface $i_data ) : void {
+        try {
+            $u = $this->socket->sendTimed( $i_data, null, $this->uTimeoutSeconds, $this->uTimeoutMicroseconds );
+        } catch ( \Throwable $e ) {
+            throw new ConnectionException( "send failed: {$e->getMessage()}", 0, $e );
+        }
         if ( 0 === $u ) {
-            throw new TransportException( 'Failed to send data via socket.' );
+            throw new ConnectionException( 'send timed out' );
         }
     }
 
@@ -54,15 +57,23 @@ abstract class AbstractSocketTransport implements TransportInterface {
 
 
     protected function read( int $i_uBufferSize ) : ?string {
-        if ( ! $this->socket->selectForRead( $this->uTimeoutSeconds, $this->uTimeoutMicroseconds ) ) {
-            return null;
+        try {
+            if ( ! $this->socket->selectForRead( $this->uTimeoutSeconds, $this->uTimeoutMicroseconds ) ) {
+                return null;
+            }
+            return $this->socket->read( $i_uBufferSize );
+        } catch ( \Throwable $e ) {
+            throw new ConnectionException( "read failed: {$e->getMessage()}", 0, $e );
         }
-        return $this->socket->read( $i_uBufferSize );
     }
 
 
     protected function readTimed( int $i_uExactLength ) : string {
-        return $this->socket->readTimed( $i_uExactLength, $this->uTimeoutSeconds, $this->uTimeoutMicroseconds );
+        try {
+            return $this->socket->readTimed( $i_uExactLength, $this->uTimeoutSeconds, $this->uTimeoutMicroseconds );
+        } catch ( \Throwable $e ) {
+            throw new ConnectionException( "readTimed failed: {$e->getMessage()}", 0, $e );
+        }
     }
 
 
@@ -70,8 +81,8 @@ abstract class AbstractSocketTransport implements TransportInterface {
         $r = [ 'iov' => $i_rVector ];
         try {
             $this->socket->sendMsg( $r );
-        } catch ( WriteException $e ) {
-            throw new TransportException( 'Failed to send data via socket.', 0, $e );
+        } catch ( \Throwable $e ) {
+            throw new ConnectionException( "sendVector failed: {$e->getMessage()}", 0, $e );
         }
     }
 

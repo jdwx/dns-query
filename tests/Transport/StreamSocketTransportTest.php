@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Transport;
 
 
+use JDWX\DNSQuery\Exceptions\TransportException;
 use JDWX\DNSQuery\Transport\AbstractSocketTransport;
 use JDWX\DNSQuery\Transport\StreamSocketTransport;
 use JDWX\DNSQuery\Transport\TransportFactory;
@@ -29,6 +30,23 @@ final class StreamSocketTransportTest extends TestCase {
         $sock = $tcpDest->accept();
         self::assertSame( "\x00\x09", $sock->readTimed( 2, 0, 1_000 ) );
         self::assertSame( 'test data', $sock->readTimed( 10, 0, 1 ) );
+    }
+
+
+    public function testSendForTimeout() : void {
+        $stPath = tempnam( sys_get_temp_dir(), 'test-sock.' );
+        unlink( $stPath );
+        $sock = Socket::createBound( $stPath );
+        $transport = TransportFactory::unix( $stPath, SOCK_STREAM, 0, 10_000 );
+        assert( $transport instanceof StreamSocketTransport );
+        $sock1 = $transport->getSocket();
+        $sock1->setNonBlock();
+        $st = str_repeat( 'Whatever', 8192 );
+        $sock1->write( $st );
+        self::expectException( TransportException::class );
+        $transport->send( 'Nope!' );
+        unlink( $stPath );
+        unset( $sock );
     }
 
 

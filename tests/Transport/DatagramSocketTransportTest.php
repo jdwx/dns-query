@@ -40,4 +40,13 @@ final class DatagramSocketTransportTest extends TestCase {
     }
 
 
+    public function testSetTimeout() : void {
+        $uPort = 32768 + random_int( 0, 20000 );
+        $transport = TransportFactory::udp( '127.0.0.1', $uPort );
+        assert( $transport instanceof DatagramSocketTransport );
+        $transport->setTimeout( 0, 10_000 );
+        self::assertNull( $transport->receive() );
+    }
+
+
 }
