@@ -17,14 +17,14 @@ use JDWX\DNSQuery\Transport\TransportInterface;
 class TransportPool implements Countable {
 
 
-    /** @var array<string, PooledConnection> All connections in the pool */
+    /** @var array<string, PooledTransport> All connections in the pool */
     private array $connections = [];
 
     /** @var array<string, bool> Track which connections are in use */
     private array $inUse = [];
 
 
-    /** @param array<string, PoolStrategyInterface> $strategies Strategies by transport type */
+    /** @param list<PoolStrategyInterface> $strategies Available strategies */
     public function __construct( private array $strategies ) {}
 
 
@@ -34,11 +34,12 @@ class TransportPool implements Countable {
     }
 
 
-    /** @return array<string, PoolStrategyInterface> */
+    /** @return list<PoolStrategyInterface> */
     protected static function defaultStrategies() : array {
         return [
-            'udp' => new UdpPoolStrategy(),
-            'tcp' => new TcpPoolStrategy(),
+            new UdpPoolStrategy(),
+            new TcpPoolStrategy(),
+            new HttpsPoolStrategy(),
         ];
     }
 
@@ -46,15 +47,22 @@ class TransportPool implements Countable {
     /**
      * Acquire a transport from the pool.
      *
-     * @param list<mixed> $options
+     * @param array<string, mixed> $options
      */
-    public function acquire( string $type, string $host, int $port = 53, array $options = [] ) : TransportInterface {
-        $strategy = $this->getStrategy( $type );
+    public function acquire( string $type, string $host, ?int $port = null, array $options = [] ) : TransportInterface {
+        // Find a strategy that handles this type
+        $strategy = null;
+        foreach ( $this->strategies as $s ) {
+            if ( $s->shouldAttempt( $type, $host, $port ) ) {
+                $strategy = $s;
+                break;
+            }
+        }
 
-        // Check if we should even attempt this transport type for this server
-        if ( ! $strategy->shouldAttempt( $host, $port ) ) {
+        if ( $strategy === null ) {
             throw new \RuntimeException(
-                "Transport type '{$type}' has previously failed for {$host}:{$port}"
+                "No strategy available for transport type '{$type}' to {$host}" .
+                ( $port !== null ? ":{$port}" : '' )
             );
         }
 
@@ -62,12 +70,13 @@ class TransportPool implements Countable {
 
         // Try to reuse existing connection
         if ( isset( $this->connections[ $key ] ) && ! isset( $this->inUse[ $key ] ) ) {
-            $connection = $this->connections[ $key ];
+            $pooledTransport = $this->connections[ $key ];
 
-            if ( $strategy->canReuse( $connection ) ) {
+            if ( $strategy->canReuse( $pooledTransport ) ) {
                 $this->inUse[ $key ] = true;
-                $connection->touch();
-                return new PooledTransportWrapper( $connection, $this );
+                $pooledTransport->touch();
+                $pooledTransport->attachToPool( $this );
+                return $pooledTransport;
             }
 
             // Connection can't be reused, remove it
@@ -82,11 +91,20 @@ class TransportPool implements Countable {
             throw $e;
         }
 
-        $connection = new PooledConnection( $transport, $key, $type );
-        $this->connections[ $key ] = $connection;
+        $pooledTransport = new PooledTransport( $transport, $key, $type, $strategy );
+        $this->connections[ $key ] = $pooledTransport;
         $this->inUse[ $key ] = true;
+        $pooledTransport->attachToPool( $this );
 
-        return new PooledTransportWrapper( $connection, $this );
+        return $pooledTransport;
+    }
+
+
+    /**
+     * Add a pooling strategy.
+     */
+    public function addStrategy( PoolStrategyInterface $strategy ) : void {
+        $this->strategies[] = $strategy;
     }
 
 
@@ -126,23 +144,13 @@ class TransportPool implements Countable {
     /**
      * Handle an error that occurred with a transport.
      */
-    public function handleError( PooledTransportWrapper $transport, \Throwable $error ) : void {
-        $connection = $transport->getConnection();
-        $strategy = $this->getStrategy( $connection->getType() );
+    public function handleError( PooledTransport $transport, \Throwable $error ) : void {
+        $strategy = $transport->getStrategy();
 
-        if ( ! $strategy->handleError( $connection, $error ) ) {
+        if ( ! $strategy->handleError( $transport, $error ) ) {
             // Strategy says connection is no longer usable
-            unset( $this->connections[ $connection->getKey() ] );
-            unset( $this->inUse[ $connection->getKey() ] );
+            unset( $this->connections[ $transport->getKey() ], $this->inUse[ $transport->getKey() ] );
         }
-    }
-
-
-    /**
-     * Register a pooling strategy for a transport type.
-     */
-    public function registerStrategy( string $type, PoolStrategyInterface $strategy ) : void {
-        $this->strategies[ $type ] = $strategy;
     }
 
 
@@ -150,15 +158,16 @@ class TransportPool implements Countable {
      * Release a transport back to the pool.
      */
     public function release( TransportInterface $transport ) : void {
-        if ( ! $transport instanceof PooledTransportWrapper ) {
+        if ( ! $transport instanceof PooledTransport ) {
             return;
         }
 
         $key = $transport->getKey();
         unset( $this->inUse[ $key ] );
+        $transport->detachFromPool();
 
         // Clean up old connections periodically
-        if ( count( $this->connections ) > 10 && mt_rand( 1, 10 ) === 1 ) {
+        if ( count( $this->connections ) > 10 && random_int( 1, 10 ) === 1 ) {
             $this->cleanupStaleConnections();
         }
     }
@@ -168,27 +177,17 @@ class TransportPool implements Countable {
      * Remove stale connections based on their strategy's rules.
      */
     private function cleanupStaleConnections() : void {
-        foreach ( $this->connections as $key => $connection ) {
+        foreach ( $this->connections as $key => $pooledTransport ) {
             if ( isset( $this->inUse[ $key ] ) ) {
                 continue;
             }
 
-            $strategy = $this->getStrategy( $connection->getType() );
-            if ( ! $strategy->canReuse( $connection ) ) {
+            // Find the strategy for this connection type
+            $strategy = $pooledTransport->getStrategy();
+            if ( ! $strategy->canReuse( $pooledTransport ) ) {
                 unset( $this->connections[ $key ] );
             }
         }
-    }
-
-
-    /**
-     * Get strategy for a transport type.
-     */
-    private function getStrategy( string $type ) : PoolStrategyInterface {
-        if ( ! isset( $this->strategies[ $type ] ) ) {
-            throw new \InvalidArgumentException( "No pooling strategy registered for type: {$type}" );
-        }
-        return $this->strategies[ $type ];
     }
 
 

@@ -20,6 +20,11 @@ readonly class Codec implements CodecInterface {
                                  private DecoderInterface $decoder ) {}
 
 
+    public static function rfc1035() : self {
+        return new self( new RFC1035Encoder(), new RFC1035Decoder() );
+    }
+
+
     public function decodeMessage( ReadBufferInterface $i_buffer ) : ?MessageInterface {
         return $this->decoder->decodeMessage( $i_buffer );
     }

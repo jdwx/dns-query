@@ -25,14 +25,14 @@ class TcpPoolStrategy implements PoolStrategyInterface {
     private const int MAX_IDLE_SECONDS = 120; // 2 minutes per RFC
 
 
-    public function canReuse( PooledConnection $connection ) : bool {
+    public function canReuse( PooledTransport $transport ) : bool {
         // Check if connection has errors
-        if ( $connection->getErrorCount() > 0 ) {
+        if ( $transport->getErrorCount() > 0 ) {
             return false;
         }
 
         // Check if connection has been idle too long
-        if ( $connection->getIdleSeconds() > self::MAX_IDLE_SECONDS ) {
+        if ( $transport->getIdleSeconds() > self::MAX_IDLE_SECONDS ) {
             return false;
         }
 
@@ -43,13 +43,20 @@ class TcpPoolStrategy implements PoolStrategyInterface {
     }
 
 
-    /** @param list<mixed> $options */
-    public function createTransport( string $host, int $port, array $options = [] ) : TransportInterface {
-        return TransportFactory::tcp( $host, $port, ...$options );
+    /** @param array<string, mixed> $options */
+    public function createTransport( string $host, ?int $port, array $options = [] ) : TransportInterface {
+        // Extract parameters for factory method
+        $timeoutSeconds = isset( $options[ 'timeout_seconds' ] ) ? (int) $options[ 'timeout_seconds' ] : null;
+        $timeoutMicroseconds = isset( $options[ 'timeout_microseconds' ] ) ? (int) $options[ 'timeout_microseconds' ] : null;
+        $localAddress = isset( $options[ 'local_address' ] ) ? (string) $options[ 'local_address' ] : null;
+        $localPort = isset( $options[ 'local_port' ] ) ? (int) $options[ 'local_port' ] : null;
+
+        return TransportFactory::tcp( $host, $port, $timeoutSeconds, $timeoutMicroseconds, $localAddress, $localPort );
     }
 
 
-    public function getKey( string $host, int $port, array $options = [] ) : string {
+    public function getKey( string $host, ?int $port, array $options = [] ) : string {
+        $port ??= 53; // Default to port 53 if not specified
         return sprintf( 'tcp:%s:%d', $host, $port );
     }
 
@@ -59,8 +66,8 @@ class TcpPoolStrategy implements PoolStrategyInterface {
     }
 
 
-    public function handleError( PooledConnection $connection, \Throwable $error ) : bool {
-        $connection->recordError();
+    public function handleError( PooledTransport $transport, \Throwable $error ) : bool {
+        $transport->recordError();
 
         // For TCP, ANY error invalidates the connection because we can't
         // know what state the stream is in. This includes:
@@ -73,15 +80,15 @@ class TcpPoolStrategy implements PoolStrategyInterface {
     }
 
 
-    public function recordFailure( string $host, int $port ) : void {
+    public function recordFailure( string $host, ?int $port ) : void {
         // TCP failures are usually transient (connection refused, timeout)
         // so we don't need to remember them long-term
     }
 
 
-    public function shouldAttempt( string $host, int $port ) : bool {
-        // TCP is generally available, though some servers might not support it
-        return true;
+    public function shouldAttempt( string $type, string $host, ?int $port ) : bool {
+        // Only handle TCP requests
+        return $type === 'tcp';
     }
 
 

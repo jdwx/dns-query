@@ -7,7 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Tests\Transport;
 
 
-use JDWX\DNSQuery\Transport\Pool\PooledTransportWrapper;
+use JDWX\DNSQuery\Transport\Pool\PooledTransport;
 use JDWX\DNSQuery\Transport\Pool\TransportPool;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -50,9 +50,9 @@ class TransportPoolTest extends TestCase {
         $transport2 = $pool->acquire( 'udp', '8.8.8.8' );
 
         self::assertSame( 1, $pool->count() );
-        assert( $transport1 instanceof PooledTransportWrapper );
-        assert( $transport2 instanceof PooledTransportWrapper );
-        self::assertSame( $transport1->getConnection(), $transport2->getConnection() );
+        assert( $transport1 instanceof PooledTransport );
+        assert( $transport2 instanceof PooledTransport );
+        self::assertSame( $transport1, $transport2 );
     }
 
 

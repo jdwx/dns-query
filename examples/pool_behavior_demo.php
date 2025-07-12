@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-use JDWX\DNSQuery\Transport\Pool\DohPoolStrategy;
+use JDWX\DNSQuery\Transport\Pool\HttpsPoolStrategy;
 use JDWX\DNSQuery\Transport\Pool\TransportPool;
 
 
@@ -50,9 +50,9 @@ try {
 echo "\n3. DoH Behavior (server-level failure tracking):\n";
 try {
     // Clear any previous failures
-    DohPoolStrategy::clearFailureMemory();
+    HttpsPoolStrategy::clearFailureMemory();
 
-    $doh = $pool->acquire( 'doh', '8.8.8.8' );
+    $doh = $pool->acquire( 'https', '8.8.8.8' );
     echo "   - Would acquire DoH transport (not implemented yet)\n";
 } catch ( RuntimeException $e ) {
     echo '   - Expected error: ' . $e->getMessage() . "\n";
@@ -64,6 +64,6 @@ echo "   - TCP errors immediately invalidate the connection\n";
 echo "   - DoH failures are remembered at the server level\n";
 
 echo "\nPool Statistics:\n";
-echo '  Total connections: ' . $pool->count() . "\n";
-echo '  Active connections: ' . $pool->getActiveCount() . "\n";
-echo '  Idle connections: ' . $pool->getIdleCount() . "\n";
+echo '  Total connections: ', $pool->count(), "\n";
+echo '  Active connections: ', $pool->getActiveCount(), "\n";
+echo '  Idle connections: ', $pool->getIdleCount(), "\n";

@@ -70,9 +70,10 @@ final class TransportFactory {
     }
 
 
-    public static function tcp( string $i_stHost, int $i_uPort = 53, ?int $i_nuTimeoutSeconds = null,
+    public static function tcp( string $i_stHost, ?int $i_uPort = null, ?int $i_nuTimeoutSeconds = null,
                                 ?int   $i_nuTimeoutMicroseconds = null, ?string $i_nstLocalAddress = null,
                                 ?int   $i_nuLocalPort = null ) : TransportInterface {
+        $i_uPort ??= 53; // Default port for TCP DNS queries
         try {
             $sock = Socket::createByAddress( $i_stHost, SOCK_STREAM );
             if ( is_string( $i_nstLocalAddress ) ) {
@@ -91,9 +92,10 @@ final class TransportFactory {
     }
 
 
-    public static function udp( string $i_stHost, int $i_uPort = 53, ?int $i_nuTimeoutSeconds = null,
+    public static function udp( string $i_stHost, ?int $i_uPort = null, ?int $i_nuTimeoutSeconds = null,
                                 ?int   $i_nuTimeoutMicroseconds = null, ?string $i_nstLocalAddress = null,
                                 ?int   $i_nuLocalPort = null ) : TransportInterface {
+        $i_uPort ??= 53; // Default port for UDP DNS queries
         try {
             $sock = Socket::createByAddress( $i_stHost, SOCK_DGRAM );
             if ( is_string( $i_nstLocalAddress ) ) {
