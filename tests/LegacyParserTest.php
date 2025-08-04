@@ -20,7 +20,7 @@ declare( strict_types = 1 );
  */
 
 
-namespace JDWX\DNSQuery\tests;
+namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exception;
@@ -204,7 +204,7 @@ final class LegacyParserTest extends TestCase {
                 $className = '\\JDWX\\DNSQuery\\RR\\' . $rrType;
 
                 # Create a new packet.
-                if ( $rrType == 'PTR' ) {
+                if ( 'PTR' === $rrType ) {
                     $request = new RequestPacket( '1.0.0.127.in-addr.arpa', $rrType, 'IN' );
                 } else {
                     $request = new RequestPacket( 'example.com', $rrType, 'IN' );

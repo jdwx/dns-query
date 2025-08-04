@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\tests;
+namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exception;
@@ -50,7 +50,7 @@ final class TCPTransportTest extends TestCase {
         socket_close( $socketClient );
         socket_close( $socket );
 
-        self::expectException( Exception::class );
+        $this->expectException( Exception::class );
         $udp->receiveResponse();
     }
 

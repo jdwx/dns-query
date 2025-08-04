@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\DNSQuery\tests;
+namespace JDWX\DNSQuery\Tests;
 
 
 use JDWX\DNSQuery\Exception;
@@ -24,7 +24,6 @@ final class ResolverTest extends TestCase {
     /** Check the results of a query for Google's MX server. */
     public static function googleMXResponseCheck( ResponsePacket $rsp ) : void {
 
-        self::assertInstanceOf( ResponsePacket::class, $rsp );
         self::assertSame( Lookups::QR_RESPONSE, $rsp->header->qr );
         self::assertCount( 1, $rsp->question );
         self::assertCount( 1, $rsp->answer );
@@ -32,7 +31,6 @@ final class ResolverTest extends TestCase {
         $mx = $rsp->answer[ 0 ];
         assert( $mx instanceof MX );
 
-        self::assertInstanceOf( MX::class, $mx );
         self::assertSame( 10, $mx->preference );
         self::assertSame( 'smtp.google.com', $mx->exchange );
 
@@ -171,9 +169,11 @@ final class ResolverTest extends TestCase {
         foreach ( $rActual as & $row ) {
             $row[ 'ttl' ] = 0;
         }
+        unset( $row );
         foreach ( $rExpected as & $row ) {
             $row[ 'ttl' ] = 0;
         }
+        unset( $row );
         self::assertSame( $rExpected, $rActual );
     }
 
