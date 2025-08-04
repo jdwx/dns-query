@@ -70,16 +70,10 @@ class MX extends RR {
 
     /** @inheritDoc */
     protected function rrGet( Packet $i_packet ) : ?string {
-        if ( strlen( $this->exchange ) > 0 ) {
-
-            $data = pack( 'n', $this->preference );
-            $i_packet->offset += 2;
-
-            $data .= $i_packet->compress( $this->exchange, $i_packet->offset );
-            return $data;
-        }
-
-        return null;
+        $data = pack( 'n', $this->preference );
+        $i_packet->offset += 2;
+        $data .= $i_packet->compress( $this->exchange, $i_packet->offset );
+        return $data;
     }
 
 
@@ -107,4 +101,6 @@ class MX extends RR {
     protected function rrToString() : string {
         return $this->preference . ' ' . $this->cleanString( $this->exchange ) . '.';
     }
+
+
 }
