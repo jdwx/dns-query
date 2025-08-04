@@ -357,6 +357,30 @@ class RRTypesTest extends TestCase {
     }
 
 
+    public function testMXForExchangeRoot() : void {
+        $rr = new ResourceRecord( 'example.com', 'MX', 'IN', 3600, [
+            'preference' => 0,
+            'exchange' => [],
+        ] );
+        $rr = $this->roundTripArray( $rr, [
+            'name' => [ 'example', 'com' ],
+            'type' => 'MX',
+            'class' => 'IN',
+            'ttl' => 3600,
+            'preference' => 0,
+            'exchange' => [],
+        ] );
+        $rr = $this->roundTripBinary( $rr );
+        $rr = $this->roundTripString( $rr, 'example.com. 3600 IN MX 0 .' );
+        self::assertSame( [ 'example', 'com' ], $rr->getName() );
+        self::assertSame( 3600, $rr->getTTL() );
+        self::assertSame( 'IN', $rr->class() );
+        self::assertSame( 'MX', $rr->type() );
+        self::assertSame( 0, $rr->tryGetRDataValue( 'preference' ) );
+        self::assertSame( [], $rr->tryGetRDataValue( 'exchange' ) );
+    }
+
+
     public function testNAPTR() : void {
         $rr = new ResourceRecord( 'example.com', 'NAPTR', 'IN', 3600, [
             'order' => 100,
