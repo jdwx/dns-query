@@ -47,6 +47,7 @@ use Stringable;
  */
 class Packet implements Stringable {
 
+
     /** @var string Full binary data for this packet. */
     public string $rdata;
 
@@ -78,7 +79,7 @@ class Packet implements Stringable {
     /**
      * parses a domain label from a DNS Packet at the given offset
      *
-     * @param Packet       $packet Packet to look in for the domain name
+     * @param Packet $packet Packet to look in for the domain name
      * @param int         &$offset (input/output) Offset into the given packet object
      *
      * @return ?string The domain name or null if it's invalid or not found.
@@ -121,7 +122,6 @@ class Packet implements Stringable {
      * @return string
      */
     public static function pack( string $name ) : string {
-        $offset = 0;
         $names = explode( '.', $name );
         $compName = '';
 
@@ -131,7 +131,6 @@ class Packet implements Stringable {
             $length = strlen( $first );
 
             $compName .= pack( 'Ca*', $length, $first );
-            $offset += $length + 1;
         }
 
         $compName .= "\0";
@@ -174,7 +173,7 @@ class Packet implements Stringable {
      * This logic was based on the Net::DNS::Packet::dn_comp() function
      * by Michael Fuhr
      *
-     * @param string  $name Name to be compressed
+     * @param string $name Name to be compressed
      * @param int    &$offset Offset into the given packet object
      *
      * @return string
@@ -189,7 +188,7 @@ class Packet implements Stringable {
 
         while ( ! empty( $names ) ) {
 
-            $dName = join( '.', $names );
+            $dName = implode( '.', $names );
 
             if ( isset( $this->compressed[ $dName ] ) ) {
 
@@ -252,7 +251,7 @@ class Packet implements Stringable {
      * by Michael Fuhr
      *
      * @param int         &$io_offset (input/output) Offset into the given packet object
-     * @param bool         $i_escapeDotLiterals Escape periods in names
+     * @param bool $i_escapeDotLiterals Escape periods in names
      *
      * @return ?string The domain name, or null if it's invalid or not found.
      */
@@ -265,18 +264,20 @@ class Packet implements Stringable {
             }
 
             $labelLen = ord( $this->rdata[ $io_offset ] );
-            if ( $labelLen == 0 ) {
+            if ( 0 === $labelLen ) {
 
                 ++$io_offset;
                 break;
 
-            } elseif ( ( $labelLen & 0xc0 ) == 0xc0 ) {
+            }
+
+            if ( 0xc0 === ( $labelLen & 0xc0 ) ) {
                 if ( $this->rdLength < ( $io_offset + 2 ) ) {
                     return null;
                 }
 
                 $ptr = ord( $this->rdata[ $io_offset ] ) << 8 | ord( $this->rdata[ $io_offset + 1 ] );
-                $ptr = $ptr & 0x3fff;
+                $ptr &= 0x3fff;
 
                 $name2 = $this->expand( $ptr, $i_escapeDotLiterals );
                 if ( is_null( $name2 ) ) {
@@ -287,24 +288,24 @@ class Packet implements Stringable {
                 $io_offset += 2;
 
                 break;
-            } else {
-                ++$io_offset;
-
-                if ( $this->rdLength < ( $io_offset + $labelLen ) ) {
-
-                    return null;
-                }
-
-                $elem = substr( $this->rdata, $io_offset, $labelLen );
-
-                # Escape literal dots in certain cases (like the SOA rName).
-                if ( $i_escapeDotLiterals && ( str_contains( $elem, '.' ) ) ) {
-                    $elem = str_replace( '.', '\.', $elem );
-                }
-
-                $name .= $elem . '.';
-                $io_offset += $labelLen;
             }
+
+            ++$io_offset;
+
+            if ( $this->rdLength < ( $io_offset + $labelLen ) ) {
+
+                return null;
+            }
+
+            $elem = substr( $this->rdata, $io_offset, $labelLen );
+
+            # Escape literal dots in certain cases (like the SOA rName).
+            if ( $i_escapeDotLiterals && ( str_contains( $elem, '.' ) ) ) {
+                $elem = str_replace( '.', '\.', $elem );
+            }
+
+            $name .= $elem . '.';
+            $io_offset += $labelLen;
         }
 
         return trim( $name, '.' );
@@ -316,7 +317,7 @@ class Packet implements Stringable {
      *  and throws an exception on failure (contrast static::expand()).
      *
      * @param int  &$io_offset (input/output) Offset into the given Packet object
-     * @param bool  $i_escapeDotLiterals if we should escape periods in names
+     * @param bool $i_escapeDotLiterals if we should escape periods in names
      *
      * @return string the expanded domain name
      *
@@ -399,4 +400,6 @@ class Packet implements Stringable {
 
         return true;
     }
+
+
 }
