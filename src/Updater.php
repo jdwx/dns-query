@@ -496,7 +496,7 @@ class Updater extends BaseQuery {
      * @throws Exception
      */
     private function _checkName( string $i_name ) : void {
-        if ( ! preg_match( '/' . $this->packet->question[ 0 ]->qName . '$/', $i_name ) ) {
+        if ( ! preg_match( '/' . $this->packet->question[ 0 ]->qName . '$/i', $i_name ) ) {
 
             throw new Exception(
                 'name provided (' . $i_name . ') does not match zone name (' .
