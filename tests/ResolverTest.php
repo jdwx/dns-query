@@ -125,9 +125,34 @@ final class ResolverTest extends TestCase {
     }
 
 
+    public function testDNSGetRecordForALL() : void {
+        # Regrettably, calling dns_get_record() with DNS_ALL appears to hang forever
+        # on the test system, so we have to wing it.
+        $rActual = Resolver::dns_get_record( 'iana.org', DNS_ALL );
+        $uSOACount = 0;
+        $uACount = 0;
+        $uAAAACount = 0;
+        foreach ( $rActual as $rr ) {
+            switch ( $rr[ 'type' ] ) {
+                case 'SOA':
+                    $uSOACount++;
+                    break;
+                case 'A':
+                    $uACount++;
+                    break;
+                case 'AAAA':
+                    $uAAAACount++;
+                    break;
+            }
+        }
+        self::assertGreaterThan( 0, $uSOACount );
+        self::assertGreaterThan( 0, $uACount );
+        self::assertGreaterThan( 0, $uAAAACount );
+    }
+
+
     public function testGetDNSRecordForANY() : void {
-        # Test DNS_ANY (the default value). Regrettably, DNS_ALL cannot be tested
-        # as the PHP built-in function takes an ob
+        # Test DNS_ANY (the default value).
         $rExpected = dns_get_record( 'iana.org' );
         $rActual = Resolver::dns_get_record( 'iana.org' );
         $this->compareRRArrays( $rExpected, $rActual );
