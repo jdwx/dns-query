@@ -761,9 +761,10 @@ class BaseQuery {
             # Make sure the response code in the header is ok.
             if ( $response->header->rCode != Lookups::RCODE_NOERROR ) {
 
+                $stType = $i_request->question[ 0 ]->qType;
+                $stName = $i_request->question[ 0 ]->qName;
                 $this->lastException = new Exception(
-
-                    "DNS request to {$ns} failed: " .
+                    "DNS request to {$ns} for {$stName} {$stType} failed: " .
                     Lookups::$resultCodeMessages[ $response->header->rCode ],
                     $response->header->rCode,
                     null,

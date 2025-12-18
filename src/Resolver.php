@@ -87,6 +87,36 @@ class Resolver extends BaseQuery {
     }
 
 
+    /** @return \Generator<class-string> */
+    private static function decomposeTypeMap( int $type ) : \Generator {
+        if ( $type === DNS_ANY ) {
+            $type = DNS_A | DNS_AAAA | DNS_NS | DNS_SOA;
+        }
+        if ( ( $type & DNS_A6 ) === DNS_A6 ) {
+            trigger_error( 'Per RFC6563, A6 records should not be implemented or deployed.', E_USER_WARNING );
+            $type -= DNS_A6;
+        }
+        if ( 0 === $type ) {
+            return;
+        }
+
+        if ( isset( Lookups::$rrClassByPHPId[ $type ] ) ) {
+            if ( $type !== DNS_ALL && $type !== DNS_ANY ) {
+                yield Lookups::$rrClassByPHPId[ $type ];
+                return;
+            }
+        }
+        foreach ( Lookups::$rrClassByPHPId as $phpType => $rrClass ) {
+            if ( $phpType === DNS_ALL || $phpType === DNS_ANY ) {
+                continue;
+            }
+            if ( ( $type & $phpType ) === $phpType ) {
+                yield $rrClass;
+            }
+        }
+    }
+
+
     /**
      * An interface similar to dns_get_record that allows customizing the resolver request.
      *
@@ -110,22 +140,20 @@ class Resolver extends BaseQuery {
     public function compatQuery( string $hostname, int $type = DNS_ANY,
                                  ?array &$authoritativeNameServers = null,
                                  ?array &$additionalRecords = null ) : array|false {
-        if ( $type == DNS_A6 ) {
-            trigger_error( 'Per RFC6563, A6 records should not be implemented or deployed.', E_USER_WARNING );
-            return false;
-        }
-        if ( ! array_key_exists( $type, Lookups::$rrClassByPHPId ) ) {
-            trigger_error( 'Invalid record type: $type', E_USER_WARNING );
-            return false;
-        }
-        $class = Lookups::$rrClassByPHPId[ $type ];
-        $id = Lookups::$rrTypesClassToId[ $class ];
-        $rrType = Lookups::$rrTypesById[ $id ];
 
-        $rsp = $this->query( $hostname, $rrType );
         $rAnswer = [];
-        foreach ( $rsp->answer as $rr ) {
-            $rAnswer[] = $rr->getPHPRecord();
+        $rsp = null;
+        foreach ( self::decomposeTypeMap( $type ) as $rrClass ) {
+            $id = Lookups::$rrTypesClassToId[ $rrClass ];
+            $rrType = Lookups::$rrTypesById[ $id ];
+            $rsp = $this->query( $hostname, $rrType );
+            foreach ( $rsp->answer as $rr ) {
+                $rAnswer[] = $rr->getPHPRecord();
+            }
+        }
+        if ( ! $rsp instanceof ResponsePacket ) {
+            echo "Nothing for $hostname\n";
+            return false;
         }
 
         if ( $authoritativeNameServers !== null ) {
@@ -200,12 +228,12 @@ class Resolver extends BaseQuery {
         # We don't support incremental zone transfers; so if it's requested, a full
         # zone transfer can be returned.
         /** @noinspection SpellCheckingInspection */
-        if ( $i_type == 'IXFR' ) {
+        if ( $i_type === 'IXFR' ) {
             $i_type = 'AXFR';
         }
 
         # If the name *looks* too short, then append the domain from the config.
-        if ( ( ! str_contains( $i_name, '.' ) ) && ( $i_type != 'PTR' ) ) {
+        if ( ( $i_type !== 'PTR' ) && ( ! str_contains( $i_name, '.' ) ) ) {
             $i_name .= '.' . strtolower( $this->domain );
         }
 
@@ -269,7 +297,7 @@ class Resolver extends BaseQuery {
         # Send the packet and get back the response.
         # *Always* use TCP for zone transfers. Does this cause any problems?
         $response = $this->sendPacket(
-            $packet, ( $i_type == 'AXFR' ) ? true : $this->useTCP
+            $packet, ( $i_type === 'AXFR' ) ? true : $this->useTCP
         );
 
         # If strict_query mode is enabled AND we've received some answers,
@@ -284,9 +312,9 @@ class Resolver extends BaseQuery {
             # Look for the requested name/type/class.
             foreach ( $response->answer as $object ) {
 
-                if ( ( strcasecmp( trim( $object->name, '.' ), trim( $packet->question[ 0 ]->qName, '.' ) ) == 0 )
-                    && ( $object->type == $packet->question[ 0 ]->qType )
+                if ( ( $object->type == $packet->question[ 0 ]->qType )
                     && ( $object->class == $packet->question[ 0 ]->qClass )
+                    && ( strcasecmp( trim( $object->name, '.' ), trim( $packet->question[ 0 ]->qName, '.' ) ) === 0 )
                 ) {
                     $found = true;
                     break;
@@ -377,7 +405,7 @@ class Resolver extends BaseQuery {
      * record in the response and restarts the query at the domain name
      * specified in the data field of the CNAME record.
      *
-     * This can cause "unexpected" behaviours, since I'm sure *most* people
+     * This can cause "unexpected" behaviors, since I'm sure *most* people
      * don't know DNS does this; there may be cases where the resolver returns a
      * positive response, even though the hostname the user looked up did not
      * actually exist.

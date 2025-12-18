@@ -37,6 +37,16 @@ final class ResolverTest extends TestCase {
     }
 
 
+    /** @param mixed[] $rr */
+    private static function rrArrayToString( array $rr ) : string {
+        $st = '';
+        foreach ( $rr as $key => $value ) {
+            $st .= "{$key}={$value}; ";
+        }
+        return $st;
+    }
+
+
     /** Test that CNAME queries return the CNAME and indirect RR both in the answer field,
      * as expected by default.
      *
@@ -93,6 +103,10 @@ final class ResolverTest extends TestCase {
         $rActual = Resolver::dns_get_record( 'iana.org', DNS_A );
         $this->compareRRArrays( $rExpected, $rActual );
 
+        $rExpected = dns_get_record( 'iana.org', DNS_A | DNS_AAAA );
+        $rActual = Resolver::dns_get_record( 'iana.org', DNS_A | DNS_AAAA );
+        $this->compareRRArrays( $rExpected, $rActual );
+
         $rExpected = dns_get_record( 'www.amazon.com', DNS_CNAME );
         $rActual = Resolver::dns_get_record( 'www.amazon.com', DNS_CNAME );
         $this->compareRRArrays( $rExpected, $rActual );
@@ -108,6 +122,15 @@ final class ResolverTest extends TestCase {
         $rActual[ 0 ][ 'serial' ] = '0';
         $this->compareRRArrays( $rExpected, $rActual );
 
+    }
+
+
+    public function testGetDNSRecordForANY() : void {
+        # Test DNS_ANY (the default value). Regrettably, DNS_ALL cannot be tested
+        # as the PHP built-in function takes an ob
+        $rExpected = dns_get_record( 'iana.org' );
+        $rActual = Resolver::dns_get_record( 'iana.org' );
+        $this->compareRRArrays( $rExpected, $rActual );
     }
 
 
@@ -166,15 +189,29 @@ final class ResolverTest extends TestCase {
      * server (like 1.1.1.1) that is actually a cluster of servers.
      */
     private function compareRRArrays( array $rExpected, array $rActual ) : void {
+        $rActualList = [];
         foreach ( $rActual as & $row ) {
             $row[ 'ttl' ] = 0;
+            if ( $row[ 'type' ] === 'AAAA' ) {
+                # Normalize IPv6 addresses.
+                $row[ 'ipv6' ] = inet_ntop( inet_pton( $row[ 'ipv6' ] ) );
+            }
+            $rActualList[] = self::rrArrayToString( $row );
         }
         unset( $row );
+        $rExpectedList = [];
         foreach ( $rExpected as & $row ) {
             $row[ 'ttl' ] = 0;
+            if ( $row[ 'type' ] === 'AAAA' ) {
+                # Normalize IPv6 addresses.
+                $row[ 'ipv6' ] = inet_ntop( inet_pton( $row[ 'ipv6' ] ) );
+            }
+            $rExpectedList[] = self::rrArrayToString( $row );
         }
         unset( $row );
-        self::assertSame( $rExpected, $rActual );
+        sort( $rExpectedList );
+        sort( $rActualList );
+        self::assertSame( $rExpectedList, $rActualList );
     }
 
 
