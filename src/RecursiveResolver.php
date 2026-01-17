@@ -114,7 +114,7 @@ class RecursiveResolver {
         if ( in_array( $i_address, $this->addressCache[ $i_name ] ) ) {
             return;
         }
-        echo 'Learned ', $i_name, ': ', $i_address, "\n";
+        // echo 'Learned ', $i_name, ': ', $i_address, "\n";
         $this->addressCache[ $i_name ][] = $i_address;
     }
 
