@@ -126,7 +126,7 @@ class RecursiveResolver {
      * glue records, we have to start over and look up that name server separately.
      */
     public function lookupNameServer( string $i_nameServer ) : array {
-        echo 'Lookup: ', $i_nameServer, "\n";
+        // echo 'Lookup: ', $i_nameServer, "\n";
         if ( ! array_key_exists( $i_nameServer, $this->addressCache ) ) {
             if ( $this->useIPv4 ) {
                 $this->query( $i_nameServer );
@@ -239,7 +239,7 @@ class RecursiveResolver {
                                        int    $i_maxDepth ) : array {
 
         # Malicious name servers can create infinite loops.  We do not want to loop forever.
-        if ( 0 == $i_maxDepth ) {
+        if ( 0 === $i_maxDepth ) {
             throw new Exception( 'Maximum depth exceeded' );
         }
         $i_maxDepth -= 1;
