@@ -18,10 +18,10 @@
     "source": "https://github.com/jdwx/dns-query"
   },
   "authors": [
-	{
-		"name": "Jeff W",
+    {
+      "name": "Jeff W",
       "homepage": "https://github.com/jdwx/"
-	},
+    },
     {
       "name": "Mike Pultz",
       "email": "mike@mikepultz.com",
@@ -37,7 +37,7 @@
     "jdwx/array-cache": "^1.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^10",
+    "phpunit/phpunit": "^12",
     "jetbrains/phpstorm-attributes": "^1.0"
   },
   "autoload-dev": {
