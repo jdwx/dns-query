@@ -530,11 +530,10 @@ abstract class RR {
         }
 
         foreach ( $data as $index => $string ) {
-            $data[ $index ] = str_replace(
-                '\"',
-                '"',
-                ( strlen( $string ) >= 2 && $string[0] === '"' && $string[-1] === '"' ) ? substr( $string, 1, -1 ) : $string
-            );
+            if ( strlen( $string ) >= 2 && $string[ 0 ] === '"' && $string[ -1 ] === '"' ) {
+                $string = substr( $string, 1, -1 );
+            }
+            $data[ $index ] = str_replace( '\"', '"', $string );
         }
 
         return $data;

@@ -193,6 +193,13 @@ final class RRTest extends TestCase {
     }
 
 
+    public function testFromStringForQuotesWithEscapedQuoteDKIM() : void {
+        $rr = RR::fromString( 'example.com. 3600 IN TXT "\\"v=DKIM1; k=rsa; p=ABC123\\""' );
+        assert( $rr instanceof TXT );
+        self::assertSame( [ '"v=DKIM1; k=rsa; p=ABC123"' ], $rr->text );
+    }
+
+
     public function testFromStringForQuotesWithEscapedQuotes() : void {
         $rr = RR::fromString( 'example.com. 3600 IN TXT "This is a test \\"with escaped quotes\\"."' );
         assert( $rr instanceof TXT );
