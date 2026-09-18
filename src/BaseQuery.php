@@ -113,7 +113,7 @@ class BaseQuery {
         }
         if ( is_string( $i_nameServers ) ) {
             $this->setNameServer( $i_nameServers );
-        } elseif ( is_array( $i_nameServers ) ) {
+        } elseif ( is_array( $i_nameServers ) && ! empty( $i_nameServers ) ) {
             $this->setNameServers( $i_nameServers );
         }
         $this->transportManager = new TransportManager( $this->localAddress, $this->localPort, $this->timeout );
@@ -340,6 +340,13 @@ class BaseQuery {
      */
     public function setNameServers( array $i_nameServers ) : static {
 
+        if ( empty( $i_nameServers ) ) {
+            throw new Exception(
+                'empty name servers list; you must provide a list of name servers',
+                Lookups::E_NS_INVALID_ENTRY
+            );
+        }
+
         # Collect valid IP addresses in a temporary list.
         $ipAddresses = [];
 
@@ -355,14 +362,8 @@ class BaseQuery {
         }
 
         $ipAddresses = array_unique( $ipAddresses );
-        if ( empty( $ipAddresses ) ) {
-            throw new Exception(
-                'empty name servers list; you must provide a list of name servers',
-                Lookups::E_NS_INVALID_ENTRY
-            );
-        }
 
-        # Only replace the nameservers list if no exception is thrown.
+        # Only replace the nameserver list if no exception is thrown.
         $this->nameServers = $ipAddresses;
         return $this;
     }
@@ -497,9 +498,9 @@ class BaseQuery {
     /**
      * Add a TSIG RR object for authentication
      *
-     * @param TSIG|string $i_keyName Key name to use for the TSIG RR
-     * @param string $i_signature Key to sign the request.
-     * @param string $i_algorithm Algorithm to use
+     * @param TSIG|string $i_keyName   Key name to use for the TSIG RR
+     * @param string      $i_signature Key to sign the request.
+     * @param string      $i_algorithm Algorithm to use
      *
      * @return void
      *
@@ -642,7 +643,7 @@ class BaseQuery {
      * Sends a RequestPacket
      *
      * @param RequestPacket $i_request Packet object to send
-     * @param bool $i_useTCP True to skip straight to TCP, false to try UDP first.
+     * @param bool          $i_useTCP  True to skip straight to TCP, false to try UDP first.
      *
      * @return ResponsePacket
      * @throws Exception
@@ -824,9 +825,9 @@ class BaseQuery {
     /**
      * sends a DNS request using TCP
      *
-     * @param string $i_ns Name server to use for the request
+     * @param string $i_ns   Name server to use for the request
      * @param string $i_data Raw DNS packet data
-     * @param bool $i_axfr Whether this is a zone transfer request
+     * @param bool   $i_axfr Whether this is a zone transfer request
      *
      * @return ResponsePacket the response object
      * @throws Exception
@@ -849,7 +850,7 @@ class BaseQuery {
     /**
      * sends a DNS request using UDP
      *
-     * @param string $i_ns the name server to use for the request
+     * @param string $i_ns   the name server to use for the request
      * @param string $i_data the raw DNS packet data
      *
      * @return ResponsePacket the response object
