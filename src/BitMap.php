@@ -29,6 +29,8 @@ namespace JDWX\DNSQuery;
  *
  */
 class BitMap {
+
+
     /**
      * builds a RR Bit map from an array of RR type names
      *
@@ -76,13 +78,13 @@ class BitMap {
             # Build the current window.
             $currentWindow = (int) ( $type / 256 );
 
-            $val = $type - $currentWindow * 256.0;
+            $val = intval( $type - $currentWindow * 256.0 );
             if ( $val > $max ) {
                 $max = $val;
             }
 
             $bm[ $currentWindow ][ $val ] = 1;
-            $bm[ $currentWindow ][ 'length' ] = ceil( ( $max + 1 ) / 8 );
+            $bm[ $currentWindow ][ 'length' ] = intval( ceil( ( $max + 1 ) / 8 ) );
         }
 
         $output = '';
@@ -185,4 +187,6 @@ class BitMap {
 
         return $output;
     }
+
+
 }
