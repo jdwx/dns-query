@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -55,7 +56,7 @@ class ATMA extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $value = array_shift( $i_rData );
+        $value = TypeIs::string( array_shift( $i_rData ) );
 
         if ( ctype_xdigit( $value ) ) {
             $this->format = 0;

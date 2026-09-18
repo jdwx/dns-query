@@ -12,6 +12,7 @@ use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 use JDWX\DNSQuery\Packet\RequestPacket;
 use JDWX\DNSQuery\PrivateKey;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -114,14 +115,14 @@ class SIG extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->typeCovered = strtoupper( array_shift( $i_rData ) );
+        $this->typeCovered = strtoupper( TypeIs::string( array_shift( $i_rData ) ) );
         $this->algorithm = (int) array_shift( $i_rData );
         $this->labels = (int) array_shift( $i_rData );
         $this->origTTL = (int) array_shift( $i_rData );
-        $this->sigExpiration = array_shift( $i_rData );
-        $this->sigInception = array_shift( $i_rData );
+        $this->sigExpiration = TypeIs::string( array_shift( $i_rData ) );
+        $this->sigInception = TypeIs::string( array_shift( $i_rData ) );
         $this->keytag = (int) array_shift( $i_rData );
-        $this->signName = $this->cleanString( array_shift( $i_rData ) );
+        $this->signName = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
 
         $this->signature = '';
         foreach ( $i_rData as $line ) {
@@ -200,11 +201,14 @@ class SIG extends RR {
                 ),
             };
 
+            $privateKey = $this->privateKey->instance;
+            assert( $privateKey instanceof \OpenSSLAsymmetricKey );
+
             # Sign the data.
-            if ( ! openssl_sign( $sigData, $this->signature, $this->privateKey->instance, $algorithm ) ) {
+            if ( ! openssl_sign( $sigData, $this->signature, $privateKey, $algorithm ) ) {
 
                 throw new Exception(
-                    openssl_error_string(),
+                    openssl_error_string() ?: 'No error message',
                     Lookups::E_OPENSSL_ERROR
                 );
             }

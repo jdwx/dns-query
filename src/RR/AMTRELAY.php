@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -40,7 +42,9 @@ use JDWX\DNSQuery\Packet\Packet;
  */
 class AMTRELAY extends RR {
 
+
     # Type definitions that match the "type" field below
+
 
     /** @const AMTRELAY type None */
     public const AMTRELAY_TYPE_NONE = 0;
@@ -74,7 +78,7 @@ class AMTRELAY extends RR {
         $this->precedence = (int) array_shift( $i_rData );
         $this->discovery = (int) array_shift( $i_rData );
         $this->relayType = (int) array_shift( $i_rData );
-        $this->relay = trim( strtolower( trim( array_shift( $i_rData ) ) ), '.' );
+        $this->relay = trim( strtolower( trim( TypeIs::string( array_shift( $i_rData ) ) ) ), '.' );
 
         # If there's anything other than 0 in the discovery value, then force it to 1, so
         # that it is effectively either "true" or "false."
@@ -151,8 +155,7 @@ class AMTRELAY extends RR {
         if ( $this->rdLength > 0 ) {
 
             # Parse off the first two octets.
-            /** @noinspection SpellCheckingInspection */
-            $parse = unpack( 'Cprecedence/Csecond', $this->rdata );
+            $parse = OK::unpack( 'Cprecedence/Csecond', $this->rdata );
 
             $this->precedence = $parse[ 'precedence' ];
             $this->discovery = ( $parse[ 'second' ] >> 7 ) & 0x1;
@@ -167,7 +170,7 @@ class AMTRELAY extends RR {
                     break;
 
                 case self::AMTRELAY_TYPE_IPV4:
-                    $this->relay = inet_ntop( substr( $this->rdata, $offset, 4 ) );
+                    $this->relay = OK::inet_ntop( substr( $this->rdata, $offset, 4 ) );
                     break;
 
                 case self::AMTRELAY_TYPE_IPV6:
@@ -175,7 +178,7 @@ class AMTRELAY extends RR {
                     # PHP's inet_ntop returns IPv6 addresses in their compressed form, but we want to keep
                     # with the preferred standard, so we'll parse it manually.
                     $ip = unpack( 'n8', substr( $this->rdata, $offset, 16 ) );
-                    if ( count( $ip ) == 8 ) {
+                    if ( is_array( $ip ) && count( $ip ) == 8 ) {
                         $this->relay = vsprintf( '%x:%x:%x:%x:%x:%x:%x:%x', $ip );
                     } else {
                         return false;
@@ -211,4 +214,6 @@ class AMTRELAY extends RR {
 
         return $out;
     }
+
+
 }

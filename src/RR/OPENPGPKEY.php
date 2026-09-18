@@ -8,6 +8,8 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -46,7 +48,7 @@ class OPENPGPKEY extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->key = array_shift( $i_rData );
+        $this->key = TypeIs::string( array_shift( $i_rData ) );
 
         return true;
     }
@@ -56,7 +58,7 @@ class OPENPGPKEY extends RR {
     protected function rrGet( Packet $i_packet ) : ?string {
         if ( strlen( $this->key ) > 0 ) {
 
-            $data = base64_decode( $this->key );
+            $data = OK::base64_decode( $this->key );
 
             $i_packet->offset += strlen( $data );
 

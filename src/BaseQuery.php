@@ -16,6 +16,7 @@ use JDWX\DNSQuery\Packet\ResponsePacket;
 use JDWX\DNSQuery\RR\RR;
 use JDWX\DNSQuery\RR\SIG;
 use JDWX\DNSQuery\RR\TSIG;
+use JDWX\Strict\OK;
 
 
 /**
@@ -128,7 +129,7 @@ class BaseQuery {
      * @return string the fully expanded IPv6 address
      */
     public static function expandIPv6( string $i_address ) : string {
-        $hex = unpack( 'H*hex', inet_pton( $i_address ) );
+        $hex = OK::unpack( 'H*hex', OK::inet_pton( $i_address ) );
 
         return substr( preg_replace( '/([A-f\d]{4})/', '$1:', $hex[ 'hex' ] ), 0, -1 );
     }
@@ -614,7 +615,7 @@ class BaseQuery {
                     break;
 
                 case 'search':
-                    $this->searchList = preg_split( '/\s+/', $value );
+                    $this->searchList = OK::preg_split_list( '/\s+/', $value );
                     break;
 
                 case 'options':
@@ -777,10 +778,8 @@ class BaseQuery {
                 continue;
             }
 
-            break;
+            return $response;
         }
-
-        return $response;
     }
 
 

@@ -14,6 +14,8 @@ use JDWX\DNSQuery\Resolver;
 use JDWX\DNSQuery\RR\A;
 use JDWX\DNSQuery\RR\CNAME;
 use JDWX\DNSQuery\RR\MX;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 use PHPUnit\Framework\TestCase;
 
 
@@ -97,18 +99,26 @@ final class ResolverTest extends TestCase {
     public function testDNSGetRecordDropIn() : void {
         $rExpected = dns_get_record( 'google.com', DNS_MX );
         $rActual = Resolver::dns_get_record( 'google.com', DNS_MX );
+        assert( is_array( $rExpected ) );
+        assert( is_array( $rActual ) );
         $this->compareRRArrays( $rExpected, $rActual );
 
         $rExpected = dns_get_record( 'iana.org', DNS_A );
         $rActual = Resolver::dns_get_record( 'iana.org', DNS_A );
+        assert( is_array( $rExpected ) );
+        assert( is_array( $rActual ) );
         $this->compareRRArrays( $rExpected, $rActual );
 
         $rExpected = dns_get_record( 'iana.org', DNS_A | DNS_AAAA );
         $rActual = Resolver::dns_get_record( 'iana.org', DNS_A | DNS_AAAA );
+        assert( is_array( $rExpected ) );
+        assert( is_array( $rActual ) );
         $this->compareRRArrays( $rExpected, $rActual );
 
         $rExpected = dns_get_record( 'www.amazon.com', DNS_CNAME );
         $rActual = Resolver::dns_get_record( 'www.amazon.com', DNS_CNAME );
+        assert( is_array( $rExpected ) );
+        assert( is_array( $rActual ) );
         $this->compareRRArrays( $rExpected, $rActual );
 
         $rExpected = dns_get_record( 'org.', DNS_SOA );
@@ -155,6 +165,8 @@ final class ResolverTest extends TestCase {
         # Test DNS_ANY (the default value).
         $rExpected = dns_get_record( 'iana.org' );
         $rActual = Resolver::dns_get_record( 'iana.org' );
+        assert( is_array( $rExpected ) );
+        assert( is_array( $rActual ) );
         $this->compareRRArrays( $rExpected, $rActual );
     }
 
@@ -219,7 +231,7 @@ final class ResolverTest extends TestCase {
             $row[ 'ttl' ] = 0;
             if ( $row[ 'type' ] === 'AAAA' ) {
                 # Normalize IPv6 addresses.
-                $row[ 'ipv6' ] = inet_ntop( inet_pton( $row[ 'ipv6' ] ) );
+                $row[ 'ipv6' ] = OK::inet_ntop( OK::inet_pton( TypeIs::string( $row[ 'ipv6' ] ) ) );
             }
             $rActualList[] = self::rrArrayToString( $row );
         }
@@ -229,7 +241,7 @@ final class ResolverTest extends TestCase {
             $row[ 'ttl' ] = 0;
             if ( $row[ 'type' ] === 'AAAA' ) {
                 # Normalize IPv6 addresses.
-                $row[ 'ipv6' ] = inet_ntop( inet_pton( $row[ 'ipv6' ] ) );
+                $row[ 'ipv6' ] = OK::inet_ntop( OK::inet_pton( TypeIs::string( $row[ 'ipv6' ] ) ) );
             }
             $rExpectedList[] = self::rrArrayToString( $row );
         }

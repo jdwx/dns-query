@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -62,7 +63,7 @@ class MX extends RR {
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
         $this->preference = (int) array_shift( $i_rData );
-        $this->exchange = $this->cleanString( array_shift( $i_rData ) );
+        $this->exchange = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
 
         return true;
     }

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -108,14 +109,14 @@ class RRSIG extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->typeCovered = strtoupper( array_shift( $i_rData ) );
+        $this->typeCovered = strtoupper( TypeIs::string( array_shift( $i_rData ) ) );
         $this->algorithm = (int) array_shift( $i_rData );
         $this->labels = (int) array_shift( $i_rData );
         $this->origTTL = (int) array_shift( $i_rData );
-        $this->sigExpiration = array_shift( $i_rData );
-        $this->sigInception = array_shift( $i_rData );
+        $this->sigExpiration = TypeIs::string( array_shift( $i_rData ) );
+        $this->sigInception = TypeIs::string( array_shift( $i_rData ) );
         $this->keytag = (int) array_shift( $i_rData );
-        $this->signName = $this->cleanString( array_shift( $i_rData ) );
+        $this->signName = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
 
         $this->signature = '';
         foreach ( $i_rData as $line ) {

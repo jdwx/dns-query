@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
 
 
 /**
@@ -43,7 +44,7 @@ class TYPE65534 extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->privateData = base64_decode( implode( '', $i_rData ) );
+        $this->privateData = OK::base64_decode( implode( '', $i_rData ) );
 
         return true;
     }

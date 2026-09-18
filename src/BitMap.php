@@ -7,6 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery;
 
 
+use JDWX\Strict\OK;
+
+
 /**
  * DNS Library for handling lookups and updates.
  *
@@ -120,7 +123,7 @@ class BitMap {
         $result = '';
 
         $bin = substr( chunk_split( strrev( $number ), 4, '-' ), 0, -1 );
-        $temp = preg_split( '[-]', $bin, -1, PREG_SPLIT_DELIM_CAPTURE );
+        $temp = OK::preg_split_list( '[-]', $bin, -1, PREG_SPLIT_DELIM_CAPTURE );
 
         for ( $ii = count( $temp ) - 1 ; $ii >= 0 ; $ii-- ) {
 

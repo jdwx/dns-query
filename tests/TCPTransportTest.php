@@ -10,6 +10,8 @@ namespace JDWX\DNSQuery\Tests;
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Network\TCPTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 use PHPUnit\Framework\TestCase;
 
 
@@ -33,7 +35,7 @@ final class TCPTransportTest extends TestCase {
      * @throws \Exception
      */
     public function testTCPTransportSocketReadTooShort() : void {
-        $socket = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
+        $socket = OK::socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
         $port = random_int( 2048, 65535 );
         socket_bind( $socket, '127.0.0.1', $port );
         socket_listen( $socket );
@@ -41,7 +43,7 @@ final class TCPTransportTest extends TestCase {
         $req = new RequestPacket( 'google.com', 'MX' );
         $udp = new TCPTransport( '127.0.0.1', $port );
 
-        $socketClient = socket_accept( $socket );
+        $socketClient = TypeIs::socket( socket_accept( $socket ) );
 
         $udp->sendRequest( $req );
         socket_recv( $socketClient, $buf, 1024, 0 );

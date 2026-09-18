@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -50,7 +51,7 @@ class L32 extends RR {
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
         $this->preference = (int) array_shift( $i_rData );
-        $this->locator32 = array_shift( $i_rData );
+        $this->locator32 = TypeIs::string( array_shift( $i_rData ) );
         return true;
     }
 

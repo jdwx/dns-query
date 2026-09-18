@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -55,7 +56,7 @@ class WKS extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->address = strtolower( trim( array_shift( $i_rData ), '.' ) );
+        $this->address = strtolower( trim( TypeIs::string( array_shift( $i_rData ) ), '.' ) );
         $this->protocol = (int) array_shift( $i_rData );
         $this->bitmap = array_map( intval( ... ), $i_rData );
         return true;
@@ -96,7 +97,7 @@ class WKS extends RR {
 
                 if ( $maxPort == 8 ) {
 
-                    $data .= chr( bindec( $string ) );
+                    $data .= chr( TypeIs::int( bindec( $string ) ) );
                     $string = '';
                     $maxPort = 0;
                 }

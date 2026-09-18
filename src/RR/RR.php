@@ -29,6 +29,7 @@ namespace JDWX\DNSQuery\RR;
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -190,12 +191,12 @@ abstract class RR {
                             Lookups::E_PARSE_ERROR
                         );
                     }
-                    $class = strtoupper( array_shift( $values ) );
+                    $class = strtoupper( TypeIs::string( array_shift( $values ) ) );
                     break;
 
                 case isset( Lookups::$rrTypesByName[ strtoupper( $value ) ] ):
 
-                    $type = strtoupper( array_shift( $values ) );
+                    $type = strtoupper( TypeIs::string( array_shift( $values ) ) );
                     break 2;
 
                 default:

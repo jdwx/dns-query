@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -67,7 +68,7 @@ class CAA extends RR {
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
         $this->flags = (int) array_shift( $i_rData );
-        $this->tag = array_shift( $i_rData );
+        $this->tag = TypeIs::string( array_shift( $i_rData ) );
 
         $this->value = trim( $this->cleanString( implode( ' ', $i_rData ) ), '"' );
 
@@ -103,7 +104,7 @@ class CAA extends RR {
             $offset = 2;
 
             $this->tag = substr( $this->rdata, $offset, $parse[ 'tag_length' ] );
-            $offset += $parse[ 'tag_length' ];
+            $offset = TypeIs::int( $offset + $parse[ 'tag_length' ] );
 
             $this->value = substr( $this->rdata, $offset );
 

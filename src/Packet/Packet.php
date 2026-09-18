@@ -11,6 +11,8 @@ use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Question;
 use JDWX\DNSQuery\RR\RR;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 use Stringable;
 
 
@@ -79,7 +81,7 @@ class Packet implements Stringable {
     /**
      * parses a domain label from a DNS Packet at the given offset
      *
-     * @param Packet $packet Packet to look in for the domain name
+     * @param Packet       $packet Packet to look in for the domain name
      * @param int         &$offset (input/output) Offset into the given packet object
      *
      * @return ?string The domain name or null if it's invalid or not found.
@@ -114,7 +116,7 @@ class Packet implements Stringable {
      * RFC 1035 specifies that names should be written as a series of labels
      * with a single null byte at the end.
      * Each label starts with its length, followed by the label itself.
-     * This function converts a provided name to that format, but does not
+     * This function converts a provided name to that format but does not
      * perform any compression.
      *
      * @param string $name the name to be compressed
@@ -173,7 +175,7 @@ class Packet implements Stringable {
      * This logic was based on the Net::DNS::Packet::dn_comp() function
      * by Michael Fuhr
      *
-     * @param string $name Name to be compressed
+     * @param string  $name   Name to be compressed
      * @param int    &$offset Offset into the given packet object
      *
      * @return string
@@ -182,8 +184,8 @@ class Packet implements Stringable {
         # Use preg_split() rather than explode() so that we can use the negative lookbehind
         # to catch cases where we have escaped dots in strings.
         #
-        # There are only a few cases like this; the rName in SOA for example.
-        $names = str_replace( '\.', '.', preg_split( '/(?<!\\\)\./', $name ) );
+        # There are only a few cases like this; the rName in SOA, for example.
+        $names = str_replace( '\.', '.', OK::preg_split_list( '/(?<!\\\)\./', $name ) );
         $compName = '';
 
         while ( ! empty( $names ) ) {
@@ -245,13 +247,13 @@ class Packet implements Stringable {
 
 
     /**
-     * expands the domain name stored at a given offset in a DNS Packet
+     * Expands the domain name stored at a given offset in a DNS Packet
      *
      * This logic was based on the Net::DNS::Packet::dn_expand() function
      * by Michael Fuhr
      *
-     * @param int         &$io_offset (input/output) Offset into the given packet object
-     * @param bool $i_escapeDotLiterals Escape periods in names
+     * @param int         &$io_offset           (input/output) Offset into the given packet object
+     * @param bool         $i_escapeDotLiterals Escape periods in names
      *
      * @return ?string The domain name, or null if it's invalid or not found.
      */
@@ -266,7 +268,7 @@ class Packet implements Stringable {
             $labelLen = ord( $this->rdata[ $io_offset ] );
             if ( 0 === $labelLen ) {
 
-                ++$io_offset;
+                $io_offset = TypeIs::int( $io_offset + 1 );
                 break;
 
             }
@@ -285,12 +287,12 @@ class Packet implements Stringable {
                 }
 
                 $name .= $name2;
-                $io_offset += 2;
+                $io_offset = TypeIs::int( $io_offset + 2 );
 
                 break;
             }
 
-            ++$io_offset;
+            $io_offset = TypeIs::int( $io_offset + 1 );
 
             if ( $this->rdLength < ( $io_offset + $labelLen ) ) {
 
@@ -305,7 +307,7 @@ class Packet implements Stringable {
             }
 
             $name .= $elem . '.';
-            $io_offset += $labelLen;
+            $io_offset = TypeIs::int( $io_offset + $labelLen );
         }
 
         return trim( $name, '.' );
@@ -316,8 +318,8 @@ class Packet implements Stringable {
      *  expands the domain name stored at a given offset in this DNS Packet
      *  and throws an exception on failure (contrast static::expand()).
      *
-     * @param int  &$io_offset (input/output) Offset into the given Packet object
-     * @param bool $i_escapeDotLiterals if we should escape periods in names
+     * @param int  &$io_offset           (input/output) Offset into the given Packet object
+     * @param bool  $i_escapeDotLiterals if we should escape periods in names
      *
      * @return string the expanded domain name
      *

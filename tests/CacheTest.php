@@ -33,6 +33,7 @@ final class CacheTest extends TestCase {
         $cache->put( 'foo', $rsp );
         self::assertTrue( $cache->has( 'foo' ) );
         $xx = $cache->get( 'foo' );
+        assert( $xx instanceof \JDWX\DNSQuery\Packet\ResponsePacket );
         $ans = $xx->answer[ 0 ];
         assert( $ans instanceof MX );
         self::assertEquals( 'smtp.google.com', $ans->exchange );

@@ -8,6 +8,8 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -55,7 +57,7 @@ class DHCID extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $data = base64_decode( array_shift( $i_rData ) );
+        $data = OK::base64_decode( TypeIs::string( array_shift( $i_rData ) ) );
         if ( strlen( $data ) > 0 ) {
 
             # Unpack the id type and digest type.

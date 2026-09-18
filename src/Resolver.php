@@ -337,7 +337,7 @@ class Resolver extends BaseQuery {
         # Cache the response object if allowable.
         # $packet_hash is only set here if caching is turned on, allowable,
         # and the record wasn't already cached.
-        if ( is_string( $packetHash ) ) {
+        if ( $this->cache instanceof ICache && is_string( $packetHash ) ) {
             $this->cache->put( $packetHash, $response );
         }
 

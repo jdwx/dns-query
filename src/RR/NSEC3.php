@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BitMap;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -77,7 +79,7 @@ class NSEC3 extends RR {
         $this->iterations = (int) array_shift( $i_rData );
 
         # An empty salt is represented as '-' per RFC5155 section 3.3
-        $salt = array_shift( $i_rData );
+        $salt = TypeIs::string( array_shift( $i_rData ) );
         if ( $salt == '-' ) {
 
             $this->saltLength = 0;
@@ -88,8 +90,8 @@ class NSEC3 extends RR {
             $this->salt = strtoupper( $salt );
         }
 
-        $this->hashedOwnerName = array_shift( $i_rData );
-        $this->hashLength = strlen( base64_decode( $this->hashedOwnerName ) );
+        $this->hashedOwnerName = TypeIs::string( array_shift( $i_rData ) );
+        $this->hashLength = strlen( OK::base64_decode( $this->hashedOwnerName ) );
 
         $this->typeBitMaps = $i_rData;
 
@@ -145,7 +147,7 @@ class NSEC3 extends RR {
 
                 $parse = unpack( 'H*', substr( $this->rdata, $offset, $this->saltLength ) );
                 $this->salt = strtoupper( $parse[ 1 ] );
-                $offset += $this->saltLength;
+                $offset = TypeIs::int( $offset + $this->saltLength );
             }
 
             # Unpack the hash length.
@@ -160,7 +162,7 @@ class NSEC3 extends RR {
                 $this->hashedOwnerName = base64_encode(
                     substr( $this->rdata, $offset, $this->hashLength )
                 );
-                $offset += $this->hashLength;
+                $offset = TypeIs::int( $offset + $this->hashLength );
             }
 
             # Parse out the RR bitmap.

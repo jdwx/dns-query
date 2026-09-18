@@ -8,6 +8,8 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -96,7 +98,10 @@ class APL extends RR {
                     case 1:
                         $address = explode(
                             '.',
-                            $this->_trimZeros( $item[ 'address_family' ], $item[ 'afd_part' ] )
+                            $this->_trimZeros(
+                                TypeIs::int( $item[ 'address_family' ] ),
+                                TypeIs::string( $item[ 'afd_part' ] )
+                            )
                         );
 
                         foreach ( $address as $byte ) {
@@ -106,7 +111,10 @@ class APL extends RR {
                     case 2:
                         $address = explode(
                             ':',
-                            $this->_trimZeros( $item[ 'address_family' ], $item[ 'afd_part' ] )
+                            $this->_trimZeros(
+                                TypeIs::int( $item[ 'address_family' ] ),
+                                TypeIs::string( $item[ 'afd_part' ] )
+                            )
                         );
 
                         foreach ( $address as $byte ) {
@@ -136,13 +144,11 @@ class APL extends RR {
             while ( $offset < $this->rdLength ) {
 
                 # Unpack the family, prefix, negate and length values.
-                /** @noinspection SpellCheckingInspection */
-                $parse = unpack(
+                $parse = OK::unpack(
                     'naddress_family/Cprefix/Cextra', substr( $this->rdata, $offset )
                 );
 
                 $item = [
-
                     'address_family' => $parse[ 'address_family' ],
                     'prefix' => $parse[ 'prefix' ],
                     'n' => ( $parse[ 'extra' ] >> 7 ) & 0x1,
@@ -222,7 +228,7 @@ class APL extends RR {
     /**
      * Return an IP address with the right-hand zeros trimmed
      *
-     * @param int $family IP address family from the rdata
+     * @param int    $family  IP address family from the rdata
      * @param string $address IP address
      *
      * @return string The trimmed IP address.

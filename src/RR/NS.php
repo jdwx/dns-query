@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -56,7 +57,7 @@ class NS extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->nsdName = $this->cleanString( array_shift( $i_rData ) );
+        $this->nsdName = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
         return true;
     }
 

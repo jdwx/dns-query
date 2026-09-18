@@ -7,8 +7,9 @@ declare( strict_types = 1 );
 namespace JDWX\DNSQuery\Network;
 
 
-use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\BaseQuery;
+use JDWX\DNSQuery\Exception;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -29,13 +30,14 @@ use JDWX\DNSQuery\BaseQuery;
 
 /** Network socket management using PHP streams.
  *
- * By and large this class returns true on success and false on failure rather
+ * By and large, this class returns true on success and false on failure rather
  * than throwing exceptions because there are many cases in which a failure is
  * not exceptional.  (For example, if we have been provided a list of name
- * servers and we fail to connect to one, we want to try the next one,
+ * servers, and we fail to connect to one, we want to try the next one,
  * not abort.)
  */
 class Socket {
+
 
     /** @const TCP socket type code */
     public const SOCK_STREAM = SOCK_STREAM;
@@ -83,10 +85,10 @@ class Socket {
     /**
      * constructor - set the port details
      *
-     * @param int    $i_type Type of socket to use (i.e., Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
+     * @param int    $i_type          Type of socket to use (i.e., Socket::SOCK_DGRAM or Socket::SOCK_STREAM)
      * @param string $i_remoteAddress IP address to connect to
-     * @param int    $i_remotePort IP port to connect to
-     * @param float  $i_timeout Timeout value (in seconds) to use for socket functions
+     * @param int    $i_remotePort    IP port to connect to
+     * @param float  $i_timeout       Timeout value (in seconds) to use for socket functions
      */
     public function __construct( int $i_type, string $i_remoteAddress, int $i_remotePort, float $i_timeout = 5.0 ) {
         $this->type = $i_type;
@@ -112,9 +114,9 @@ class Socket {
      * sets the local address/port for the socket to bind to
      *
      * @param ?string $i_localAddress Local IP address to bind to
-     *                         or null to let the OS choose
-     * @param ?int    $i_localPort Local IP port to bind to, or null to let the
-     *                      OS choose
+     *                                or null to let the OS choose
+     * @param ?int    $i_localPort    Local IP port to bind to, or null to let the
+     *                                OS choose
      *
      * @return void
      *
@@ -163,7 +165,7 @@ class Socket {
 
         # Create socket.
         $errno = 0;
-        $errorString = "";
+        $errorString = '';
 
         switch ( $this->type ) {
             case Socket::SOCK_STREAM:
@@ -171,7 +173,7 @@ class Socket {
                 if ( BaseQuery::isIPv4( $this->remoteAddress ) ) {
 
                     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-                    $this->sock = @stream_socket_client(
+                    $sock = @stream_socket_client(
                         'tcp://' . $this->remoteAddress . ':' . $this->remotePort,
                         $errno, $errorString, $this->timeout,
                         STREAM_CLIENT_CONNECT, $context
@@ -179,7 +181,7 @@ class Socket {
                 } elseif ( BaseQuery::isIPv6( $this->remoteAddress ) ) {
 
                     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-                    $this->sock = @stream_socket_client(
+                    $sock = @stream_socket_client(
                         'tcp://[' . $this->remoteAddress . ']:' . $this->remotePort,
                         $errno, $errorString, $this->timeout,
                         STREAM_CLIENT_CONNECT, $context
@@ -197,7 +199,7 @@ class Socket {
                 if ( BaseQuery::isIPv4( $this->remoteAddress ) ) {
 
                     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-                    $this->sock = @stream_socket_client(
+                    $sock = @stream_socket_client(
                         'udp://' . $this->remoteAddress . ':' . $this->remotePort,
                         $errno, $errorString, $this->timeout,
                         STREAM_CLIENT_CONNECT, $context
@@ -205,7 +207,7 @@ class Socket {
                 } elseif ( BaseQuery::isIPv6( $this->remoteAddress ) ) {
 
                     /** @noinspection PhpUsageOfSilenceOperatorInspection */
-                    $this->sock = @stream_socket_client(
+                    $sock = @stream_socket_client(
                         'udp://[' . $this->remoteAddress . ']:' . $this->remotePort,
                         $errno, $errorString, $this->timeout,
                         STREAM_CLIENT_CONNECT, $context
@@ -223,10 +225,11 @@ class Socket {
                 return false;
         }
 
-        if ( $this->sock === false ) {
+        if ( ! is_resource( $sock ) ) {
             $this->lastError = $errorString;
             return false;
         }
+        $this->sock = $sock;
 
         # Set it to non-blocking and set the timeout.
         stream_set_blocking( $this->sock, false );
@@ -239,7 +242,7 @@ class Socket {
     /**
      * Read a response from a DNS server
      *
-     * @param int &$o_size (output) The size of the DNS packet read is passed back
+     * @param int &$o_size    (output) The size of the DNS packet read is passed back
      * @param int  $i_maxSize Max data size that the caller wants
      *
      * @return bool|string Binary data from the server on success, otherwise false
@@ -289,9 +292,9 @@ class Socket {
             $length = ord( $data[ 0 ] ) << 8 | ord( $data[ 1 ] );
         }
 
-        # At this point, we know that there is data on the socket to be read,
+        # At this point, we know that there is data on the socket to be read
         # because we've already extracted the length from the first two bytes.
-        # So the easiest thing to do, is just turn off socket blocking, and
+        # So the easiest thing to do is just turn off socket blocking and
         # wait for the data.
         stream_set_blocking( $this->sock, true );
 
@@ -386,7 +389,7 @@ class Socket {
             $packetLength = pack( 'n', $length );
 
             /** @noinspection PhpUsageOfSilenceOperatorInspection */
-            if ( @fwrite( $this->sock, $packetLength ) === false ) {
+            if ( @fwrite( TypeIs::resource( $this->sock ), $packetLength ) === false ) {
                 $this->lastError = 'failed to write 16bit length';
                 return false;
             }
@@ -394,9 +397,8 @@ class Socket {
 
         # Write the data to the socket.
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
-        $size = @fwrite( $this->sock, $i_data );
+        $size = @fwrite( TypeIs::resource( $this->sock ), $i_data );
         if ( ( $size === false ) || ( $size != $length ) ) {
-
             $this->lastError = 'failed to write packet';
             return false;
         }

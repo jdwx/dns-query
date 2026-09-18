@@ -11,6 +11,7 @@ use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Network\UDPTransport;
 use JDWX\DNSQuery\Packet\RequestPacket;
+use JDWX\Strict\OK;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use ReflectionObject;
@@ -88,7 +89,7 @@ final class UDPTransportTest extends TestCase {
      * @throws \Exception
      */
     public function testUDPTransportSocketReadTooShort() : void {
-        $socket = socket_create( AF_INET, SOCK_DGRAM, SOL_UDP );
+        $socket = OK::socket_create( AF_INET, SOCK_DGRAM, SOL_UDP );
         $port = random_int( 2048, 65535 );
         socket_bind( $socket, '127.0.0.1', $port );
 

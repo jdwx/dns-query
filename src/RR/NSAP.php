@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -55,7 +56,7 @@ class NSAP extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $data = strtolower( trim( array_shift( $i_rData ) ) );
+        $data = strtolower( trim( TypeIs::string( array_shift( $i_rData ) ) ) );
 
         # There is no real standard for format, so we can't rely on the fact that
         # the value will come in with periods separating the values so strip

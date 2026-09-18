@@ -31,6 +31,8 @@ use OpenSSLAsymmetricKey;
  *
  */
 class PrivateKey {
+
+
     /** @var string Filename that was loaded; stored for reference */
     public string $filename;
 
@@ -152,8 +154,7 @@ class PrivateKey {
 
         # Read all the data from the file.
         $data = file( $i_keyPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-        if ( count( $data ) == 0 ) {
-
+        if ( ! is_array( $data ) || count( $data ) == 0 ) {
             throw new Exception(
                 'file ' . $keyName . ' is empty!',
                 Lookups::E_OPENSSL_INV_PKEY
@@ -288,7 +289,7 @@ class PrivateKey {
         $this->instance = openssl_pkey_new( $args );
         if ( $this->instance === false ) {
             throw new Exception(
-                openssl_error_string(),
+                openssl_error_string() ?: 'No error message',
                 Lookups::E_OPENSSL_ERROR
             );
         }

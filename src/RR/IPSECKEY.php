@@ -9,6 +9,8 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -92,7 +94,7 @@ class IPSECKEY extends RR {
         $precedence = (int) array_shift( $i_rData );
         $gatewayType = (int) array_shift( $i_rData );
         $algorithm = (int) array_shift( $i_rData );
-        $gateway = trim( strtolower( trim( array_shift( $i_rData ) ) ), '.' );
+        $gateway = trim( strtolower( trim( TypeIs::string( array_shift( $i_rData ) ) ) ), '.' );
         $key = array_shift( $i_rData ) ?? "";
 
         # Validate it.
@@ -215,13 +217,13 @@ class IPSECKEY extends RR {
                     break;
 
                 case self::GATEWAY_TYPE_IPV4:
-                    $this->gateway = inet_ntop( substr( $this->rdata, $offset, 4 ) );
+                    $this->gateway = OK::inet_ntop( substr( $this->rdata, $offset, 4 ) );
                     $offset += 4;
                     break;
 
                 case self::GATEWAY_TYPE_IPV6:
                     $ip = unpack( 'n8', substr( $this->rdata, $offset, 16 ) );
-                    if ( count( $ip ) == 8 ) {
+                    if ( is_array( $ip ) && count( $ip ) == 8 ) {
 
                         $this->gateway = vsprintf( '%x:%x:%x:%x:%x:%x:%x:%x', $ip );
                         $offset += 16;

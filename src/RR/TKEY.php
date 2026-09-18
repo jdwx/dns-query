@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -104,9 +105,9 @@ class TKEY extends RR {
     protected function rrFromString( array $i_rData ) : bool {
 
         # Data passed in is assumed: <algorithm> <mode> <key>
-        $this->algorithm = $this->cleanString( array_shift( $i_rData ) );
+        $this->algorithm = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
         $this->mode = (int) array_shift( $i_rData );
-        $this->keyData = trim( array_shift( $i_rData ), '.' );
+        $this->keyData = trim( TypeIs::string( array_shift( $i_rData ) ), '.' );
 
         # The rest of the data is set manually.
         $this->inception = (string) time();
@@ -181,13 +182,13 @@ class TKEY extends RR {
             $this->error = $parse[ 'error' ];
             $this->keySize = $parse[ 'key_size' ];
 
-            $offset += 14;
+            $offset = TypeIs::int( $offset + 14 );
 
             # If key_size > 0, then copy out the key.
             if ( $this->keySize > 0 ) {
 
                 $this->keyData = substr( $i_packet->rdata, $offset, $this->keySize );
-                $offset += $this->keySize;
+                $offset = TypeIs::int( $offset + $this->keySize );
             }
 
             # Unpack the other length.
@@ -195,7 +196,7 @@ class TKEY extends RR {
             $parse = unpack( '@' . $offset . '/nother_size', $i_packet->rdata );
 
             $this->otherSize = $parse[ 'other_size' ];
-            $offset += 2;
+            $offset = TypeIs::int( $offset + 2 );
 
             # If other_size > 0, then copy out the data.
             if ( $this->otherSize > 0 ) {

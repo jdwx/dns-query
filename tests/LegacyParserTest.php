@@ -255,11 +255,12 @@ final class LegacyParserTest extends TestCase {
         $request->additional[] = RR::fromString( 'mykey TSIG Zm9vYmFy' );
         $request->header->arCount = 1;
 
-        assert( $request->additional[ 0 ] instanceof TSIG );
-        $line = $request->additional[ 0 ]->name . '. ' . $request->additional[ 0 ]->ttl . ' ' .
-            $request->additional[ 0 ]->class . ' ' . $request->additional[ 0 ]->type . ' ' .
-            $request->additional[ 0 ]->algorithm . '. ' . $request->additional[ 0 ]->timeSigned . ' ' .
-            $request->additional[ 0 ]->fudge;
+        $tsig = $request->additional[ 0 ];
+        assert( $tsig instanceof TSIG );
+        $line = $tsig->name . '. ' . $tsig->ttl . ' ' .
+            $tsig->class . ' ' . $tsig->type . ' ' .
+            $tsig->algorithm . '. ' . $tsig->timeSigned . ' ' .
+            $tsig->fudge;
 
         # Get the binary packet data.
         $data = $request->get();

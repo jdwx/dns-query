@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -65,7 +66,7 @@ class NSEC3PARAM extends RR {
         $this->flags = (int) array_shift( $i_rData );
         $this->iterations = (int) array_shift( $i_rData );
 
-        $salt = array_shift( $i_rData );
+        $salt = TypeIs::string( array_shift( $i_rData ) );
         if ( $salt == '-' ) {
 
             $this->saltLength = 0;

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -127,7 +128,7 @@ class OPT extends RR {
     protected function rrFromString( array $i_rData ) : bool {
         $this->optionCode = (int) array_shift( $i_rData );
         $this->optionData = array_shift( $i_rData );
-        $this->optionLength = strlen( $this->optionData );
+        $this->optionLength = strlen( TypeIs::string( $this->optionData ) );
 
         $this->unpackTTL();
 

@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -53,7 +54,8 @@ class AAAA extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'ipv6' => "string" ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'ipv6' => 'string' ] )]
+    public function getPHPRData() : array {
         return [
             'ipv6' => $this->address,
         ];
@@ -64,7 +66,7 @@ class AAAA extends RR {
     protected function rrFromString( array $i_rData ) : bool {
 
         # Expand out compressed formats.
-        $value = array_shift( $i_rData );
+        $value = TypeIs::string( array_shift( $i_rData ) );
         if ( BaseQuery::isIPv6( $value ) ) {
 
             $this->address = $value;
@@ -78,7 +80,7 @@ class AAAA extends RR {
     /** @inheritDoc */
     protected function rrGet( Packet $i_packet ) : ?string {
         $i_packet->offset += 16;
-        return inet_pton( $this->address );
+        return inet_pton( $this->address ) ?: null;
     }
 
 
@@ -90,7 +92,7 @@ class AAAA extends RR {
             # but we want to keep with the preferred standard, so we'll parse
             # it manually.
             $xx = unpack( 'n8', $this->rdata );
-            if ( count( $xx ) == 8 ) {
+            if ( is_array( $xx ) && count( $xx ) == 8 ) {
                 $this->address = vsprintf( '%x:%x:%x:%x:%x:%x:%x:%x', $xx );
                 return true;
             }

@@ -11,6 +11,8 @@ use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
 use JDWX\DNSQuery\Packet\RequestPacket;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -115,7 +117,7 @@ class TSIG extends RR {
         # The only value passed in is the key
         #
         # This assumes it's passed in base64 encoded.
-        $this->key = preg_replace( '/\s+/', '', array_shift( $i_rData ) );
+        $this->key = preg_replace( '/\s+/', '', TypeIs::string( array_shift( $i_rData ) ) );
 
         # The rest of the data is set to default.
         $this->algorithm = self::HMAC_MD5;
@@ -177,7 +179,7 @@ class TSIG extends RR {
 
             # Sign the data.
             $this->mac = $this->_signHMAC(
-                $sigData, base64_decode( $this->key ), $this->algorithm
+                $sigData, OK::base64_decode( $this->key ), $this->algorithm
             );
             $this->macSize = strlen( $this->mac );
 
@@ -242,13 +244,13 @@ class TSIG extends RR {
             $this->fudge = $parse[ 'fudge' ];
             $this->macSize = $parse[ 'mac_size' ];
 
-            $offset += 10;
+            $offset = TypeIs::int( $offset + 10 );
 
             # Copy out the mac.
             if ( $this->macSize > 0 ) {
 
                 $this->mac = substr( $this->rdata, $offset, $this->macSize );
-                $offset += $this->macSize;
+                $offset = TypeIs::int( $offset + $this->macSize );
             }
 
             # Unpack the original id, error, and other_length values.
@@ -278,7 +280,7 @@ class TSIG extends RR {
                 /** @noinspection SpellCheckingInspection */
                 $parse = unpack(
                     'nhigh/nlow',
-                    substr( $this->rdata, $offset + 6, $this->otherLength )
+                    substr( $this->rdata, TypeIs::int( $offset + 6 ), $this->otherLength )
                 );
                 $this->otherData = $parse[ 'low' ];
             }

@@ -73,6 +73,7 @@ use JDWX\DNSQuery\RR\TYPE65534;
 use JDWX\DNSQuery\RR\URI;
 use JDWX\DNSQuery\RR\WKS;
 use JDWX\DNSQuery\RR\X25;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -98,14 +99,14 @@ use JDWX\DNSQuery\RR\X25;
 // build the reverse lookup tables; this is just so we don't have to
 // have duplicate static content lying around.
 //
-Lookups::$rrTypesById = array_flip( Lookups::$rrTypesByName );
-Lookups::$classesById = array_flip( Lookups::$classesByName );
-Lookups::$rrTypesClassToId = array_flip( Lookups::$rrTypesIdToClass );
-Lookups::$algorithmNameToID = array_flip( Lookups::$algorithmIdToName );
-Lookups::$digestNameToId = array_flip( Lookups::$digestIdToName );
-Lookups::$rrQTypesById = array_flip( Lookups::$rrQTypesByName );
-Lookups::$rrMetaTypesById = array_flip( Lookups::$rrMetaTypesByName );
-Lookups::$protocolById = array_flip( Lookups::$protocolByName );
+Lookups::$rrTypesById = TypeIs::arrayString( array_flip( Lookups::$rrTypesByName ) );
+Lookups::$classesById = TypeIs::arrayString( array_flip( Lookups::$classesByName ) );
+Lookups::$rrTypesClassToId = TypeIs::array( array_flip( Lookups::$rrTypesIdToClass ) );
+Lookups::$algorithmNameToID = TypeIs::array( array_flip( Lookups::$algorithmIdToName ) );
+Lookups::$digestNameToId = TypeIs::array( array_flip( Lookups::$digestIdToName ) );
+Lookups::$rrQTypesById = TypeIs::arrayString( array_flip( Lookups::$rrQTypesByName ) );
+Lookups::$rrMetaTypesById = TypeIs::arrayString( array_flip( Lookups::$rrMetaTypesByName ) );
+Lookups::$protocolById = TypeIs::arrayString( array_flip( Lookups::$protocolByName ) );
 
 
 /**
@@ -339,51 +340,87 @@ class Lookups {
 
     # EDNS0 Option Codes (OPT)
     # 0 - Reserved
-    public const EDNS0_OPT_LLQ = 1;
-    public const EDNS0_OPT_UL = 2;
+    public const EDNS0_OPT_LLQ  = 1;
+
+    public const EDNS0_OPT_UL   = 2;
+
     public const EDNS0_OPT_NSID = 3;
+
     # 4 - Reserved
-    public const EDNS0_OPT_DAU = 5;
-    public const EDNS0_OPT_DHU = 6;
-    public const EDNS0_OPT_N3U = 7;
+    public const EDNS0_OPT_DAU           = 5;
+
+    public const EDNS0_OPT_DHU           = 6;
+
+    public const EDNS0_OPT_N3U           = 7;
+
     public const EDNS0_OPT_CLIENT_SUBNET = 8;
-    public const EDNS0_OPT_EXPIRE = 9;
-    public const EDNS0_OPT_COOKIE = 10;
+
+    public const EDNS0_OPT_EXPIRE        = 9;
+
+    public const EDNS0_OPT_COOKIE        = 10;
+
     public const EDNS0_OPT_TCP_KEEPALIVE = 11;
-    public const EDNS0_OPT_PADDING = 12;
-    public const EDNS0_OPT_CHAIN = 13;
-    public const EDNS0_OPT_KEY_TAG = 14;
+
+    public const EDNS0_OPT_PADDING       = 12;
+
+    public const EDNS0_OPT_CHAIN         = 13;
+
+    public const EDNS0_OPT_KEY_TAG       = 14;
+
     # 15 - unassigned
     public const EDNS0_OPT_CLIENT_TAG = 16;
+
     public const EDNS0_OPT_SERVER_TAG = 17;
+
     # 18-26945 - unassigned
     public const EDNS0_OPT_DEVICEID = 26946;
 
     # DNSSEC Algorithms
-    public const DNSSEC_ALGORITHM_RES = 0;
-    public const DNSSEC_ALGORITHM_RSAMD5 = 1;
-    public const DNSSEC_ALGORITHM_DH = 2;
-    public const DNSSEC_ALGORITHM_DSA = 3;
-    public const DNSSEC_ALGORITHM_ECC = 4;
-    public const DNSSEC_ALGORITHM_RSASHA1 = 5;
-    public const DNSSEC_ALGORITHM_DSANSEC3SHA1 = 6;
+    public const DNSSEC_ALGORITHM_RES              = 0;
+
+    public const DNSSEC_ALGORITHM_RSAMD5           = 1;
+
+    public const DNSSEC_ALGORITHM_DH               = 2;
+
+    public const DNSSEC_ALGORITHM_DSA              = 3;
+
+    public const DNSSEC_ALGORITHM_ECC              = 4;
+
+    public const DNSSEC_ALGORITHM_RSASHA1          = 5;
+
+    public const DNSSEC_ALGORITHM_DSANSEC3SHA1     = 6;
+
     public const DSNSEC_ALGORITHM_RSASHA1NSEC3SHA1 = 7;
-    public const DNSSEC_ALGORITHM_RSASHA256 = 8;
-    public const DNSSEC_ALGORITHM_RSASHA512 = 10;
-    public const DNSSEC_ALGORITHM_ECCGOST = 12;
-    public const DNSSEC_ALGORITHM_ECDSAP256SHA256 = 13;
-    public const DNSSEC_ALGORITHM_ECDSAP384SHA384 = 14;
-    public const DNSSEC_ALGORITHM_ED25519 = 15;
-    public const DNSSEC_ALGORITHM_ED448 = 16;
-    public const DNSSEC_ALGORITHM_INDIRECT = 252;
-    public const DNSSEC_ALGORITHM_PRIVATEDNS = 253;
-    public const DNSSEC_ALGORITHM_PRIVATEOID = 254;
+
+    public const DNSSEC_ALGORITHM_RSASHA256        = 8;
+
+    public const DNSSEC_ALGORITHM_RSASHA512        = 10;
+
+    public const DNSSEC_ALGORITHM_ECCGOST          = 12;
+
+    public const DNSSEC_ALGORITHM_ECDSAP256SHA256  = 13;
+
+    public const DNSSEC_ALGORITHM_ECDSAP384SHA384  = 14;
+
+    public const DNSSEC_ALGORITHM_ED25519          = 15;
+
+    public const DNSSEC_ALGORITHM_ED448            = 16;
+
+    public const DNSSEC_ALGORITHM_INDIRECT         = 252;
+
+    public const DNSSEC_ALGORITHM_PRIVATEDNS       = 253;
+
+    public const DNSSEC_ALGORITHM_PRIVATEOID       = 254;
 
     # DNSSEC Digest Types
-    public const DNSSEC_DIGEST_RES = 0;
-    public const DNSSEC_DIGEST_SHA1 = 1;
+    public const DNSSEC_DIGEST_RES    = 0;
+
+    public const DNSSEC_DIGEST_SHA1   = 1;
+
     public const DNSSEC_DIGEST_SHA256 = 2;
-    public const DNSSEC_DIGEST_GOST = 3;
+
+    public const DNSSEC_DIGEST_GOST   = 3;
+
     public const DNSSEC_DIGEST_SHA384 = 4;
 
 
@@ -495,7 +532,7 @@ class Lookups {
         'TA' => 32768,        # same as DS
         'DLV' => 32769,       # RFC 4431
         'ALIAS' => 65401,
-        'TYPE65534' => 65534  # Private Bind record
+        'TYPE65534' => 65534,  # Private Bind record
     ];
 
     /** @var array<int, string> Map Q-types from ID to name (defined in RFC2929 section 3.1) */
@@ -507,7 +544,7 @@ class Lookups {
         'AXFR' => 252,     # RFC 1035
         'MAILB' => 253,    # RFC 883, Not implemented
         'MAILA' => 254,    # RFC 973, Not implemented
-        'ANY' => 255       # RFC 1035 - we support both 'ANY' and '*'
+        'ANY' => 255,       # RFC 1035 - we support both 'ANY' and '*'
     ];
 
     /** @var array<int, string> Map meta-types from ID to name */
@@ -517,7 +554,7 @@ class Lookups {
     public static array $rrMetaTypesByName = [
         'OPT' => 41,      # RFC 2671
         'TKEY' => 249,    # RFC 2930
-        'TSIG' => 250     # RFC 2845
+        'TSIG' => 250,     # RFC 2845
     ];
 
     /** @var int[] Map resource record type class names to their IDs */
@@ -606,7 +643,7 @@ class Lookups {
         'CH' => self::RR_CLASS_CH,        # RFC 1035
         'HS' => self::RR_CLASS_HS,        # RFC 1035
         'NONE' => self::RR_CLASS_NONE,    # RFC 2136
-        'ANY' => self::RR_CLASS_ANY       # RFC 1035
+        'ANY' => self::RR_CLASS_ANY,       # RFC 1035
     ];
 
     /** @var array<int, string> Map error codes to messages. */
@@ -631,6 +668,7 @@ class Lookups {
         self::RCODE_BADALG => 'Algorithm not supported.',
         self::RCODE_BADTRUNC => 'Bad truncation.',
     ];
+
     /** @var array<int, string> Map response codes (rCodes) from ID to status tag */
     public static array $resultCodeTags = [
         self::RCODE_NOERROR => 'NOERROR',
@@ -652,6 +690,7 @@ class Lookups {
         self::RCODE_BADALG => 'BADALG',
         self::RCODE_BADTRUNC => 'BADTRUNC',
     ];
+
     /** @var array<int, string> Map opcodes to short text tags. */
     public static array $opcodeTags = [
         self::OPCODE_QUERY => 'QUERY',
@@ -671,6 +710,7 @@ class Lookups {
         14 => 'OPCODE14',
         15 => 'OPCODE15',
     ];
+
     /** @var array<string, int> Map DNSSEC algorithm names to IDs */
     public static array $algorithmNameToID = [];
 
@@ -698,8 +738,10 @@ class Lookups {
         self::DNSSEC_ALGORITHM_PRIVATEDNS => 'PRIVATEDNS',
         self::DNSSEC_ALGORITHM_PRIVATEOID => 'PRIVATEOID',
     ];
+
     /** @var array<string, int> Map DNSSEC digest type names to IDs */
     public static array $digestNameToId = [];
+
     /** @var array<int, string> Map DNSSEC digest type IDs to names */
     public static array $digestIdToName = [
         self::DNSSEC_DIGEST_RES => 'RES',
@@ -708,8 +750,10 @@ class Lookups {
         self::DNSSEC_DIGEST_GOST => 'GOST-R-34.11-94',
         self::DNSSEC_DIGEST_SHA384 => 'SHA-384',
     ];
+
     /** @var array<int, string> Map protocol names to IDs */
     public static array $protocolById = [];
+
     /** @var array<string, int> Map protocol IDs to names */
     public static array $protocolByName = [
         'ICMP' => 1,
@@ -760,10 +804,11 @@ class Lookups {
         'BR-SAT-MON' => 76,
         # 77           - Unassigned
         'WB-MON' => 78,
-        'WB-EXPAK' => 79
+        'WB-EXPAK' => 79,
         # 80 - 254     - Unassigned
         # 255          - Reserved
     ];
+
     /** @var array<int, string> Map PHP DNS Constants used by dns_get_record() to RR classes */
     public static array $rrClassByPHPId = [
         DNS_A => A::class,
@@ -781,6 +826,7 @@ class Lookups {
         DNS_ALL => ALL::class,
         DNS_ANY => ANY::class,
     ];
+
     /** @var ?int The next packet ID to use when sending requests */
     private static ?int $nextPacketId = null;
 

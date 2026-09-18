@@ -83,7 +83,7 @@ class RecursiveResolver {
             if ( ! empty( $nsAddresses ) ) {
                 array_push( $out, ...$nsAddresses );
             } else {
-                array_push( $out, ...$this->lookupNameServer( $nsName ) );
+                array_push( $out, ...$this->lookupNameServer( (string) $nsName ) );
             }
         }
         echo 'Authoritative for ', $i_name, ': ', implode( ', ', $out ), "\n";

@@ -8,6 +8,8 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -78,8 +80,8 @@ class HIP extends RR {
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
         $this->pubkeyAlgorithm = (int) array_shift( $i_rData );
-        $this->hit = strtoupper( array_shift( $i_rData ) );
-        $this->publicKey = array_shift( $i_rData );
+        $this->hit = strtoupper( TypeIs::string( array_shift( $i_rData ) ) );
+        $this->publicKey = TypeIs::string( array_shift( $i_rData ) );
 
         # Anything left on the array, must be one or more rendezvous servers. Add
         # them and strip off the trailing dot.
@@ -90,7 +92,7 @@ class HIP extends RR {
 
         # Store the lengths.
         $this->hitLength = strlen( pack( 'H*', $this->hit ) );
-        $this->pubkeyLength = strlen( base64_decode( $this->publicKey ) );
+        $this->pubkeyLength = strlen( OK::base64_decode( $this->publicKey ) );
 
         return true;
     }
@@ -144,16 +146,16 @@ class HIP extends RR {
             $hit = unpack( 'H*', substr( $this->rdata, $offset, $this->hitLength ) );
 
             $this->hit = strtoupper( $hit[ 1 ] );
-            $offset += $this->hitLength;
+            $offset = TypeIs::int( $offset + $this->hitLength );
 
             # Copy out the public key.
             $this->publicKey = base64_encode(
                 substr( $this->rdata, $offset, $this->pubkeyLength )
             );
-            $offset += $this->pubkeyLength;
+            $offset = TypeIs::int( $offset + $this->pubkeyLength );
 
             # Copy out any possible rendezvous servers.
-            $offset = $i_packet->offset + $offset;
+            $offset = TypeIs::int( $i_packet->offset + $offset );
 
             while ( ( $offset - $i_packet->offset ) < $this->rdLength ) {
                 $this->rendezvousServers[] = $i_packet->expandEx( $offset );

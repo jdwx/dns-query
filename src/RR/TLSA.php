@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
 
 
 /**
@@ -60,7 +61,7 @@ class TLSA extends RR {
         $this->certUsage = (int) array_shift( $i_rData );
         $this->selector = (int) array_shift( $i_rData );
         $this->matchingType = (int) array_shift( $i_rData );
-        $this->certificate = base64_decode( implode( '', $i_rData ) );
+        $this->certificate = OK::base64_decode( implode( '', $i_rData ) );
 
         return true;
     }

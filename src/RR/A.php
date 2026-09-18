@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BaseQuery;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 use JetBrains\PhpStorm\ArrayShape;
 
 
@@ -48,7 +49,8 @@ class A extends RR {
     /** @inheritDoc
      * @noinspection PhpMissingParentCallCommonInspection
      */
-    #[ArrayShape( [ 'ip' => 'string' ] )] public function getPHPRData() : array {
+    #[ArrayShape( [ 'ip' => 'string' ] )]
+    public function getPHPRData() : array {
         return [
             'ip' => $this->address,
         ];
@@ -57,7 +59,7 @@ class A extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $value = array_shift( $i_rData );
+        $value = TypeIs::string( array_shift( $i_rData ) );
 
         if ( BaseQuery::isIPv4( $value ) ) {
 
@@ -72,7 +74,7 @@ class A extends RR {
     /** @inheritDoc */
     protected function rrGet( Packet $i_packet ) : ?string {
         $i_packet->offset += 4;
-        return inet_pton( $this->address );
+        return inet_pton( $this->address ) ?: null;
     }
 
 
@@ -80,14 +82,9 @@ class A extends RR {
     protected function rrSet( Packet $i_packet ) : bool {
         if ( $this->rdLength > 0 ) {
 
-            $this->address = inet_ntop( $this->rdata );
-            /**
-             * PhpStan doesn't know that inet_ntop() will return false if the
-             * address is invalid.
-             * @phpstan-ignore notIdentical.alwaysTrue
-             */
-            if ( $this->address !== false ) {
-
+            $address = inet_ntop( $this->rdata );
+            if ( $address !== false ) {
+                $this->address = $address;
                 return true;
             }
         }

@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -47,7 +48,7 @@ class EUI48 extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $value = array_shift( $i_rData );
+        $value = TypeIs::string( array_shift( $i_rData ) );
 
         # Re: RFC 7043, the field must be represented as six two-digit hex numbers
         # separated by hyphens.
@@ -76,7 +77,7 @@ class EUI48 extends RR {
 
         $eui = explode( '-', $this->address );
         foreach ( $eui as $hex ) {
-            $data .= chr( hexdec( $hex ) );
+            $data .= chr( TypeIs::int( hexdec( $hex ) ) );
         }
 
         $i_packet->offset += 6;
@@ -88,7 +89,7 @@ class EUI48 extends RR {
     protected function rrSet( Packet $i_packet ) : bool {
         if ( $this->rdLength > 0 ) {
             $parse = unpack( 'C6', $this->rdata );
-            if ( count( $parse ) == 6 ) {
+            if ( is_array( $parse ) && count( $parse ) == 6 ) {
                 $this->address = vsprintf( '%02x-%02x-%02x-%02x-%02x-%02x', $parse );
                 return true;
             }

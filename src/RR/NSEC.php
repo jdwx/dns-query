@@ -9,6 +9,7 @@ namespace JDWX\DNSQuery\RR;
 
 use JDWX\DNSQuery\BitMap;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -50,7 +51,7 @@ class NSEC extends RR {
 
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
-        $this->nextDomainName = $this->cleanString( array_shift( $i_rData ) );
+        $this->nextDomainName = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
         $this->typeBitMaps = $i_rData;
 
         return true;

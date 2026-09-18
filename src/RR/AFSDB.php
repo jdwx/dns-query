@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -50,7 +51,7 @@ class AFSDB extends RR {
     /** @inheritDoc */
     protected function rrFromString( array $i_rData ) : bool {
         $this->subtype = (int) array_shift( $i_rData );
-        $this->hostname = $this->cleanString( array_shift( $i_rData ) );
+        $this->hostname = $this->cleanString( TypeIs::string( array_shift( $i_rData ) ) );
         return true;
     }
 

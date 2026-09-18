@@ -10,6 +10,8 @@ namespace JDWX\DNSQuery\RR;
 use JDWX\DNSQuery\Exception;
 use JDWX\DNSQuery\Lookups;
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
+use JDWX\Strict\TypeIs;
 
 
 /**
@@ -111,7 +113,7 @@ class CERT extends RR {
         parent::__construct( $i_packet, $i_rr );
 
         # Load the lookup values
-        $this->certFormatNameToId = array_flip( $this->certFormatIdToName );
+        $this->certFormatNameToId = TypeIs::array( array_flip( $this->certFormatIdToName ) );
     }
 
 
@@ -121,7 +123,7 @@ class CERT extends RR {
         # Load and check the format; can be an int, or a mnemonic symbol.
         $format = array_shift( $i_rData );
         if ( ! is_numeric( $format ) ) {
-            $mnemonic = strtoupper( trim( $format ) );
+            $mnemonic = strtoupper( trim( TypeIs::string( $format ) ) );
             if ( ! isset( $this->certFormatNameToId[ $mnemonic ] ) ) {
                 return false;
             }
@@ -138,7 +140,7 @@ class CERT extends RR {
         # Parse and check the algorithm; can be an int, or a mnemonic symbol.
         $algorithm = array_shift( $i_rData );
         if ( ! is_numeric( $algorithm ) ) {
-            $mnemonic = strtoupper( trim( $algorithm ) );
+            $mnemonic = strtoupper( trim( TypeIs::string( $algorithm ) ) );
             if ( ! isset( Lookups::$algorithmNameToID[ $mnemonic ] ) ) {
                 return false;
             }
@@ -154,7 +156,7 @@ class CERT extends RR {
         #
         # Certificates MUST be provided base64 encoded.  If not, everything will
         # be broken after this point, as we assume it's base64 encoded.
-        $this->certificate = base64_decode( implode( ' ', $i_rData ) );
+        $this->certificate = OK::base64_decode( implode( ' ', $i_rData ) );
 
         return true;
     }

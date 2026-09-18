@@ -8,6 +8,7 @@ namespace JDWX\DNSQuery\RR;
 
 
 use JDWX\DNSQuery\Packet\Packet;
+use JDWX\Strict\OK;
 
 
 /**
@@ -65,7 +66,7 @@ class DNSKEY extends RR {
      * @return int
      */
     protected function getKeyTag() : int {
-        $key = array_values( unpack( "C*", $this->rdata ) );
+        $key = array_values( OK::unpack( "C*", $this->rdata ) );
         $keySize = $this->rdLength;
 
         $ac = 0;
@@ -110,7 +111,7 @@ class DNSKEY extends RR {
 
             # Unpack the flags, protocol and algorithm.
             /** @noinspection SpellCheckingInspection */
-            $parse = unpack( 'nflags/Cprotocol/Calgorithm', $this->rdata );
+            $parse = OK::unpack( 'nflags/Cprotocol/Calgorithm', $this->rdata );
 
             # TODO: right now we're just displaying what's in DNS; we really
             # should be parsing bit 7 and bit 15 of the flags field, and store

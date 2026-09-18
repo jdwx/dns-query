@@ -120,9 +120,9 @@ class LOC extends RR {
             $this->longitude = $this->convertDMSHToDecimal( $longDegrees, $longMinutes, $longSeconds, $longHemisphere );
 
             # The rest of the values
-            $this->size = ( isset( $matches[ 15 ] ) ) ? $matches[ 15 ] : 1;
-            $this->horizPrecision = ( ( isset( $matches[ 17 ] ) ) ? $matches[ 17 ] : 10000 );
-            $this->vertPrecision = ( ( isset( $matches[ 19 ] ) ) ? $matches[ 19 ] : 10 );
+            $this->size = ( isset( $matches[ 15 ] ) ) ? $matches[ 15 ] : '1';
+            $this->horizPrecision = ( ( isset( $matches[ 17 ] ) ) ? $matches[ 17 ] : '10000' );
+            $this->vertPrecision = ( ( isset( $matches[ 19 ] ) ) ? $matches[ 19 ] : '10' );
             $this->altitude = (float) $matches[ 13 ];
 
             # There is no way to specify the version in text; it's always assumed to be 0.
